@@ -38,3 +38,6 @@ env/
 # Claude Code
 .claude/
 CLAUDE.md
+
+# Reference files (SDK docs, third-party codecs)
+reference files/
