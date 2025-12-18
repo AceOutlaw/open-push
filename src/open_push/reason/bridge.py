@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from ..core.hardware import Push1Hardware
 from ..core.display import Push1Display
 from ..core.constants import BUTTON_CC, CC_TO_BUTTON, ENCODER_CC, COLORS, note_name
-from ..music.layout import IsomorphicLayout
+from ..music.layout import IsomorphicLayout, LAYOUT_PRESETS
 from ..music.scales import SCALE_NAMES, SCALES
 
 from .ports import ReasonPortManager
@@ -53,6 +53,7 @@ class BridgeState:
     root_note: int = 0    # 0-11 (C through B)
     in_key_mode: bool = True
     accent_on: bool = False
+    layout_preset: str = 'fourths_up'  # Default layout
 
     # Device state
     device_name: str = ""
@@ -215,6 +216,7 @@ class ReasonBridge:
         scale_name = SCALE_NAMES[self.state.scale_index]
         self.layout.set_scale(self.state.root_note, scale_name)
         self.layout.set_in_key_mode(self.state.in_key_mode)
+        self.layout.set_layout(self.state.layout_preset)
 
     def disconnect(self):
         """Disconnect from Push and close virtual ports."""
@@ -334,6 +336,7 @@ class ReasonBridge:
     def _handle_scale_pad(self, row: int, col: int):
         """Handle pad press on scale settings page."""
         NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+        LAYOUT_KEYS = list(LAYOUT_PRESETS.keys())  # Layout options
 
         if row == 0 and col < 8:
             # Bottom row: root note C through G
@@ -351,6 +354,11 @@ class ReasonBridge:
             # Sixth row: in-key/chromatic toggle
             self.state.in_key_mode = (col == 0)
             print(f"Mode: {'In-Key' if self.state.in_key_mode else 'Chromatic'}")
+        elif row == 7 and col < len(LAYOUT_KEYS):
+            # Top row: layout selection
+            self.state.layout_preset = LAYOUT_KEYS[col]
+            layout_name = LAYOUT_PRESETS[self.state.layout_preset][2]
+            print(f"Layout: {layout_name}")
 
         # Sync layout and update display
         self._sync_layout_state()
@@ -452,6 +460,7 @@ class ReasonBridge:
     def _light_scale_page(self):
         """Light up pad grid for scale settings page."""
         NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+        LAYOUT_KEYS = list(LAYOUT_PRESETS.keys())
 
         # Clear grid
         self.push.clear_all_pads()
@@ -484,6 +493,15 @@ class ReasonBridge:
         # Sixth row: in-key/chromatic
         self.push.set_pad_color(76, 'cyan' if self.state.in_key_mode else 'dim_white')
         self.push.set_pad_color(77, 'cyan' if not self.state.in_key_mode else 'dim_white')
+
+        # Top row (row 7): layout options
+        for i, key in enumerate(LAYOUT_KEYS):
+            if i < 8:
+                pad_note = 92 + i  # Row 7 starts at note 92
+                if key == self.state.layout_preset:
+                    self.push.set_pad_color(pad_note, 'purple')
+                else:
+                    self.push.set_pad_color(pad_note, 'purple_dim')
 
     def _handle_button(self, button: str):
         """Handle button press."""
@@ -854,9 +872,10 @@ class ReasonBridge:
             octave = self.layout.get_octave()
             mode_str = "In-Key" if self.state.in_key_mode else "Chromatic"
 
+            layout_name = LAYOUT_PRESETS.get(self.state.layout_preset, ('', '', 'Fourths'))[2]
             self.display.set_segments(1, ["OpenPush", f"{root_name} {scale_name.title()}", f"Oct {octave}", mode_str])
             accent_str = "Accent: ON" if self.state.accent_on else "Accent: OFF"
-            self.display.set_segments(2, [accent_str, "Fourths", "", ""])
+            self.display.set_segments(2, [accent_str, layout_name, "", ""])
             self.display.set_segments(3, ["Oct Up/Down", "Accent", "Scale", ""])
             self.display.set_segments(4, ["Play the pads!", "", "", "v0.3"])
 
@@ -864,11 +883,12 @@ class ReasonBridge:
             root_name = NOTE_NAMES[self.state.root_note]
             scale_name = SCALE_NAMES[self.state.scale_index]
             mode_str = "In-Key" if self.state.in_key_mode else "Chromatic"
+            layout_name = LAYOUT_PRESETS.get(self.state.layout_preset, ('', '', 'Fourths'))[2]
 
-            self.display.set_segments(1, ["SCALE SETTINGS", f"Root: {root_name}", scale_name.title(), ""])
-            self.display.set_segments(2, ["Row1-2: Root", "Row4: Scale", "", ""])
-            self.display.set_segments(3, ["Row6: Mode", f"({mode_str})", "", ""])
-            self.display.set_segments(4, ["Maj Min Dor Pent", "Blues Chrom...", "", "Scale=Exit"])
+            self.display.set_segments(1, ["SCALE SETTINGS", f"Root: {root_name}", scale_name.title(), layout_name])
+            self.display.set_segments(2, ["Row1-2: Root", "Row4: Scale", "Row6: Mode", "Row8: Layout"])
+            self.display.set_segments(3, [f"({mode_str})", "", "", ""])
+            self.display.set_segments(4, ["Press Scale", "to exit", "", ""])
 
         elif self.state.current_mode == 'device':
             self.display.set_segments(1, ["OpenPush", self.state.device_name, "", "Device"])
