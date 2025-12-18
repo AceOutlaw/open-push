@@ -1,0 +1,223 @@
+Propellerhead Remote Mapping File
+File Format Version	1.0.0
+Control Surface Manufacturer	OpenPush
+Control Surface Model	Mixer
+
+Map Version	1.0.0
+
+//=========================================================================
+// OpenPush Mixer Remotemap
+// Maps Mixer codec items to Reason mixer functions
+//=========================================================================
+
+Scope	Propellerheads	Reason Master Section
+//	Control Surface Item	Key	Remotable Item	Scale	Mode
+
+// Volume encoders - Channel levels
+Map	Volume 1		Channel 1 Level
+Map	Volume 2		Channel 2 Level
+Map	Volume 3		Channel 3 Level
+Map	Volume 4		Channel 4 Level
+Map	Volume 5		Channel 5 Level
+Map	Volume 6		Channel 6 Level
+Map	Volume 7		Channel 7 Level
+Map	Volume 8		Channel 8 Level
+
+// Pan encoders - Channel pans
+Map	Pan 1		Channel 1 Pan
+Map	Pan 2		Channel 2 Pan
+Map	Pan 3		Channel 3 Pan
+Map	Pan 4		Channel 4 Pan
+Map	Pan 5		Channel 5 Pan
+Map	Pan 6		Channel 6 Pan
+Map	Pan 7		Channel 7 Pan
+Map	Pan 8		Channel 8 Pan
+
+// Mute buttons
+Map	Mute 1		Channel 1 Mute
+Map	Mute 2		Channel 2 Mute
+Map	Mute 3		Channel 3 Mute
+Map	Mute 4		Channel 4 Mute
+Map	Mute 5		Channel 5 Mute
+Map	Mute 6		Channel 6 Mute
+Map	Mute 7		Channel 7 Mute
+Map	Mute 8		Channel 8 Mute
+
+// Solo buttons
+Map	Solo 1		Channel 1 Solo
+Map	Solo 2		Channel 2 Solo
+Map	Solo 3		Channel 3 Solo
+Map	Solo 4		Channel 4 Solo
+Map	Solo 5		Channel 5 Solo
+Map	Solo 6		Channel 6 Solo
+Map	Solo 7		Channel 7 Solo
+Map	Solo 8		Channel 8 Solo
+
+// Master volume
+Map	Master Volume		Master Level
+
+// Bank navigation
+Map	Bank Left		Previous Remote Base Channel
+Map	Bank Right		Next Remote Base Channel
+
+// Channel names display
+Map	Track Name 1		Channel 1 Channel Name
+Map	Track Name 2		Channel 2 Channel Name
+Map	Track Name 3		Channel 3 Channel Name
+Map	Track Name 4		Channel 4 Channel Name
+Map	Track Name 5		Channel 5 Channel Name
+Map	Track Name 6		Channel 6 Channel Name
+Map	Track Name 7		Channel 7 Channel Name
+Map	Track Name 8		Channel 8 Channel Name
+
+// VU Meters
+Map	Meter 1		Channel 1 VU Meter
+Map	Meter 2		Channel 2 VU Meter
+Map	Meter 3		Channel 3 VU Meter
+Map	Meter 4		Channel 4 VU Meter
+Map	Meter 5		Channel 5 VU Meter
+Map	Meter 6		Channel 6 VU Meter
+Map	Meter 7		Channel 7 VU Meter
+Map	Meter 8		Channel 8 VU Meter
+
+//eos
+
+Scope	Propellerheads	Record Master Section
+//	Control Surface Item	Key	Remotable Item	Scale	Mode
+
+// Volume encoders
+Map	Volume 1		Channel 1 Level
+Map	Volume 2		Channel 2 Level
+Map	Volume 3		Channel 3 Level
+Map	Volume 4		Channel 4 Level
+Map	Volume 5		Channel 5 Level
+Map	Volume 6		Channel 6 Level
+Map	Volume 7		Channel 7 Level
+Map	Volume 8		Channel 8 Level
+
+// Pan encoders
+Map	Pan 1		Channel 1 Pan
+Map	Pan 2		Channel 2 Pan
+Map	Pan 3		Channel 3 Pan
+Map	Pan 4		Channel 4 Pan
+Map	Pan 5		Channel 5 Pan
+Map	Pan 6		Channel 6 Pan
+Map	Pan 7		Channel 7 Pan
+Map	Pan 8		Channel 8 Pan
+
+// Mute buttons
+Map	Mute 1		Channel 1 Mute
+Map	Mute 2		Channel 2 Mute
+Map	Mute 3		Channel 3 Mute
+Map	Mute 4		Channel 4 Mute
+Map	Mute 5		Channel 5 Mute
+Map	Mute 6		Channel 6 Mute
+Map	Mute 7		Channel 7 Mute
+Map	Mute 8		Channel 8 Mute
+
+// Solo buttons
+Map	Solo 1		Channel 1 Solo
+Map	Solo 2		Channel 2 Solo
+Map	Solo 3		Channel 3 Solo
+Map	Solo 4		Channel 4 Solo
+Map	Solo 5		Channel 5 Solo
+Map	Solo 6		Channel 6 Solo
+Map	Solo 7		Channel 7 Solo
+Map	Solo 8		Channel 8 Solo
+
+// Master volume
+Map	Master Volume		Master Level
+
+// Bank navigation
+Map	Bank Left		Previous Remote Base Channel
+Map	Bank Right		Next Remote Base Channel
+
+// Channel names display
+Map	Track Name 1		Channel 1 Channel Name
+Map	Track Name 2		Channel 2 Channel Name
+Map	Track Name 3		Channel 3 Channel Name
+Map	Track Name 4		Channel 4 Channel Name
+Map	Track Name 5		Channel 5 Channel Name
+Map	Track Name 6		Channel 6 Channel Name
+Map	Track Name 7		Channel 7 Channel Name
+Map	Track Name 8		Channel 8 Channel Name
+
+// VU Meters
+Map	Meter 1		Channel 1 VU Meter
+Map	Meter 2		Channel 2 VU Meter
+Map	Meter 3		Channel 3 VU Meter
+Map	Meter 4		Channel 4 VU Meter
+Map	Meter 5		Channel 5 VU Meter
+Map	Meter 6		Channel 6 VU Meter
+Map	Meter 7		Channel 7 VU Meter
+Map	Meter 8		Channel 8 VU Meter
+
+//eos
+
+Scope	Propellerheads	Mixer 14:2
+//	Control Surface Item	Key	Remotable Item	Scale	Mode
+
+// Volume encoders
+Map	Volume 1		Channel 1 Level	2
+Map	Volume 2		Channel 2 Level	2
+Map	Volume 3		Channel 3 Level	2
+Map	Volume 4		Channel 4 Level	2
+Map	Volume 5		Channel 5 Level	2
+Map	Volume 6		Channel 6 Level	2
+Map	Volume 7		Channel 7 Level	2
+Map	Volume 8		Channel 8 Level	2
+
+// Pan encoders
+Map	Pan 1		Channel 1 Pan	2
+Map	Pan 2		Channel 2 Pan	2
+Map	Pan 3		Channel 3 Pan	2
+Map	Pan 4		Channel 4 Pan	2
+Map	Pan 5		Channel 5 Pan	2
+Map	Pan 6		Channel 6 Pan	2
+Map	Pan 7		Channel 7 Pan	2
+Map	Pan 8		Channel 8 Pan	2
+
+// Mute buttons
+Map	Mute 1		Channel 1 Mute	2
+Map	Mute 2		Channel 2 Mute	2
+Map	Mute 3		Channel 3 Mute	2
+Map	Mute 4		Channel 4 Mute	2
+Map	Mute 5		Channel 5 Mute	2
+Map	Mute 6		Channel 6 Mute	2
+Map	Mute 7		Channel 7 Mute	2
+Map	Mute 8		Channel 8 Mute	2
+
+// Solo buttons
+Map	Solo 1		Channel 1 Solo	2
+Map	Solo 2		Channel 2 Solo	2
+Map	Solo 3		Channel 3 Solo	2
+Map	Solo 4		Channel 4 Solo	2
+Map	Solo 5		Channel 5 Solo	2
+Map	Solo 6		Channel 6 Solo	2
+Map	Solo 7		Channel 7 Solo	2
+Map	Solo 8		Channel 8 Solo	2
+
+// Master volume
+Map	Master Volume		Master Level
+
+// Channel names
+Map	Track Name 1		Channel 1 Name	2
+Map	Track Name 2		Channel 2 Name	2
+Map	Track Name 3		Channel 3 Name	2
+Map	Track Name 4		Channel 4 Name	2
+Map	Track Name 5		Channel 5 Name	2
+Map	Track Name 6		Channel 6 Name	2
+Map	Track Name 7		Channel 7 Name	2
+Map	Track Name 8		Channel 8 Name	2
+
+// Peak meters
+Map	Meter 1		Channel 1 Peak Meter	2
+Map	Meter 2		Channel 2 Peak Meter	2
+Map	Meter 3		Channel 3 Peak Meter	2
+Map	Meter 4		Channel 4 Peak Meter	2
+Map	Meter 5		Channel 5 Peak Meter	2
+Map	Meter 6		Channel 6 Peak Meter	2
+Map	Meter 7		Channel 7 Peak Meter	2
+Map	Meter 8		Channel 8 Peak Meter	2
+
+//eos

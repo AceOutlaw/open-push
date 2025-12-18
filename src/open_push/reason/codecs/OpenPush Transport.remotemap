@@ -1,0 +1,98 @@
+Propellerhead Remote Mapping File
+File Format Version	1.0.0
+Control Surface Manufacturer	OpenPush
+Control Surface Model	Transport
+
+Map Version	1.0.0
+
+//=========================================================================
+// OpenPush Transport Remotemap
+// Maps Transport codec items to Reason functions
+//=========================================================================
+
+Scope	Propellerheads	Master Keyboard
+//	Control Surface Item	Key	Remotable Item	Scale	Mode
+Map	Keyboard		Keyboard
+
+//eos
+
+Scope	Propellerheads	Reason Document
+//	Control Surface Item	Key	Remotable Item	Scale	Mode
+
+// Transport controls
+Map	Play		Play
+Map	Stop		Stop
+Map	Record		Record
+Map	Rewind		Rewind
+Map	Forward		Fast Forward
+Map	Loop		Loop On/Off
+Map	Metronome		Click On/Off
+
+// Tempo control
+Map	Tempo		Tempo BPM
+
+// Track navigation
+Map	NavigateUp		Target Previous Track
+Map	NavigateDown		Target Next Track
+Map	NavigateLeft		Select Prev Patch for Target Device
+Map	NavigateRight		Select Next Patch for Target Device
+
+// Display
+Map	LCD1		Target Track Name
+Map	LCD2		Document Name
+
+//eos
+
+Scope	Propellerheads	Record Document
+//	Control Surface Item	Key	Remotable Item	Scale	Mode
+
+// Transport controls
+Map	Play		Play
+Map	Stop		Stop
+Map	Record		Record
+Map	Rewind		Rewind
+Map	Forward		Fast Forward
+Map	Loop		Loop On/Off
+Map	Metronome		Click On/Off
+
+// Tempo control
+Map	Tempo		Tempo BPM
+
+// Track navigation
+Map	NavigateUp		Target Previous Track
+Map	NavigateDown		Target Next Track
+Map	NavigateLeft		Select Prev Patch for Target Device
+Map	NavigateRight		Select Next Patch for Target Device
+
+// Display
+Map	LCD1		Target Track Name
+Map	LCD2		Document Name
+
+//eos
+
+Scope	Propellerheads	Reason Essentials
+//	Control Surface Item	Key	Remotable Item	Scale	Mode
+
+// Transport controls
+Map	Play		Play
+Map	Stop		Stop
+Map	Record		Record
+Map	Rewind		Rewind
+Map	Forward		Fast Forward
+Map	Loop		Loop On/Off
+Map	Metronome		Click On/Off
+
+// Tempo control
+Map	Tempo		Tempo BPM
+
+// Track navigation
+Map	NavigateUp		Target Previous Track
+Map	NavigateDown		Target Next Track
+Map	NavigateLeft		Select Prev Patch for Target Device
+Map	NavigateRight		Select Next Patch for Target Device
+
+// Display
+Map	LCD1		Target Track Name
+Map	LCD2		Document Name
+
+//eos

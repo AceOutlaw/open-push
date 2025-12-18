@@ -1,0 +1,305 @@
+Propellerhead Remote Mapping File
+File Format Version	1.0.0
+Control Surface Manufacturer	OpenPush
+Control Surface Model	Devices
+
+Map Version	1.0.0
+
+//=========================================================================
+// OpenPush Devices Remotemap
+// Maps Devices codec items to Reason device parameters
+//=========================================================================
+
+Scope	Propellerheads	Master Keyboard
+//	Control Surface Item	Key	Remotable Item	Scale	Mode
+Map	Keyboard		Keyboard
+
+//eos
+
+//=========================================================================
+// Kong Drum Designer - 16 drum pads with parameters
+//=========================================================================
+Scope	Propellerheads	Kong Drum Designer
+//	Control Surface Item	Key	Remotable Item	Scale	Mode
+
+// Display device name
+Map	Device Name		"Kong"
+
+// Master level on encoder 8
+Map	Encoder 8		Master Level
+
+// First 8 drums' levels on encoders (default view)
+Map	Encoder 1		Drum 1 Level
+Map	Encoder 2		Drum 2 Level
+Map	Encoder 3		Drum 3 Level
+Map	Encoder 4		Drum 4 Level
+Map	Encoder 5		Drum 5 Level
+Map	Encoder 6		Drum 6 Level
+Map	Encoder 7		Drum 7 Level
+
+// Param names for drums 1-8
+Map	Param Name 1		"Drum 1"
+Map	Param Name 2		"Drum 2"
+Map	Param Name 3		"Drum 3"
+Map	Param Name 4		"Drum 4"
+Map	Param Name 5		"Drum 5"
+Map	Param Name 6		"Drum 6"
+Map	Param Name 7		"Drum 7"
+Map	Param Name 8		"Master"
+
+//eos
+
+//=========================================================================
+// Redrum Drum Computer - 10 channel drum machine
+//=========================================================================
+Scope	Propellerheads	Redrum Drum Computer
+//	Control Surface Item	Key	Remotable Item	Scale	Mode
+
+// Display device name
+Map	Device Name		"Redrum"
+
+// Master level
+Map	Encoder 8		Master Level
+
+// First 8 drum channels
+Map	Encoder 1		Drum 1 Level
+Map	Encoder 2		Drum 2 Level
+Map	Encoder 3		Drum 3 Level
+Map	Encoder 4		Drum 4 Level
+Map	Encoder 5		Drum 5 Level
+Map	Encoder 6		Drum 6 Level
+Map	Encoder 7		Drum 7 Level
+
+// Param names
+Map	Param Name 1		"Drum 1"
+Map	Param Name 2		"Drum 2"
+Map	Param Name 3		"Drum 3"
+Map	Param Name 4		"Drum 4"
+Map	Param Name 5		"Drum 5"
+Map	Param Name 6		"Drum 6"
+Map	Param Name 7		"Drum 7"
+Map	Param Name 8		"Master"
+
+// Mute buttons for drums
+Map	Lower Button 1		Drum 1 Mute
+Map	Lower Button 2		Drum 2 Mute
+Map	Lower Button 3		Drum 3 Mute
+Map	Lower Button 4		Drum 4 Mute
+Map	Lower Button 5		Drum 5 Mute
+Map	Lower Button 6		Drum 6 Mute
+Map	Lower Button 7		Drum 7 Mute
+Map	Lower Button 8		Drum 8 Mute
+
+//eos
+
+//=========================================================================
+// Dr.OctoRex Loop Player - 8 slices per loop
+//=========================================================================
+Scope	Propellerheads	Dr.OctoRex Loop Player
+//	Control Surface Item	Key	Remotable Item	Scale	Mode
+
+// Display device name
+Map	Device Name		"Dr.OctoRex"
+
+// Master level
+Map	Encoder 8		Master Level
+
+// Loop 1 parameters (default view)
+Map	Encoder 1		Loop Slot 1 Level
+Map	Encoder 2		Loop Slot 2 Level
+Map	Encoder 3		Loop Slot 3 Level
+Map	Encoder 4		Loop Slot 4 Level
+Map	Encoder 5		Loop Slot 5 Level
+Map	Encoder 6		Loop Slot 6 Level
+Map	Encoder 7		Loop Slot 7 Level
+
+// Param names
+Map	Param Name 1		"Loop 1"
+Map	Param Name 2		"Loop 2"
+Map	Param Name 3		"Loop 3"
+Map	Param Name 4		"Loop 4"
+Map	Param Name 5		"Loop 5"
+Map	Param Name 6		"Loop 6"
+Map	Param Name 7		"Loop 7"
+Map	Param Name 8		"Master"
+
+// Loop select buttons
+Map	Upper Button 1		Select Loop Slot 1
+Map	Upper Button 2		Select Loop Slot 2
+Map	Upper Button 3		Select Loop Slot 3
+Map	Upper Button 4		Select Loop Slot 4
+Map	Upper Button 5		Select Loop Slot 5
+Map	Upper Button 6		Select Loop Slot 6
+Map	Upper Button 7		Select Loop Slot 7
+Map	Upper Button 8		Select Loop Slot 8
+
+// Run button
+Map	Lower Button 1		Run
+
+//eos
+
+//=========================================================================
+// Subtractor Analog Synthesizer
+//=========================================================================
+Scope	Propellerheads	Subtractor Analog Synthesizer
+//	Control Surface Item	Key	Remotable Item	Scale	Mode
+
+Map	Device Name		"Subtractor"
+
+// Filter and amp envelope
+Map	Encoder 1		Filter Freq
+Map	Encoder 2		Filter Res
+Map	Encoder 3		Filter Env Amount
+Map	Encoder 4		Amp Env Attack
+Map	Encoder 5		Amp Env Decay
+Map	Encoder 6		Amp Env Sustain
+Map	Encoder 7		Amp Env Release
+Map	Encoder 8		Master Level
+
+Map	Param Name 1		"Filter"
+Map	Param Name 2		"Res"
+Map	Param Name 3		"Env Amt"
+Map	Param Name 4		"Attack"
+Map	Param Name 5		"Decay"
+Map	Param Name 6		"Sustain"
+Map	Param Name 7		"Release"
+Map	Param Name 8		"Level"
+
+//eos
+
+//=========================================================================
+// Thor Polysonic Synthesizer
+//=========================================================================
+Scope	Propellerheads	Thor Polysonic Synthesizer
+//	Control Surface Item	Key	Remotable Item	Scale	Mode
+
+Map	Device Name		"Thor"
+
+// Rotary knobs and buttons
+Map	Encoder 1		Rotary 1
+Map	Encoder 2		Rotary 2
+Map	Encoder 3		Rotary 3
+Map	Encoder 4		Rotary 4
+Map	Encoder 5		Button 1
+Map	Encoder 6		Button 2
+Map	Encoder 7		Button 3
+Map	Encoder 8		Button 4
+
+Map	Param Name 1		"Rotary 1"
+Map	Param Name 2		"Rotary 2"
+Map	Param Name 3		"Rotary 3"
+Map	Param Name 4		"Rotary 4"
+Map	Param Name 5		"Button 1"
+Map	Param Name 6		"Button 2"
+Map	Param Name 7		"Button 3"
+Map	Param Name 8		"Button 4"
+
+//eos
+
+//=========================================================================
+// Malstrom Graintable Synthesizer
+//=========================================================================
+Scope	Propellerheads	Malstrom Graintable Synthesizer
+//	Control Surface Item	Key	Remotable Item	Scale	Mode
+
+Map	Device Name		"Malstrom"
+
+// Rotary controls
+Map	Encoder 1		Rotary 1
+Map	Encoder 2		Rotary 2
+Map	Encoder 3		Rotary 3
+Map	Encoder 4		Rotary 4
+Map	Encoder 5		Button 1
+Map	Encoder 6		Button 2
+Map	Encoder 7		Button 3
+Map	Encoder 8		Button 4
+
+//eos
+
+//=========================================================================
+// NN-XT Advanced Sampler
+//=========================================================================
+Scope	Propellerheads	NN-XT Advanced Sampler
+//	Control Surface Item	Key	Remotable Item	Scale	Mode
+
+Map	Device Name		"NN-XT"
+
+// Main controls
+Map	Encoder 1		Filter Freq
+Map	Encoder 2		Filter Res
+Map	Encoder 3		Amp Env Attack
+Map	Encoder 4		Amp Env Decay
+Map	Encoder 5		Amp Env Release
+Map	Encoder 6		Mod Env Decay
+Map	Encoder 7		External Controller
+Map	Encoder 8		Master Volume
+
+Map	Param Name 1		"Filter"
+Map	Param Name 2		"Res"
+Map	Param Name 3		"Attack"
+Map	Param Name 4		"Decay"
+Map	Param Name 5		"Release"
+Map	Param Name 6		"Mod Dec"
+Map	Param Name 7		"Ext Ctrl"
+Map	Param Name 8		"Volume"
+
+//eos
+
+//=========================================================================
+// Combinator - Combination Device
+//=========================================================================
+Scope	Propellerheads	Combinator
+//	Control Surface Item	Key	Remotable Item	Scale	Mode
+
+Map	Device Name		"Combinator"
+
+// Programmer controls
+Map	Encoder 1		Rotary 1
+Map	Encoder 2		Rotary 2
+Map	Encoder 3		Rotary 3
+Map	Encoder 4		Rotary 4
+Map	Encoder 5		Button 1
+Map	Encoder 6		Button 2
+Map	Encoder 7		Button 3
+Map	Encoder 8		Button 4
+
+Map	Param Name 1		"Rotary 1"
+Map	Param Name 2		"Rotary 2"
+Map	Param Name 3		"Rotary 3"
+Map	Param Name 4		"Rotary 4"
+Map	Param Name 5		"Button 1"
+Map	Param Name 6		"Button 2"
+Map	Param Name 7		"Button 3"
+Map	Param Name 8		"Button 4"
+
+// Run button for pattern devices
+Map	Lower Button 1		Run Pattern Devices
+
+//eos
+
+//=========================================================================
+// Generic fallback for Rack Extensions and other devices
+//=========================================================================
+Scope	Propellerheads	Reason Rack Plugin
+//	Control Surface Item	Key	Remotable Item	Scale	Mode
+
+// Standard rotary/button mapping used by most rack extensions
+Map	Encoder 1		Rotary 1
+Map	Encoder 2		Rotary 2
+Map	Encoder 3		Rotary 3
+Map	Encoder 4		Rotary 4
+Map	Encoder 5		Rotary 5
+Map	Encoder 6		Rotary 6
+Map	Encoder 7		Rotary 7
+Map	Encoder 8		Rotary 8
+
+Map	Upper Button 1		Button 1
+Map	Upper Button 2		Button 2
+Map	Upper Button 3		Button 3
+Map	Upper Button 4		Button 4
+Map	Upper Button 5		Button 5
+Map	Upper Button 6		Button 6
+Map	Upper Button 7		Button 7
+Map	Upper Button 8		Button 8
+
+//eos
