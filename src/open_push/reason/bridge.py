@@ -19,7 +19,9 @@ from dataclasses import dataclass, field
 
 from ..core.hardware import Push1Hardware
 from ..core.display import Push1Display
-from ..core.constants import BUTTON_CC, CC_TO_BUTTON, ENCODER_CC
+from ..core.constants import BUTTON_CC, CC_TO_BUTTON, ENCODER_CC, COLORS, note_name
+from ..music.layout import IsomorphicLayout
+from ..music.scales import SCALE_NAMES, SCALES
 
 from .ports import ReasonPortManager
 from .protocol import (
@@ -44,7 +46,13 @@ class BridgeState:
     tempo: float = 120.0
 
     # Mode state
-    current_mode: str = 'device'  # device, mixer, transport
+    current_mode: str = 'note'  # note, device, mixer, mixer_pan, transport, scale
+
+    # Note mode state
+    scale_index: int = 1  # Index into SCALE_NAMES (default: minor)
+    root_note: int = 0    # 0-11 (C through B)
+    in_key_mode: bool = True
+    accent_on: bool = False
 
     # Device state
     device_name: str = ""
@@ -95,6 +103,12 @@ class ReasonBridge:
         self._connected = False
         self._running = False
 
+        # Note mode: isomorphic layout and virtual output
+        self.layout = IsomorphicLayout(root_note=36)  # C2
+        self.note_output: Optional[mido.ports.BaseOutput] = None
+        self.active_notes: Dict[int, int] = {}  # pad_note -> midi_note
+        self.midi_channel = 0  # MIDI channel for note output
+
         # Callbacks for custom handling
         self._on_transport: Optional[Callable] = None
         self._on_device: Optional[Callable] = None
@@ -134,12 +148,28 @@ class ReasonBridge:
         self.ports.set_devices_callback(self._handle_device_from_reason)
         self.ports.set_mixer_callback(self._handle_mixer_from_reason)
 
+        # Create note output port for DAW
+        try:
+            self.note_output = mido.open_output("OpenPush Notes", virtual=True)
+            print(f"  - OpenPush Notes (for DAW note input)")
+        except Exception as e:
+            print(f"Warning: Could not create note output port: {e}")
+
         # Initialize Push to user mode
         self.push.set_user_mode()
+
+        # Sync layout with state
+        self._sync_layout_state()
 
         self._connected = True
         print("Reason Bridge connected!")
         return True
+
+    def _sync_layout_state(self):
+        """Sync isomorphic layout with current state."""
+        scale_name = SCALE_NAMES[self.state.scale_index]
+        self.layout.set_scale(self.state.root_note, scale_name)
+        self.layout.set_in_key_mode(self.state.in_key_mode)
 
     def disconnect(self):
         """Disconnect from Push and close virtual ports."""
@@ -198,15 +228,138 @@ class ReasonBridge:
 
     def _handle_pad(self, pad_note: int, velocity: int):
         """Handle pad press/release."""
-        # In device mode, pads might trigger drum sounds
-        # In mixer mode, pads might select tracks
         row = (pad_note - 36) // 8
         col = (pad_note - 36) % 8
 
-        if self.state.current_mode == 'mixer':
+        if self.state.current_mode == 'note':
+            # Note mode: play notes via isomorphic layout
+            self._handle_note_pad(pad_note, row, col, velocity)
+
+        elif self.state.current_mode == 'scale':
+            # Scale settings page
+            if velocity > 0:
+                self._handle_scale_pad(row, col)
+
+        elif self.state.current_mode == 'mixer':
             if velocity > 0 and row == 0:
                 # Bottom row selects tracks
                 self._select_track(col)
+
+    def _handle_note_pad(self, pad_note: int, row: int, col: int, velocity: int):
+        """Handle pad in note mode - play isomorphic notes."""
+        midi_note = self.layout.get_note_at(row, col)
+
+        if velocity > 0:
+            # Note on
+            self.active_notes[pad_note] = midi_note
+
+            # Apply accent or velocity curve
+            if self.state.accent_on:
+                out_velocity = 127
+            else:
+                # Simple velocity curve with floor
+                out_velocity = max(40, min(127, velocity))
+
+            # Flash pad green while playing
+            self.push.set_pad_color(pad_note, 'green')
+
+            # Send note to DAW
+            if self.note_output:
+                msg = mido.Message('note_on', note=midi_note, velocity=out_velocity, channel=self.midi_channel)
+                self.note_output.send(msg)
+
+        else:
+            # Note off
+            if pad_note in self.active_notes:
+                midi_note = self.active_notes.pop(pad_note)
+
+                # Restore pad color
+                color = self._get_note_pad_color(row, col)
+                self.push.set_pad_color(pad_note, color)
+
+                # Send note off
+                if self.note_output:
+                    msg = mido.Message('note_off', note=midi_note, velocity=0, channel=self.midi_channel)
+                    self.note_output.send(msg)
+
+    def _handle_scale_pad(self, row: int, col: int):
+        """Handle pad press on scale settings page."""
+        NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+
+        if row == 0 and col < 8:
+            # Bottom row: root note C through G
+            self.state.root_note = col
+            print(f"Root: {NOTE_NAMES[self.state.root_note]}")
+        elif row == 1 and col < 4:
+            # Second row: root note G# through B
+            self.state.root_note = 8 + col
+            print(f"Root: {NOTE_NAMES[self.state.root_note]}")
+        elif row == 3 and col < len(SCALE_NAMES):
+            # Fourth row: scale selection
+            self.state.scale_index = col
+            print(f"Scale: {SCALE_NAMES[col]}")
+        elif row == 5 and col in [0, 1]:
+            # Sixth row: in-key/chromatic toggle
+            self.state.in_key_mode = (col == 0)
+            print(f"Mode: {'In-Key' if self.state.in_key_mode else 'Chromatic'}")
+
+        # Sync layout and update display
+        self._sync_layout_state()
+        self._light_scale_page()
+        self._update_display()
+
+    def _get_note_pad_color(self, row: int, col: int) -> int:
+        """Get color for a pad in note mode based on scale."""
+        if self.layout.is_root(36 + row * 8 + col):
+            return COLORS['blue']  # Root notes
+        elif self.layout.is_in_scale(36 + row * 8 + col):
+            return COLORS['white']  # Scale notes
+        else:
+            return COLORS['dim_white']  # Non-scale notes (chromatic only)
+
+    def _light_note_grid(self):
+        """Light up pad grid for note mode."""
+        for row in range(8):
+            for col in range(8):
+                pad_note = 36 + row * 8 + col
+                color = self._get_note_pad_color(row, col)
+                self.push.set_pad_color(pad_note, color)
+
+    def _light_scale_page(self):
+        """Light up pad grid for scale settings page."""
+        NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+
+        # Clear grid
+        self.push.clear_all_pads()
+
+        # Bottom row: root notes C-G
+        for col in range(8):
+            pad_note = 36 + col
+            if col == self.state.root_note:
+                self.push.set_pad_color(pad_note, 'blue')
+            elif col < 8:
+                self.push.set_pad_color(pad_note, 'dim_white')
+
+        # Second row: root notes G#-B
+        for col in range(4):
+            pad_note = 44 + col
+            root_idx = 8 + col
+            if root_idx == self.state.root_note:
+                self.push.set_pad_color(pad_note, 'blue')
+            else:
+                self.push.set_pad_color(pad_note, 'dim_white')
+
+        # Fourth row: scales
+        for i, scale in enumerate(SCALE_NAMES[:8]):
+            pad_note = 60 + i
+            if i == self.state.scale_index:
+                self.push.set_pad_color(pad_note, 'green')
+            else:
+                self.push.set_pad_color(pad_note, 'green_dim')
+
+        # Sixth row: in-key/chromatic
+        self.push.set_pad_color(76, 'cyan' if self.state.in_key_mode else 'dim_white')
+        self.push.set_pad_color(77, 'cyan' if not self.state.in_key_mode else 'dim_white')
 
     def _handle_button(self, button: str):
         """Handle button press."""
@@ -237,6 +390,8 @@ class ReasonBridge:
             self._send_transport_cc(0x63, 127)
 
         # Mode selection (local to bridge, not sent to Reason)
+        elif button == 'note':
+            self._set_mode('note')
         elif button == 'device':
             self._set_mode('device')
         elif button == 'volume':
@@ -245,12 +400,24 @@ class ReasonBridge:
             self._set_mode('mixer_pan')
         elif button == 'track':
             self._set_mode('transport')
+        elif button == 'scale':
+            # Toggle between note and scale settings
+            if self.state.current_mode == 'scale':
+                self._set_mode('note')
+            else:
+                self._set_mode('scale')
 
         # Octave shift (for note mode)
         elif button == 'octave_up':
             self._handle_octave_shift(+1)
         elif button == 'octave_down':
             self._handle_octave_shift(-1)
+
+        # Accent toggle
+        elif button == 'accent':
+            self.state.accent_on = not self.state.accent_on
+            self._update_button_leds()
+            self._update_display()
 
         # Upper row buttons (above display) - route based on mode
         elif button.startswith('upper_'):
@@ -293,8 +460,12 @@ class ReasonBridge:
 
     def _handle_octave_shift(self, direction: int):
         """Handle octave up/down for note mode."""
-        # This will be used when we implement note modes
-        pass
+        octave = self.layout.shift_octave(direction)
+        print(f"Octave: {octave}")
+        if self.state.current_mode == 'note':
+            self._light_note_grid()
+        self._update_button_leds()
+        self._update_display()
 
     def _handle_encoder(self, encoder: int, delta: int):
         """Handle encoder turn - routes to appropriate port based on mode."""
@@ -336,6 +507,16 @@ class ReasonBridge:
     def _set_mode(self, mode: str):
         """Set the current operating mode."""
         self.state.current_mode = mode
+
+        # Update pad grid based on mode
+        if mode == 'note':
+            self._light_note_grid()
+        elif mode == 'scale':
+            self._light_scale_page()
+        else:
+            # Clear pads for non-note modes
+            self.push.clear_all_pads()
+
         self._update_display()
         self._update_button_leds()
 
@@ -530,10 +711,34 @@ class ReasonBridge:
 
     def _update_display(self):
         """Update Push LCD based on current mode and state."""
+        NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+
         if not self.display:
             return
 
-        if self.state.current_mode == 'device':
+        if self.state.current_mode == 'note':
+            root_name = NOTE_NAMES[self.state.root_note]
+            scale_name = SCALE_NAMES[self.state.scale_index]
+            octave = self.layout.get_octave()
+            mode_str = "In-Key" if self.state.in_key_mode else "Chromatic"
+
+            self.display.set_segments(1, ["OpenPush", f"{root_name} {scale_name.title()}", f"Oct {octave}", mode_str])
+            accent_str = "Accent: ON" if self.state.accent_on else "Accent: OFF"
+            self.display.set_segments(2, [accent_str, "Fourths", "", ""])
+            self.display.set_segments(3, ["Oct Up/Down", "Accent", "Scale", ""])
+            self.display.set_segments(4, ["Play the pads!", "", "", "v0.3"])
+
+        elif self.state.current_mode == 'scale':
+            root_name = NOTE_NAMES[self.state.root_note]
+            scale_name = SCALE_NAMES[self.state.scale_index]
+            mode_str = "In-Key" if self.state.in_key_mode else "Chromatic"
+
+            self.display.set_segments(1, ["SCALE SETTINGS", f"Root: {root_name}", scale_name.title(), ""])
+            self.display.set_segments(2, ["Row1-2: Root", "Row4: Scale", "", ""])
+            self.display.set_segments(3, ["Row6: Mode", f"({mode_str})", "", ""])
+            self.display.set_segments(4, ["Maj Min Dor Pent", "Blues Chrom...", "", "Scale=Exit"])
+
+        elif self.state.current_mode == 'device':
             self.display.set_segments(1, ["OpenPush", self.state.device_name, "", "Device"])
             self.display.set_fields(2, self.state.param_names)
             # Show param values as bars or numbers
@@ -585,9 +790,23 @@ class ReasonBridge:
         self._update_transport_leds()
 
         # Mode buttons
+        self.push.set_button_color('note', 'blue' if self.state.current_mode in ('note', 'scale') else 'dim_white')
         self.push.set_button_color('device', 'blue' if self.state.current_mode == 'device' else 'dim_white')
         self.push.set_button_color('volume', 'blue' if self.state.current_mode == 'mixer' else 'dim_white')
+        self.push.set_button_color('pan_send', 'blue' if self.state.current_mode == 'mixer_pan' else 'dim_white')
         self.push.set_button_color('track', 'blue' if self.state.current_mode == 'transport' else 'dim_white')
+
+        # Scale button
+        self.push.set_button_color('scale', 'green' if self.state.current_mode == 'scale' else 'dim_white')
+
+        # Accent button
+        self.push.set_button_color('accent', 'orange' if self.state.accent_on else 'dim_white')
+
+        # Octave buttons - show availability
+        can_go_up = self.layout.root_note <= 84
+        can_go_down = self.layout.root_note >= 12
+        self.push.set_button_color('octave_up', 'white' if can_go_up else 'off')
+        self.push.set_button_color('octave_down', 'white' if can_go_down else 'off')
 
     # =========================================================================
     # MAIN LOOP
