@@ -40,6 +40,7 @@ class BridgeState:
     playing: bool = False
     recording: bool = False
     looping: bool = False
+    metronome: bool = False
     tempo: float = 120.0
 
     # Mode state
@@ -209,49 +210,123 @@ class ReasonBridge:
 
     def _handle_button(self, button: str):
         """Handle button press."""
-        # Transport buttons
+        # Transport buttons - send CC to Reason via transport port
         if button == 'play':
-            self._send_transport(MessageType.TRANSPORT_PLAY, 1)
-        elif button == 'record':
-            self._send_transport(MessageType.TRANSPORT_RECORD, 1)
+            self._send_transport_cc(0x50, 127)  # CC 80
         elif button == 'stop':
-            self._send_transport(MessageType.TRANSPORT_STOP, 1)
+            self._send_transport_cc(0x51, 127)  # CC 81
+        elif button == 'record':
+            self._send_transport_cc(0x52, 127)  # CC 82
+        elif button == 'tap_tempo':
+            # Tap tempo doubles as rewind
+            self._send_transport_cc(0x53, 127)  # CC 83 - Rewind
+        elif button == 'metronome':
+            self._send_transport_cc(0x57, 127)  # CC 87 - Metronome toggle
+        elif button == 'fixed_length':
+            # Use fixed length as loop toggle
+            self._send_transport_cc(0x55, 127)  # CC 85 - Loop
 
-        # Mode selection
+        # Navigation arrows - send to transport for Reason navigation
+        elif button == 'up':
+            self._send_transport_cc(0x60, 127)
+        elif button == 'down':
+            self._send_transport_cc(0x61, 127)
+        elif button == 'left':
+            self._send_transport_cc(0x62, 127)
+        elif button == 'right':
+            self._send_transport_cc(0x63, 127)
+
+        # Mode selection (local to bridge, not sent to Reason)
         elif button == 'device':
             self._set_mode('device')
         elif button == 'volume':
             self._set_mode('mixer')
+        elif button == 'pan_send':
+            self._set_mode('mixer_pan')
         elif button == 'track':
             self._set_mode('transport')
 
-        # Navigation
-        elif button == 'left':
+        # Octave shift (for note mode)
+        elif button == 'octave_up':
+            self._handle_octave_shift(+1)
+        elif button == 'octave_down':
+            self._handle_octave_shift(-1)
+
+        # Upper row buttons (above display) - route based on mode
+        elif button.startswith('upper_'):
+            btn_num = int(button.split('_')[1]) - 1  # 0-7
             if self.state.current_mode == 'device':
-                # Previous device/parameter page
-                pass
-        elif button == 'right':
+                self._send_device_cc(0x66 + btn_num, 127)
+            elif self.state.current_mode in ('mixer', 'mixer_pan'):
+                # Could be track select in mixer mode
+                self._send_mixer_cc(0x20 + btn_num, 127)
+
+        # Lower row buttons (below display)
+        elif button.startswith('lower_'):
+            btn_num = int(button.split('_')[1]) - 1  # 0-7
             if self.state.current_mode == 'device':
-                # Next device/parameter page
-                pass
+                self._send_device_cc(0x14 + btn_num, 127)
+            elif self.state.current_mode == 'mixer':
+                # Mute buttons
+                self._send_mixer_cc(0x40 + btn_num, 127)
+            elif self.state.current_mode == 'mixer_pan':
+                # Solo buttons
+                self._send_mixer_cc(0x48 + btn_num, 127)
+
+    def _send_device_cc(self, cc: int, value: int):
+        """Send a CC message to Reason via devices port."""
+        import mido
+        msg = mido.Message('control_change', channel=15, control=cc, value=value)
+        self.ports.devices.send(msg)
+
+    def _send_mixer_cc(self, cc: int, value: int):
+        """Send a CC message to Reason via mixer port."""
+        import mido
+        msg = mido.Message('control_change', channel=15, control=cc, value=value)
+        self.ports.mixer.send(msg)
+
+    def _send_transport_cc(self, cc: int, value: int):
+        """Send a CC message to Reason via transport port."""
+        import mido
+        msg = mido.Message('control_change', channel=15, control=cc, value=value)
+        self.ports.transport.send(msg)
+
+    def _handle_octave_shift(self, direction: int):
+        """Handle octave up/down for note mode."""
+        # This will be used when we implement note modes
+        pass
 
     def _handle_encoder(self, encoder: int, delta: int):
-        """Handle encoder turn."""
+        """Handle encoder turn - routes to appropriate port based on mode."""
+        import mido
+        # Encode delta: 64 = no change, >64 = increase, <64 = decrease
+        value = max(0, min(127, delta + 64))
+
         if self.state.current_mode == 'device':
-            # Send parameter change to Reason
-            msg = build_encoder_message(encoder, delta)
-            self.ports.devices.send_sysex(msg.to_sysex())
+            # Send to Devices port - CC 0x47-0x4E for encoders 1-8
+            cc = 0x47 + encoder
+            msg = mido.Message('control_change', channel=15, control=cc, value=value)
+            self.ports.devices.send(msg)
 
         elif self.state.current_mode == 'mixer':
-            # Send mixer change to Reason
-            # Volume or pan depending on sub-mode
-            msg = build_mixer_message(MessageType.MIXER_VOLUME, encoder, delta + 64)
-            self.ports.mixer.send_sysex(msg.to_sysex())
+            # Send volume change to Mixer port - CC 0x30-0x37
+            cc = 0x30 + encoder
+            msg = mido.Message('control_change', channel=15, control=cc, value=value)
+            self.ports.mixer.send(msg)
+
+        elif self.state.current_mode == 'mixer_pan':
+            # Send pan change to Mixer port - CC 0x38-0x3F
+            cc = 0x38 + encoder
+            msg = mido.Message('control_change', channel=15, control=cc, value=value)
+            self.ports.mixer.send(msg)
 
     def _handle_tempo_encoder(self, delta: int):
-        """Handle tempo encoder turn."""
-        msg = build_transport_message(MessageType.TRANSPORT_TEMPO, delta + 64)
-        self.ports.transport.send_sysex(msg.to_sysex())
+        """Handle tempo encoder turn - sends to Reason for tempo adjustment."""
+        import mido
+        # Send relative CC value (64 = no change, >64 = increase, <64 = decrease)
+        value = max(0, min(127, delta + 64))
+        msg = mido.Message('control_change', channel=15, control=0x16, value=value)
+        self.ports.transport.send(msg)
 
     def _send_transport(self, msg_type: MessageType, value: int):
         """Send a transport control message to Reason."""
@@ -279,6 +354,9 @@ class ReasonBridge:
             parsed = ReasonMessage.from_sysex(list(msg.data))
             if parsed:
                 self._process_transport_message(parsed)
+        elif msg.type == 'control_change':
+            # Handle CC feedback from Reason for LED states
+            self._process_transport_cc(msg.control, msg.value)
 
     def _handle_device_from_reason(self, msg: mido.Message):
         """Handle message from Reason on devices port."""
@@ -286,6 +364,29 @@ class ReasonBridge:
             parsed = ReasonMessage.from_sysex(list(msg.data))
             if parsed:
                 self._process_device_message(parsed)
+        elif msg.type == 'control_change':
+            # Handle CC feedback from Reason for encoder values
+            self._process_device_cc(msg.control, msg.value)
+
+    def _process_device_cc(self, cc: int, value: int):
+        """Process device CC feedback from Reason."""
+        # Encoder value feedback (CC 0x47-0x4E)
+        if 0x47 <= cc <= 0x4E:
+            encoder = cc - 0x47
+            if 0 <= encoder < 8:
+                self.state.param_values[encoder] = value
+                self._update_display()
+        # Upper button feedback (CC 0x66-0x6D)
+        elif 0x66 <= cc <= 0x6D:
+            button = cc - 0x66
+            # Update button LED on Push
+            button_name = f'upper_{button + 1}'
+            self.push.set_button_color(button_name, 'blue' if value > 0 else 'dim_white')
+        # Lower button feedback (CC 0x14-0x1B)
+        elif 0x14 <= cc <= 0x1B:
+            button = cc - 0x14
+            button_name = f'lower_{button + 1}'
+            self.push.set_button_color(button_name, 'blue' if value > 0 else 'dim_white')
 
     def _handle_mixer_from_reason(self, msg: mido.Message):
         """Handle message from Reason on mixer port."""
@@ -293,9 +394,73 @@ class ReasonBridge:
             parsed = ReasonMessage.from_sysex(list(msg.data))
             if parsed:
                 self._process_mixer_message(parsed)
+        elif msg.type == 'control_change':
+            self._process_mixer_cc(msg.control, msg.value)
+
+    def _process_mixer_cc(self, cc: int, value: int):
+        """Process mixer CC feedback from Reason."""
+        # Volume feedback (CC 0x30-0x37)
+        if 0x30 <= cc <= 0x37:
+            channel = cc - 0x30
+            if 0 <= channel < 8:
+                self.state.track_volumes[channel] = value
+                self._update_display()
+        # Pan feedback (CC 0x38-0x3F)
+        elif 0x38 <= cc <= 0x3F:
+            channel = cc - 0x38
+            if 0 <= channel < 8:
+                self.state.track_pans[channel] = value
+                self._update_display()
+        # Mute feedback (CC 0x40-0x47)
+        elif 0x40 <= cc <= 0x47:
+            channel = cc - 0x40
+            if 0 <= channel < 8:
+                self.state.track_mutes[channel] = value > 0
+                # Update lower button LED for mute state
+                button_name = f'lower_{channel + 1}'
+                self.push.set_button_color(button_name, 'orange' if value > 0 else 'dim_white')
+        # Solo feedback (CC 0x48-0x4F)
+        elif 0x48 <= cc <= 0x4F:
+            channel = cc - 0x48
+            if 0 <= channel < 8:
+                self.state.track_solos[channel] = value > 0
+                # Update lower button LED for solo state (when in pan mode)
+                if self.state.current_mode == 'mixer_pan':
+                    button_name = f'lower_{channel + 1}'
+                    self.push.set_button_color(button_name, 'yellow' if value > 0 else 'dim_white')
+        # Select feedback (CC 0x20-0x27)
+        elif 0x20 <= cc <= 0x27:
+            channel = cc - 0x20
+            # Update upper button LED for selected track
+            for i in range(8):
+                button_name = f'upper_{i + 1}'
+                is_selected = (i == channel and value > 0)
+                self.push.set_button_color(button_name, 'green' if is_selected else 'dim_white')
+
+    def _process_transport_cc(self, cc: int, value: int):
+        """Process transport CC feedback from Reason for LED states."""
+        # Map CC numbers to transport state
+        if cc == 0x50:  # Play
+            self.state.playing = value > 0
+            self._update_transport_leds()
+        elif cc == 0x51:  # Stop - no LED state, just confirmation
+            pass
+        elif cc == 0x52:  # Record
+            self.state.recording = value > 0
+            self._update_transport_leds()
+        elif cc == 0x55:  # Loop
+            self.state.looping = value > 0
+            self._update_transport_leds()
+        elif cc == 0x57:  # Metronome
+            self.state.metronome = value > 0
+            self._update_transport_leds()
+        elif cc == 0x16:  # Tempo value feedback
+            # Tempo comes as a scaled value
+            self.state.tempo = 60 + (value * 1.5)  # Rough mapping
+            self._update_display()
 
     def _process_transport_message(self, msg: ReasonMessage):
-        """Process a transport message from Reason."""
+        """Process a transport SysEx message from Reason."""
         if msg.msg_type == MessageType.TRANSPORT_PLAY:
             self.state.playing = msg.data[0] > 0 if msg.data else False
             self._update_transport_leds()
@@ -377,25 +542,43 @@ class ReasonBridge:
             self.display.set_segments(4, ["<-Params", "", "", "Params->"])
 
         elif self.state.current_mode == 'mixer':
-            self.display.set_segments(1, ["OpenPush", "Mixer", "", f"{self.state.tempo:.1f} BPM"])
+            self.display.set_segments(1, ["OpenPush", "Mixer Vol", "", f"{self.state.tempo:.1f} BPM"])
             self.display.set_fields(2, self.state.track_names)
             volumes = [f"{v:3d}" for v in self.state.track_volumes]
             self.display.set_fields(3, volumes)
-            self.display.set_segments(4, ["<-Tracks", "Mute", "Solo", "Tracks->"])
+            self.display.set_segments(4, ["<-Tracks", "Mute", "Pan/Send", "Tracks->"])
+
+        elif self.state.current_mode == 'mixer_pan':
+            self.display.set_segments(1, ["OpenPush", "Mixer Pan", "", f"{self.state.tempo:.1f} BPM"])
+            self.display.set_fields(2, self.state.track_names)
+            # Show pan as L/C/R indicator
+            pans = []
+            for p in self.state.track_pans:
+                if p < 60:
+                    pans.append(f"L{64-p:2d}")
+                elif p > 68:
+                    pans.append(f"R{p-64:2d}")
+                else:
+                    pans.append(" C ")
+            self.display.set_fields(3, pans)
+            self.display.set_segments(4, ["<-Tracks", "Solo", "Volume", "Tracks->"])
 
         elif self.state.current_mode == 'transport':
             status = "Playing" if self.state.playing else "Stopped"
-            rec = " [REC]" if self.state.recording else ""
-            loop = " [LOOP]" if self.state.looping else ""
+            rec = "[REC]" if self.state.recording else ""
+            loop = "[LOOP]" if self.state.looping else ""
+            metro = "[METRO]" if self.state.metronome else ""
             self.display.set_segments(1, ["OpenPush", "Transport", "", f"{self.state.tempo:.1f} BPM"])
-            self.display.set_segments(2, [status + rec + loop, "", "", ""])
+            self.display.set_segments(2, [status, rec, loop, metro])
             self.display.set_segments(3, ["", "", "", ""])
-            self.display.set_segments(4, ["Play", "Stop", "Record", "Loop"])
+            self.display.set_segments(4, ["Play/Stop", "Record", "Loop", "Metronome"])
 
     def _update_transport_leds(self):
         """Update transport button LEDs."""
         self.push.set_button_color('play', 'green' if self.state.playing else 'dim_white')
         self.push.set_button_color('record', 'red' if self.state.recording else 'dim_white')
+        self.push.set_button_color('fixed_length', 'blue' if self.state.looping else 'dim_white')
+        self.push.set_button_color('metronome', 'cyan' if self.state.metronome else 'dim_white')
 
     def _update_button_leds(self):
         """Update all button LEDs based on state."""
