@@ -55,6 +55,10 @@ class BridgeState:
     accent_on: bool = False
     layout_preset: str = 'fourths_up'  # Default layout
 
+    # Note repeat state
+    note_repeat_on: bool = False
+    note_repeat_rate_idx: int = 2  # Index into REPEAT_RATES (default: 1/8)
+
     # Device state
     device_name: str = ""
     param_names: list = field(default_factory=lambda: [""] * 8)
@@ -111,6 +115,16 @@ DRUM_COLORS = {
     'redrum': 'red',
     'dr_octo_rex': 'purple',
 }
+
+# Note repeat rates (name, beat division)
+REPEAT_RATES = [
+    ('1/4', 1.0),       # Quarter note
+    ('1/8', 0.5),       # Eighth note
+    ('1/16', 0.25),     # Sixteenth note
+    ('1/32', 0.125),    # Thirty-second note
+    ('1/8T', 1/3),      # Eighth triplet
+    ('1/16T', 1/6),     # Sixteenth triplet
+]
 
 
 class ReasonBridge:
@@ -567,6 +581,22 @@ class ReasonBridge:
             self._update_button_leds()
             self._update_display()
 
+        # Note repeat toggle
+        elif button == 'repeat':
+            self.state.note_repeat_on = not self.state.note_repeat_on
+            self._update_button_leds()
+            self._update_display()
+            if self.state.note_repeat_on:
+                print(f"Note Repeat: ON ({REPEAT_RATES[self.state.note_repeat_rate_idx][0]})")
+            else:
+                print("Note Repeat: OFF")
+
+        # Page buttons - adjust repeat rate when in note mode
+        elif button == 'page_left' and self.state.current_mode in ('note', 'drum'):
+            self._adjust_repeat_rate(-1)
+        elif button == 'page_right' and self.state.current_mode in ('note', 'drum'):
+            self._adjust_repeat_rate(+1)
+
         # Upper row buttons (above display) - route based on mode
         elif button.startswith('upper_'):
             btn_num = int(button.split('_')[1]) - 1  # 0-7
@@ -614,6 +644,15 @@ class ReasonBridge:
             self._light_note_grid()
         self._update_button_leds()
         self._update_display()
+
+    def _adjust_repeat_rate(self, direction: int):
+        """Adjust note repeat rate."""
+        new_idx = self.state.note_repeat_rate_idx + direction
+        if 0 <= new_idx < len(REPEAT_RATES):
+            self.state.note_repeat_rate_idx = new_idx
+            rate_name = REPEAT_RATES[new_idx][0]
+            print(f"Repeat Rate: {rate_name}")
+            self._update_display()
 
     def _handle_encoder(self, encoder: int, delta: int):
         """Handle encoder turn - routes to appropriate port based on mode."""
@@ -875,8 +914,9 @@ class ReasonBridge:
             layout_name = LAYOUT_PRESETS.get(self.state.layout_preset, ('', '', 'Fourths'))[2]
             self.display.set_segments(1, ["OpenPush", f"{root_name} {scale_name.title()}", f"Oct {octave}", mode_str])
             accent_str = "Accent: ON" if self.state.accent_on else "Accent: OFF"
-            self.display.set_segments(2, [accent_str, layout_name, "", ""])
-            self.display.set_segments(3, ["Oct Up/Down", "Accent", "Scale", ""])
+            repeat_str = f"Repeat: {REPEAT_RATES[self.state.note_repeat_rate_idx][0]}" if self.state.note_repeat_on else "Repeat: OFF"
+            self.display.set_segments(2, [accent_str, repeat_str, "", layout_name])
+            self.display.set_segments(3, ["Oct Up/Down", "Accent", "Repeat", "Scale"])
             self.display.set_segments(4, ["Play the pads!", "", "", "v0.3"])
 
         elif self.state.current_mode == 'scale':
@@ -980,6 +1020,9 @@ class ReasonBridge:
 
         # Accent button
         self.push.set_button_color('accent', 'orange' if self.state.accent_on else 'dim_white')
+
+        # Repeat button
+        self.push.set_button_color('repeat', 'red' if self.state.note_repeat_on else 'dim_white')
 
         # Octave buttons - show availability
         can_go_up = self.layout.root_note <= 84
