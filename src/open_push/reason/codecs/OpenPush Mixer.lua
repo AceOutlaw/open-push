@@ -378,7 +378,10 @@ function remote_deliver_midi(max_bytes, port)
 end
 
 function remote_probe(manufacturer, model, prober)
-    return false
+    return {
+        request = "f0 00 11 22 03 f0 f7",
+        response = "f0 00 11 22 03 f1 ?? f7"
+    }
 end
 
 function remote_prepare_for_use()

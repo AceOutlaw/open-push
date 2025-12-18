@@ -166,9 +166,12 @@ class ReasonBridge:
         # Create virtual MIDI ports
         print("Creating virtual MIDI ports...")
         try:
-            self.port_transport = mido.open_output('OpenPush Transport', virtual=True)
-            self.port_devices = mido.open_output('OpenPush Devices', virtual=True)
-            self.port_mixer = mido.open_output('OpenPush Mixer', virtual=True)
+            self.port_transport = mido.open_output('OpenPush Transport In', virtual=True)
+            self.port_devices = mido.open_output('OpenPush Devices In', virtual=True)
+            self.port_mixer = mido.open_output('OpenPush Mixer In', virtual=True)
+            self.port_transport_in = mido.open_input('OpenPush Transport Out', virtual=True)
+            self.port_devices_in = mido.open_input('OpenPush Devices Out', virtual=True)
+            self.port_mixer_in = mido.open_input('OpenPush Mixer Out', virtual=True)
             print("  ✓ OpenPush Transport")
             print("  ✓ OpenPush Devices")
             print("  ✓ OpenPush Mixer")
@@ -176,139 +179,144 @@ class ReasonBridge:
             print(f"  ✗ Failed to create virtual ports: {e}")
             return False
 
-                # Connect to Push hardware
-                print()
-                print("Connecting to Push hardware...")
-                try:
-                    self.push = Push1Hardware()
-                    self.push.connect()
-                    self.push.set_user_mode()  # CRITICAL: Take control of hardware (stops rainbow mode)
-                    self.display = Push1Display(self.push)
-                    print("  ✓ Push 1 connected")
-                except Exception as e:
-                    print(f"  ✗ Failed to connect to Push: {e}")
-                    print()
-                    print("Running in virtual-only mode (no hardware)")
-                    self.push = None
-                    self.display = None
-        
-                # Initialize display
-                self._update_display()
-                self._update_grid()
-                self._update_button_leds()
-        
-                self.running = True
-        
-                print()
-                print("Bridge running! Press Ctrl+C to stop.")
-                print()
-                print("In Reason:")
-                print("  1. Go to Preferences > Control Surfaces")
-                print("  2. Add OpenPush Transport, Devices, and Mixer")
-                print("  3. Assign each to matching 'OpenPush ...' MIDI port")
-                print()
-        
-                return True
-        
-            def stop(self):
-                """Stop the bridge."""
-                self.running = False
-        
-                # Close ports
-                if self.port_transport:
-                    self.port_transport.close()
-                if self.port_devices:
-                    self.port_devices.close()
-                if self.port_mixer:
-                    self.port_mixer.close()
-        
-                # Disconnect Push
-                if self.push:
-                    self.push.disconnect()
-        
-                print("Bridge stopped.")
-        
-            def run(self):
-                """Main run loop."""
-                if not self.start():
-                    return
-        
-                try:
-                    if self.push:
-                        # Main Event Loop for Hardware
-                        for msg in self.push.iter_messages():
-                            if not self.running:
-                                break
-        
-                            if msg.type == 'note_on' or msg.type == 'note_off':
-                                # Pads (36-99)
-                                if 36 <= msg.note <= 99:
-                                    self._handle_pad(msg.note, msg.velocity if msg.type == 'note_on' else 0)
-                                # Touch Strip (sometimes mapped to note? No, typically pitchwheel)
-        
-                            elif msg.type == 'control_change':
-                                # Buttons & Encoders
-                                # Encoders are CCs 71-79, 14, 15
-                                if (71 <= msg.control <= 79) or msg.control in [14, 15]:
-                                    # Encoder delta: 1-63 = cw, 65-127 = ccw
-                                    delta = 0
-                                    if msg.value < 64:
-                                        delta = msg.value
-                                    else:
-                                        delta = msg.value - 128
-                                    
-                                    # Normalize encoder index
-                                    encoder_idx = -1
-                                    if 71 <= msg.control <= 78:
-                                        encoder_idx = msg.control - 71
-                                    elif msg.control == 79: # Master
-                                        encoder_idx = 8
-                                    elif msg.control == 14: # Tempo
-                                        encoder_idx = 0 # Map tempo to encoder 0 in transport mode?
-                                    
-                                    if encoder_idx >= 0:
-                                        self._handle_encoder(encoder_idx, delta)
-                                    elif msg.control == 14:
-                                        # Special case for tempo
-                                        self._handle_encoder(0, delta)
-        
-                                else:
-                                    # Standard Buttons
-                                    self._handle_button(msg.control, msg.value)
-        
-                            elif msg.type == 'pitchwheel':
-                                # Touch Strip
-                                # Pitch wheel value is -8192 to 8191
-                                # Map to 0-127 or similar
-                                self._handle_touch_strip(msg.pitch)
-        
-                    else:
-                        # Virtual mode fallback
-                        while self.running:
-                            time.sleep(0.1)
-        
-                except KeyboardInterrupt:
-                    print("\nShutting down...")
-                finally:
-                    self.stop()
-                    
-            # -------------------------------------------------------------------------
-            # Helper Methods
-            # -------------------------------------------------------------------------
-        
-            def _handle_touch_strip(self, pitch_val: int):
-                """
-                Handle touch strip input (Pitch Wheel).
-                pitch_val: -8192 to 8191
-                """
-                # Example: Map to modulation or pitch bend for Devices port
-                # Map -8192..8191 -> 0..16383 for standard MIDI pitch bend
-                midi_val = pitch_val + 8192
-                
-                # Send to Devices port on channel 0 (or 15)
-                msg = mido.Message('pitchwheel', pitch=pitch_val, channel=0)
-                if self.port_devices:
-                    self.port_devices.send(msg)    
+        # Connect to Push hardware
+        print()
+        print("Connecting to Push hardware...")
+        try:
+            self.push = Push1Hardware()
+            self.push.connect()
+            self.push.set_user_mode()  # CRITICAL: Take control of hardware (stops rainbow mode)
+            self.display = Push1Display(self.push)
+            print("  ✓ Push 1 connected")
+        except Exception as e:
+            print(f"  ✗ Failed to connect to Push: {e}")
+            print()
+            print("Running in virtual-only mode (no hardware)")
+            self.push = None
+            self.display = None
+
+        # Initialize display
+        self._update_display()
+        self._update_grid()
+        self._update_button_leds()
+
+        self.running = True
+
+        print()
+        print("Bridge running! Press Ctrl+C to stop.")
+        print()
+        print("In Reason:")
+        print("  1. Go to Preferences > Control Surfaces")
+        print("  2. Add OpenPush Transport, Devices, and Mixer")
+        print("  3. Assign each to matching 'OpenPush ... In/Out' ports")
+        print()
+
+        return True
+
+    def stop(self):
+        """Stop the bridge."""
+        self.running = False
+
+        # Close ports
+        if self.port_transport:
+            self.port_transport.close()
+        if self.port_devices:
+            self.port_devices.close()
+        if self.port_mixer:
+            self.port_mixer.close()
+        if self.port_transport_in:
+            self.port_transport_in.close()
+        if self.port_devices_in:
+            self.port_devices_in.close()
+        if self.port_mixer_in:
+            self.port_mixer_in.close()
+
+        # Disconnect Push
+        if self.push:
+            self.push.disconnect()
+
+        print("Bridge stopped.")
+
+    def run(self):
+        """Main run loop."""
+        if not self.start():
+            return
+
+        try:
+            if self.push:
+                # Main Event Loop for Hardware
+                for msg in self.push.iter_messages():
+                    if not self.running:
+                        break
+
+                    if msg.type == 'note_on' or msg.type == 'note_off':
+                        # Pads (36-99)
+                        if 36 <= msg.note <= 99:
+                            self._handle_pad(msg.note, msg.velocity if msg.type == 'note_on' else 0)
+                        # Touch Strip (sometimes mapped to note? No, typically pitchwheel)
+
+                    elif msg.type == 'control_change':
+                        # Buttons & Encoders
+                        # Encoders are CCs 71-79, 14, 15
+                        if (71 <= msg.control <= 79) or msg.control in [14, 15]:
+                            # Encoder delta: 1-63 = cw, 65-127 = ccw
+                            delta = 0
+                            if msg.value < 64:
+                                delta = msg.value
+                            else:
+                                delta = msg.value - 128
+
+                            # Normalize encoder index
+                            encoder_idx = -1
+                            if 71 <= msg.control <= 78:
+                                encoder_idx = msg.control - 71
+                            elif msg.control == 79:  # Master
+                                encoder_idx = 8
+                            elif msg.control == 14:  # Tempo
+                                encoder_idx = 0  # Map tempo to encoder 0 in transport mode?
+
+                            if encoder_idx >= 0:
+                                self._handle_encoder(encoder_idx, delta)
+                            elif msg.control == 14:
+                                # Special case for tempo
+                                self._handle_encoder(0, delta)
+
+                        else:
+                            # Standard Buttons
+                            self._handle_button(msg.control, msg.value)
+
+                    elif msg.type == 'pitchwheel':
+                        # Touch Strip
+                        # Pitch wheel value is -8192 to 8191
+                        self._handle_touch_strip(msg.pitch)
+
+            else:
+                # Virtual mode fallback
+                while self.running:
+                    time.sleep(0.1)
+
+        except KeyboardInterrupt:
+            print("\nShutting down...")
+        finally:
+            self.stop()
+
+    # -------------------------------------------------------------------------
+    # Helper Methods
+    # -------------------------------------------------------------------------
+
+    def _handle_touch_strip(self, pitch_val: int):
+        """
+        Handle touch strip input (Pitch Wheel).
+        pitch_val: -8192 to 8191
+        """
+        # Example: Map to modulation or pitch bend for Devices port
+        # Map -8192..8191 -> 0..16383 for standard MIDI pitch bend
+        midi_val = pitch_val + 8192
+
+        # Send to Devices port on channel 0 (or 15)
+        msg = mido.Message('pitchwheel', pitch=pitch_val, channel=0)
+        if self.port_devices:
+            self.port_devices.send(msg)
     def apply_velocity_curve(self, velocity: int) -> int:
         """
         Apply velocity curve to input velocity.

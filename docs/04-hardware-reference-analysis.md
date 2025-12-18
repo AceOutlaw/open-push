@@ -1,6 +1,6 @@
 # Hardware Reference Analysis
 
-Analysis of PusheR 1.1.9 Remote files for OpenPush development reference.
+Analysis of PusheR Remote files for OpenPush development reference.
 
 ## File Structure
 

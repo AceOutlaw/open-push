@@ -22,6 +22,14 @@ class PortConfig:
     """Configuration for a virtual MIDI port."""
     name: str
     description: str
+    in_name: str = ""
+    out_name: str = ""
+
+    def __post_init__(self):
+        if not self.in_name:
+            self.in_name = f"{self.name} In"
+        if not self.out_name:
+            self.out_name = f"{self.name} Out"
 
 
 # Default port names (different from PusheR to avoid confusion)
@@ -45,7 +53,7 @@ class VirtualMIDIPort:
     """
     A bidirectional virtual MIDI port for Reason communication.
 
-    Creates both input and output virtual ports with the same name.
+    Creates output (Reason input) and input (Reason output) ports.
     Reason will see this as a control surface it can communicate with.
     """
 
@@ -68,6 +76,16 @@ class VirtualMIDIPort:
         return self.config.name
 
     @property
+    def in_name(self) -> str:
+        """Get Reason-facing input port name."""
+        return self.config.in_name
+
+    @property
+    def out_name(self) -> str:
+        """Get Reason-facing output port name."""
+        return self.config.out_name
+
+    @property
     def is_open(self) -> bool:
         """Check if port is open."""
         return self._open
@@ -86,12 +104,11 @@ class VirtualMIDIPort:
 
         try:
             # Create virtual output (we send, Reason receives)
-            self._output = mido.open_output(self.config.name, virtual=True)
+            self._output = mido.open_output(self.config.in_name, virtual=True)
 
             # Create virtual input (Reason sends, we receive)
-            # Note: On macOS, virtual ports are bidirectional by name
             self._input = mido.open_input(
-                self.config.name,
+                self.config.out_name,
                 virtual=True,
                 callback=self._on_message
             )
@@ -229,7 +246,7 @@ class ReasonPortManager:
         if success:
             print("Virtual MIDI ports created:")
             for port in self._all_ports:
-                print(f"  - {port.name}")
+                print(f"  - {port.in_name} / {port.out_name}")
             print()
             print("In Reason, add these as separate Remote devices:")
             print("  Preferences > Control Surfaces > Add")

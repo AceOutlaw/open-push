@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 from open_push.music.layout import IsomorphicLayout
 from open_push.music.scales import SCALES, SCALE_NAMES, is_in_scale, is_root_note
 from open_push.core.constants import COLORS, BUTTON_CC, note_name
+from open_push.reason.protocol import ReasonMessage, MessageType
 
 # Push 1 Constants
 SYSEX_HEADER = [0x47, 0x7F, 0x15]
@@ -503,6 +504,9 @@ class OpenPushApp:
     def _handle_reason_message(self, port_name, msg):
         """Handle MIDI message from Reason, route to Push with channel translation."""
         # print(f"Reason ({port_name}): {msg}")
+        if msg.type == 'sysex':
+            if self._handle_reason_sysex(port_name, msg):
+                return
 
         # Update state based on Reason feedback
         if msg.type == 'control_change':
@@ -529,6 +533,30 @@ class OpenPushApp:
                     self.push_out_port.send(push_msg)
                 except Exception as e:
                     print(f"Push send error: {e}")
+
+    def _handle_reason_sysex(self, port_name, msg):
+        """Handle SysEx from Reason (auto-detect ping/pong)."""
+        if port_name not in self.remote_out_ports:
+            return False
+
+        reason_msg = ReasonMessage.from_sysex(list(msg.data))
+        if not reason_msg or reason_msg.msg_type != MessageType.SYSTEM_PING:
+            return False
+
+        response = ReasonMessage(
+            port_id=reason_msg.port_id,
+            msg_type=MessageType.SYSTEM_PONG,
+            data=[0x01],
+        )
+        try:
+            self.remote_out_ports[port_name].send(
+                mido.Message('sysex', data=response.to_sysex())
+            )
+        except Exception as e:
+            print(f"Reason probe response error: {e}")
+            return False
+
+        return True
 
     def close(self):
         """Clean up all ports."""

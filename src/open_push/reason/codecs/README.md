@@ -32,9 +32,9 @@ Copy all `.lua` and `.luacodec` files to:
 
 | Manufacturer | Model | MIDI In | MIDI Out |
 |--------------|-------|---------|----------|
-| OpenPush | Transport | OpenPush Transport | OpenPush Transport |
-| OpenPush | Devices | OpenPush Devices | OpenPush Devices |
-| OpenPush | Mixer | OpenPush Mixer | OpenPush Mixer |
+| OpenPush | Transport | OpenPush Transport In | OpenPush Transport Out |
+| OpenPush | Devices | OpenPush Devices In | OpenPush Devices Out |
+| OpenPush | Mixer | OpenPush Mixer In | OpenPush Mixer Out |
 
 5. Click **OK** to save
 

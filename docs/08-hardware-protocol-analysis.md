@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides a complete analysis of PusheR's Reason Remote implementation, extracted from studying the obfuscated Lua codec files.
+This document provides a complete analysis of PusheR's Reason Remote implementation
 
 ## Architecture: Single Shared Port
 
