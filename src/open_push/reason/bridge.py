@@ -46,7 +46,7 @@ class BridgeState:
     tempo: float = 120.0
 
     # Mode state
-    current_mode: str = 'note'  # note, device, mixer, mixer_pan, transport, scale
+    current_mode: str = 'note'  # note, device, mixer, mixer_pan, transport, scale, drum
 
     # Note mode state
     scale_index: int = 1  # Index into SCALE_NAMES (default: minor)
@@ -65,6 +65,51 @@ class BridgeState:
     track_pans: list = field(default_factory=lambda: [64] * 8)
     track_mutes: list = field(default_factory=lambda: [False] * 8)
     track_solos: list = field(default_factory=lambda: [False] * 8)
+
+    # Drum mode state
+    drum_device: str = 'kong'  # kong, redrum, dr_octo_rex
+    drum_bank: int = 0  # Bank offset for larger pad sets
+
+
+# Drum mode pad layouts
+# Each maps Push grid position (row, col) to MIDI note for that drum device
+
+KONG_LAYOUT = {
+    # Kong has 16 pads in a 4x4 grid (C1-D#2, notes 36-51)
+    # Bottom-left is pad 1, top-right is pad 16
+    # Row 0-3, Col 0-3 → Pads 1-16
+    (0, 0): 36, (0, 1): 37, (0, 2): 38, (0, 3): 39,
+    (1, 0): 40, (1, 1): 41, (1, 2): 42, (1, 3): 43,
+    (2, 0): 44, (2, 1): 45, (2, 2): 46, (2, 3): 47,
+    (3, 0): 48, (3, 1): 49, (3, 2): 50, (3, 3): 51,
+}
+
+REDRUM_LAYOUT = {
+    # Redrum has 10 drum channels in a row (C1-A1, notes 36-45)
+    # Bottom row maps to 8 drums, next row has remaining 2
+    (0, 0): 36, (0, 1): 37, (0, 2): 38, (0, 3): 39,
+    (0, 4): 40, (0, 5): 41, (0, 6): 42, (0, 7): 43,
+    (1, 0): 44, (1, 1): 45,  # Channels 9-10
+}
+
+DR_OCTO_REX_LAYOUT = {
+    # Dr.OctoRex has 8 slice triggers (C1-G1, notes 36-43)
+    # Bottom row maps to 8 slices
+    (0, 0): 36, (0, 1): 37, (0, 2): 38, (0, 3): 39,
+    (0, 4): 40, (0, 5): 41, (0, 6): 42, (0, 7): 43,
+}
+
+DRUM_LAYOUTS = {
+    'kong': KONG_LAYOUT,
+    'redrum': REDRUM_LAYOUT,
+    'dr_octo_rex': DR_OCTO_REX_LAYOUT,
+}
+
+DRUM_COLORS = {
+    'kong': 'orange',
+    'redrum': 'red',
+    'dr_octo_rex': 'purple',
+}
 
 
 class ReasonBridge:
@@ -240,6 +285,10 @@ class ReasonBridge:
             if velocity > 0:
                 self._handle_scale_pad(row, col)
 
+        elif self.state.current_mode == 'drum':
+            # Drum mode: trigger drums via devices port
+            self._handle_drum_pad(pad_note, row, col, velocity)
+
         elif self.state.current_mode == 'mixer':
             if velocity > 0 and row == 0:
                 # Bottom row selects tracks
@@ -306,6 +355,81 @@ class ReasonBridge:
         # Sync layout and update display
         self._sync_layout_state()
         self._light_scale_page()
+        self._update_display()
+
+    def _handle_drum_pad(self, pad_note: int, row: int, col: int, velocity: int):
+        """Handle pad in drum mode - trigger drum via devices port."""
+        layout = DRUM_LAYOUTS.get(self.state.drum_device, {})
+        drum_note = layout.get((row, col))
+
+        if drum_note is None:
+            # Pad not mapped for this drum device
+            return
+
+        # Send note via devices port (keyboard input)
+        import mido
+        if velocity > 0:
+            # Note on - flash pad bright
+            color = DRUM_COLORS.get(self.state.drum_device, 'white')
+            self.push.set_pad_color(pad_note, color)
+
+            # Apply accent if enabled
+            out_velocity = 127 if self.state.accent_on else max(40, min(127, velocity))
+
+            # Send note to Reason via devices port
+            msg = mido.Message('note_on', note=drum_note, velocity=out_velocity, channel=15)
+            self.ports.devices.send(msg)
+
+            # Track active drum notes
+            self.active_notes[pad_note] = drum_note
+        else:
+            # Note off - restore color
+            self._restore_drum_pad_color(pad_note, row, col)
+
+            if pad_note in self.active_notes:
+                drum_note = self.active_notes.pop(pad_note)
+                msg = mido.Message('note_off', note=drum_note, velocity=0, channel=15)
+                self.ports.devices.send(msg)
+
+    def _restore_drum_pad_color(self, pad_note: int, row: int, col: int):
+        """Restore drum pad color after release."""
+        layout = DRUM_LAYOUTS.get(self.state.drum_device, {})
+        if (row, col) in layout:
+            # Dim version of drum color
+            color = DRUM_COLORS.get(self.state.drum_device, 'white')
+            dim_color = f"{color}_dim" if color != 'white' else 'dim_white'
+            # Use the dim color or fall back to dim white
+            try:
+                self.push.set_pad_color(pad_note, dim_color)
+            except:
+                self.push.set_pad_color(pad_note, 'dim_white')
+        else:
+            self.push.set_pad_color(pad_note, 'off')
+
+    def _light_drum_grid(self):
+        """Light up pad grid for drum mode."""
+        # Clear all pads first
+        self.push.clear_all_pads()
+
+        # Light up pads that are mapped for current drum device
+        layout = DRUM_LAYOUTS.get(self.state.drum_device, {})
+        color = DRUM_COLORS.get(self.state.drum_device, 'white')
+
+        for (row, col), drum_note in layout.items():
+            pad_note = 36 + row * 8 + col
+            # Use dim version for inactive pads
+            dim_color = f"{color}_dim" if color != 'white' else 'dim_white'
+            try:
+                self.push.set_pad_color(pad_note, dim_color)
+            except:
+                self.push.set_pad_color(pad_note, 'dim_white')
+
+    def _cycle_drum_device(self):
+        """Cycle through drum devices."""
+        devices = ['kong', 'redrum', 'dr_octo_rex']
+        idx = devices.index(self.state.drum_device)
+        self.state.drum_device = devices[(idx + 1) % len(devices)]
+        self._light_drum_grid()
         self._update_display()
 
     def _get_note_pad_color(self, row: int, col: int) -> int:
@@ -392,6 +516,12 @@ class ReasonBridge:
         # Mode selection (local to bridge, not sent to Reason)
         elif button == 'note':
             self._set_mode('note')
+        elif button == 'session':
+            # Session button enters drum mode, toggles drum device when in drum mode
+            if self.state.current_mode == 'drum':
+                self._cycle_drum_device()
+            else:
+                self._set_mode('drum')
         elif button == 'device':
             self._set_mode('device')
         elif button == 'volume':
@@ -513,6 +643,8 @@ class ReasonBridge:
             self._light_note_grid()
         elif mode == 'scale':
             self._light_scale_page()
+        elif mode == 'drum':
+            self._light_drum_grid()
         else:
             # Clear pads for non-note modes
             self.push.clear_all_pads()
@@ -778,6 +910,26 @@ class ReasonBridge:
             self.display.set_segments(3, ["", "", "", ""])
             self.display.set_segments(4, ["Play/Stop", "Record", "Loop", "Metronome"])
 
+        elif self.state.current_mode == 'drum':
+            device_names = {'kong': 'Kong', 'redrum': 'Redrum', 'dr_octo_rex': 'Dr.OctoRex'}
+            device_name = device_names.get(self.state.drum_device, self.state.drum_device)
+            layout = DRUM_LAYOUTS.get(self.state.drum_device, {})
+            pad_count = len(layout)
+
+            self.display.set_segments(1, ["OpenPush", f"Drum: {device_name}", f"{pad_count} pads", "Reason"])
+            self.display.set_segments(2, ["Session btn", "cycles device", "", ""])
+
+            # Show pad layout info
+            if self.state.drum_device == 'kong':
+                self.display.set_segments(3, ["4x4 grid", "Pads 1-16", "", ""])
+            elif self.state.drum_device == 'redrum':
+                self.display.set_segments(3, ["10 drums", "2 rows", "", ""])
+            elif self.state.drum_device == 'dr_octo_rex':
+                self.display.set_segments(3, ["8 slices", "Bottom row", "", ""])
+
+            accent_str = "Accent: ON" if self.state.accent_on else "Accent: OFF"
+            self.display.set_segments(4, [accent_str, "", "", "v0.3"])
+
     def _update_transport_leds(self):
         """Update transport button LEDs."""
         self.push.set_button_color('play', 'green' if self.state.playing else 'dim_white')
@@ -795,6 +947,13 @@ class ReasonBridge:
         self.push.set_button_color('volume', 'blue' if self.state.current_mode == 'mixer' else 'dim_white')
         self.push.set_button_color('pan_send', 'blue' if self.state.current_mode == 'mixer_pan' else 'dim_white')
         self.push.set_button_color('track', 'blue' if self.state.current_mode == 'transport' else 'dim_white')
+
+        # Session button - drum mode with device-specific color
+        if self.state.current_mode == 'drum':
+            drum_color = DRUM_COLORS.get(self.state.drum_device, 'orange')
+            self.push.set_button_color('session', drum_color)
+        else:
+            self.push.set_button_color('session', 'dim_white')
 
         # Scale button
         self.push.set_button_color('scale', 'green' if self.state.current_mode == 'scale' else 'dim_white')
