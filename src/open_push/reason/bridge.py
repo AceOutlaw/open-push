@@ -46,7 +46,7 @@ class BridgeState:
     tempo: float = 120.0
 
     # Mode state
-    current_mode: str = 'note'  # note, device, mixer, mixer_pan, transport, scale, drum
+    current_mode: str = 'note'  # note, device, mixer, mixer_pan, transport, scale, drum, browse
 
     # Note mode state
     scale_index: int = 1  # Index into SCALE_NAMES (default: minor)
@@ -562,6 +562,8 @@ class ReasonBridge:
             self._set_mode('mixer_pan')
         elif button == 'track':
             self._set_mode('transport')
+        elif button == 'browse':
+            self._set_mode('browse')
         elif button == 'scale':
             # Toggle between note and scale settings
             if self.state.current_mode == 'scale':
@@ -596,6 +598,14 @@ class ReasonBridge:
             self._adjust_repeat_rate(-1)
         elif button == 'page_right' and self.state.current_mode in ('note', 'drum'):
             self._adjust_repeat_rate(+1)
+
+        # Browse mode buttons
+        elif button == 'select' and self.state.current_mode == 'browse':
+            # Select/enter in browser
+            self._send_transport_cc(0x64, 127)  # CC 100 = select
+        elif button == 'delete' and self.state.current_mode == 'browse':
+            # Back/cancel in browser
+            self._send_transport_cc(0x65, 127)  # CC 101 = back
 
         # Upper row buttons (above display) - route based on mode
         elif button.startswith('upper_'):
@@ -990,6 +1000,12 @@ class ReasonBridge:
             accent_str = "Accent: ON" if self.state.accent_on else "Accent: OFF"
             self.display.set_segments(4, [accent_str, "", "", "v0.3"])
 
+        elif self.state.current_mode == 'browse':
+            self.display.set_segments(1, ["OpenPush", "Browser", "", "Navigate"])
+            self.display.set_segments(2, ["Use arrows", "to navigate", "browser", ""])
+            self.display.set_segments(3, ["Select btn", "to choose", "Delete=back", ""])
+            self.display.set_segments(4, ["Up/Down", "Left/Right", "Select", "Back"])
+
     def _update_transport_leds(self):
         """Update transport button LEDs."""
         self.push.set_button_color('play', 'green' if self.state.playing else 'dim_white')
@@ -1004,6 +1020,7 @@ class ReasonBridge:
         # Mode buttons
         self.push.set_button_color('note', 'blue' if self.state.current_mode in ('note', 'scale') else 'dim_white')
         self.push.set_button_color('device', 'blue' if self.state.current_mode == 'device' else 'dim_white')
+        self.push.set_button_color('browse', 'blue' if self.state.current_mode == 'browse' else 'dim_white')
         self.push.set_button_color('volume', 'blue' if self.state.current_mode == 'mixer' else 'dim_white')
         self.push.set_button_color('pan_send', 'blue' if self.state.current_mode == 'mixer_pan' else 'dim_white')
         self.push.set_button_color('track', 'blue' if self.state.current_mode == 'transport' else 'dim_white')

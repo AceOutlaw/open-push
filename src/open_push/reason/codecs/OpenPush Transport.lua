@@ -68,6 +68,10 @@ function remote_init(manufacturer, model)
         {name = "NavigateLeft", input = "button"},
         {name = "NavigateRight", input = "button"},
 
+        -- Browser controls
+        {name = "BrowserSelect", input = "button"},
+        {name = "BrowserBack", input = "button"},
+
         -- Keyboard input (for pads)
         {name = "Keyboard", input = "keyboard"},
 
@@ -112,6 +116,10 @@ function remote_init(manufacturer, model)
         {pattern = "bf 61 xx", name = "NavigateDown", value = "x"},
         {pattern = "bf 62 xx", name = "NavigateLeft", value = "x"},
         {pattern = "bf 63 xx", name = "NavigateRight", value = "x"},
+
+        -- Browser controls (CC 0x64-0x65)
+        {pattern = "bf 64 xx", name = "BrowserSelect", value = "x"},
+        {pattern = "bf 65 xx", name = "BrowserBack", value = "x"},
 
         -- Keyboard (notes on channel 16)
         {pattern = "<100x>f yy zz", name = "Keyboard"},
