@@ -1,0 +1,24 @@
+--[[
+OpenPush Devices Control Surface Definition
+============================================
+
+This file tells Reason about the OpenPush Devices control surface.
+]]--
+
+function remote_supported_control_surfaces()
+    local surfaces = {
+        {
+            manufacturer = "OpenPush",
+            model = "Devices",
+            source = "OpenPush Devices.lua",
+            in_ports = {
+                {description = "OpenPush Devices In"}
+            },
+            out_ports = {
+                {description = "OpenPush Devices Out"}
+            },
+            has_keyboard = true,
+        }
+    }
+    return surfaces
+end

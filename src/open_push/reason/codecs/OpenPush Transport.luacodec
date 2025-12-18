@@ -1,0 +1,23 @@
+--[[
+OpenPush Transport Control Surface Definition
+==============================================
+
+This file tells Reason about the OpenPush Transport control surface.
+]]--
+
+function remote_supported_control_surfaces()
+    local surfaces = {
+        {
+            manufacturer = "OpenPush",
+            model = "Transport",
+            source = "OpenPush Transport.lua",
+            in_ports = {
+                {description = "OpenPush Transport In"}
+            },
+            out_ports = {
+                {description = "OpenPush Transport Out"}
+            },
+        }
+    }
+    return surfaces
+end
