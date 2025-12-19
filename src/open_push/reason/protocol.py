@@ -65,6 +65,7 @@ class MessageType(IntEnum):
     DISPLAY_LINE = 0x40        # Set display line text
     DISPLAY_FIELD = 0x41       # Set display field text
     DISPLAY_CLEAR = 0x42       # Clear display
+    REQUEST_LCD = 0x4F         # Request LCD text update from Reason
 
     # System messages (0xF0-0xFF)
     SYSTEM_PING = 0xF0

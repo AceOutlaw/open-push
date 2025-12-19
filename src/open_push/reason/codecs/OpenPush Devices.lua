@@ -263,13 +263,13 @@ function remote_deliver_midi(max_bytes, port)
     -- Send parameter name updates (fields 1-8)
     for i = 1, 8 do
         if g_lcd_state[i].changed then
-            local sysex = {0xf0, 0x00, 0x11, 0x22, 0x02, MSG_DEVICE_PARAM, i, 0}
+            local sysex_str = string.format("f0 00 11 22 02 %02x %02x 00", MSG_DEVICE_PARAM, i)
             for j = 1, 8 do
                 local char = string.byte(g_lcd_state[i].text, j) or 0x20
-                table.insert(sysex, char)
+                sysex_str = sysex_str .. string.format(" %02x", char)
             end
-            table.insert(sysex, 0xf7)
-            table.insert(events, remote.make_midi(table.unpack(sysex)))
+            sysex_str = sysex_str .. " f7"
+            table.insert(events, remote.make_midi(sysex_str))
             g_lcd_state[i].changed = false
         end
     end
@@ -277,26 +277,26 @@ function remote_deliver_midi(max_bytes, port)
     -- Send parameter value updates (fields 9-16)
     for i = 9, 16 do
         if g_lcd_state[i].changed then
-            local sysex = {0xf0, 0x00, 0x11, 0x22, 0x02, MSG_DEVICE_PARAM, i - 8, 1}
+            local sysex_str = string.format("f0 00 11 22 02 %02x %02x 01", MSG_DEVICE_PARAM, i - 8)
             for j = 1, 8 do
                 local char = string.byte(g_lcd_state[i].text, j) or 0x20
-                table.insert(sysex, char)
+                sysex_str = sysex_str .. string.format(" %02x", char)
             end
-            table.insert(sysex, 0xf7)
-            table.insert(events, remote.make_midi(table.unpack(sysex)))
+            sysex_str = sysex_str .. " f7"
+            table.insert(events, remote.make_midi(sysex_str))
             g_lcd_state[i].changed = false
         end
     end
 
     -- Send device name update (field 17)
     if g_lcd_state[17].changed then
-        local sysex = {0xf0, 0x00, 0x11, 0x22, 0x02, MSG_DEVICE_NAME}
+        local sysex_str = string.format("f0 00 11 22 02 %02x", MSG_DEVICE_NAME)
         for j = 1, 16 do
             local char = string.byte(g_lcd_state[17].text, j) or 0x20
-            table.insert(sysex, char)
+            sysex_str = sysex_str .. string.format(" %02x", char)
         end
-        table.insert(sysex, 0xf7)
-        table.insert(events, remote.make_midi(table.unpack(sysex)))
+        sysex_str = sysex_str .. " f7"
+        table.insert(events, remote.make_midi(sysex_str))
         g_lcd_state[17].changed = false
     end
 
@@ -311,7 +311,9 @@ function remote_probe(manufacturer, model, prober)
 end
 
 function remote_prepare_for_use()
+    return {}
 end
 
 function remote_release_from_use()
+    return {}
 end

@@ -340,13 +340,13 @@ function remote_deliver_midi(max_bytes, port)
     -- Send track name updates via SysEx
     for i = 1, 8 do
         if g_lcd_state[i].changed then
-            local sysex = {0xf0, 0x00, 0x11, 0x22, 0x03, MSG_MIXER_NAME, i - 1}
+            local sysex_str = string.format("f0 00 11 22 03 %02x %02x", MSG_MIXER_NAME, i - 1)
             for j = 1, 8 do
                 local char = string.byte(g_lcd_state[i].text, j) or 0x20
-                table.insert(sysex, char)
+                sysex_str = sysex_str .. string.format(" %02x", char)
             end
-            table.insert(sysex, 0xf7)
-            table.insert(events, remote.make_midi(table.unpack(sysex)))
+            sysex_str = sysex_str .. " f7"
+            table.insert(events, remote.make_midi(sysex_str))
             g_lcd_state[i].changed = false
         end
     end
@@ -355,13 +355,13 @@ function remote_deliver_midi(max_bytes, port)
     for i = 9, 16 do
         if g_lcd_state[i].changed then
             local channel = i - 9
-            local sysex = {0xf0, 0x00, 0x11, 0x22, 0x03, MSG_MIXER_VOLUME, channel}
+            local sysex_str = string.format("f0 00 11 22 03 %02x %02x", MSG_MIXER_VOLUME, channel)
             for j = 1, 8 do
                 local char = string.byte(g_lcd_state[i].text, j) or 0x20
-                table.insert(sysex, char)
+                sysex_str = sysex_str .. string.format(" %02x", char)
             end
-            table.insert(sysex, 0xf7)
-            table.insert(events, remote.make_midi(table.unpack(sysex)))
+            sysex_str = sysex_str .. " f7"
+            table.insert(events, remote.make_midi(sysex_str))
             g_lcd_state[i].changed = false
         end
     end
@@ -369,8 +369,8 @@ function remote_deliver_midi(max_bytes, port)
     -- Send meter updates for visual feedback
     for i = 1, 8 do
         if g_track_meters[i] > 0 then
-            local sysex = {0xf0, 0x00, 0x11, 0x22, 0x03, MSG_MIXER_LEVEL, i - 1, g_track_meters[i], 0xf7}
-            table.insert(events, remote.make_midi(table.unpack(sysex)))
+            local sysex_str = string.format("f0 00 11 22 03 %02x %02x %02x f7", MSG_MIXER_LEVEL, i - 1, g_track_meters[i])
+            table.insert(events, remote.make_midi(sysex_str))
         end
     end
 
@@ -385,7 +385,9 @@ function remote_probe(manufacturer, model, prober)
 end
 
 function remote_prepare_for_use()
+    return {}
 end
 
 function remote_release_from_use()
+    return {}
 end

@@ -3,44 +3,77 @@ OpenPush Transport Codec for Reason
 ====================================
 
 Handles transport controls, tempo, and global navigation.
+Implements event-driven display logic (popups) for parameter feedback.
 
 Communication with the Python bridge uses custom SysEx:
   F0 00 11 22 01 [msg_type] [data...] F7
 
 Port ID: 0x01 (Transport)
-
-Install: Copy to Reason's Codecs folder:
-  macOS: /Library/Application Support/Propellerhead Software/Remote/Codecs/
-  Windows: %PROGRAMDATA%\Propellerhead Software\Remote\Codecs\
 ]]--
 
--- Item name constants
-g_lcd_names = {}
-for i = 1, 16 do
-    g_lcd_names[i] = string.format("LCD%d", i)
-end
+-- Item indices (must match order in remote_init items table)
+LCD_ITEM_START = 16  -- LCD1 is at index 16
 
 -- Message types (must match protocol.py MessageType)
-MSG_TRANSPORT_PLAY = 0x10
-MSG_TRANSPORT_STOP = 0x11
-MSG_TRANSPORT_RECORD = 0x12
-MSG_TRANSPORT_REWIND = 0x13
-MSG_TRANSPORT_FORWARD = 0x14
-MSG_TRANSPORT_LOOP = 0x15
-MSG_TRANSPORT_TEMPO = 0x16
-MSG_TRANSPORT_METRONOME = 0x17
 MSG_DISPLAY_LINE = 0x40
+MSG_REQUEST_LCD = 0x4F
 
 -- SysEx header for OpenPush protocol
-SYSEX_HEADER = "f0 00 11 22 01"
+SYSEX_HEADER_HEX = "f0 00 11 22 01"
 
 -- State tracking
 g_last_input_time = 0
 g_last_input_item = 0
-g_lcd_state = {}
 
-for i = 1, 16 do
-    g_lcd_state[i] = {text = string.rep(" ", 16), changed = false}
+-- Debug logging (see docs/18-lua-debugging-and-logging.md)
+-- Set to true to enable debug crash dump after 3 Play presses
+g_debug_enabled = false
+g_log_buffer = "=== OpenPush Transport Debug ===\n"
+g_play_press_count = 0
+
+function log(msg)
+    if g_debug_enabled then
+        g_log_buffer = g_log_buffer .. msg .. "\n"
+    end
+end
+
+function dump_log()
+    if g_debug_enabled then
+        error(g_log_buffer)
+    end
+end
+
+-- Display State (4 Lines)
+g_display = {}
+for i = 1, 4 do
+    g_display[i] = {
+        persistent_text = string.rep(" ", 68), -- Default text (e.g. Patch Name)
+        popup_text = "",                       -- Temporary text (e.g. "Vol: 100")
+        is_popup = false,
+        timer = 0,
+        last_sent = "",                        -- Cache to avoid redundant MIDI
+        dirty = true
+    }
+end
+
+-- Helper: Pad string to length
+local function pad_string(str, length)
+    str = str or ""
+    if string.len(str) > length then
+        return string.sub(str, 1, length)
+    else
+        return str .. string.rep(" ", length - string.len(str))
+    end
+end
+
+-- Helper: Create OpenPush SysEx
+local function create_sysex(msg_type, line_idx, text)
+    local hex = SYSEX_HEADER_HEX .. string.format(" %02x %02x", msg_type, line_idx)
+    for i = 1, #text do
+        hex = hex .. string.format(" %02x", string.byte(text, i, i))
+    end
+    hex = hex .. " f7"
+    return remote.make_midi(hex)
 end
 
 ------------------------------------------------------------------------
@@ -48,12 +81,11 @@ end
 ------------------------------------------------------------------------
 
 function remote_init(manufacturer, model)
-    -- Define all control surface items
     local items = {
-        -- Transport controls
-        {name = "Play", input = "button", output = "value", min = 0, max = 1},
-        {name = "Stop", input = "button", output = "value", min = 0, max = 1},
-        {name = "Record", input = "button", output = "value", min = 0, max = 1},
+        -- Transport controls (using xx pattern for full value capture)
+        {name = "Play", input = "button", output = "value", min = 0, max = 127},
+        {name = "Stop", input = "button", output = "value", min = 0, max = 127},
+        {name = "Record", input = "button", output = "value", min = 0, max = 127},
         {name = "Rewind", input = "button"},
         {name = "Forward", input = "button"},
         {name = "Loop", input = "button", output = "value", min = 0, max = 1},
@@ -72,119 +104,151 @@ function remote_init(manufacturer, model)
         {name = "BrowserSelect", input = "button"},
         {name = "BrowserBack", input = "button"},
 
-        -- Keyboard input (for pads)
+        -- Keyboard input
         {name = "Keyboard", input = "keyboard"},
 
-        -- LCD display fields (16 chars each)
+        -- LCD fields
+        -- We map LCD1 to Line 1 (Track Name) and LCD2 to Line 2 (Device/Doc Name)
         {name = "LCD1", output = "text"},
         {name = "LCD2", output = "text"},
-        {name = "LCD3", output = "text"},
-        {name = "LCD4", output = "text"},
-        {name = "LCD5", output = "text"},
-        {name = "LCD6", output = "text"},
-        {name = "LCD7", output = "text"},
-        {name = "LCD8", output = "text"},
-        {name = "LCD9", output = "text"},
-        {name = "LCD10", output = "text"},
-        {name = "LCD11", output = "text"},
-        {name = "LCD12", output = "text"},
-        {name = "LCD13", output = "text"},
-        {name = "LCD14", output = "text"},
-        {name = "LCD15", output = "text"},
-        {name = "LCD16", output = "text"},
+        -- ... add more if needed
     }
-
     remote.define_items(items)
 
-    -- Define input patterns (MIDI from bridge)
-    -- Using channel 16 (0xBF for CC, 0x9F/0x8F for notes)
     local inputs = {
-        -- Transport buttons (CC 0x50-0x57)
-        {pattern = "bf 50 xx", name = "Play", value = "x"},
-        {pattern = "bf 51 xx", name = "Stop", value = "x"},
-        {pattern = "bf 52 xx", name = "Record", value = "x"},
-        {pattern = "bf 53 xx", name = "Rewind", value = "x"},
-        {pattern = "bf 54 xx", name = "Forward", value = "x"},
-        {pattern = "bf 55 xx", name = "Loop", value = "x"},
-        {pattern = "bf 57 xx", name = "Metronome", value = "x"},
+        -- Transport buttons (Push 1 native CCs)
+        -- Using xx pattern for full value (0-127) - simpler debugging
+        {pattern = "bf 55 xx", name = "Play", value = "x"},     -- CC 85
+        {pattern = "bf 1d xx", name = "Stop", value = "x"},     -- CC 29
+        {pattern = "bf 56 xx", name = "Record", value = "x"},   -- CC 86
+        {pattern = "bf 2c xx", name = "Rewind", value = "x"},   -- CC 44
+        {pattern = "bf 2d xx", name = "Forward", value = "x"},  -- CC 45
+        {pattern = "bf 75 ?<???x>", name = "Loop"},     -- CC 117
+        {pattern = "bf 09 ?<???x>", name = "Metronome"},-- CC 9
 
-        -- Tempo encoder (CC 0x16, relative)
-        {pattern = "bf 16 xx", name = "Tempo", value = "x - 64"},
+        -- Tempo encoder (CC 0x0F = 15, Push tempo encoder)
+        {pattern = "bf 0f xx", name = "Tempo", value = "x - 64"},
 
-        -- Navigation (CC 0x60-0x63)
-        {pattern = "bf 60 xx", name = "NavigateUp", value = "x"},
-        {pattern = "bf 61 xx", name = "NavigateDown", value = "x"},
-        {pattern = "bf 62 xx", name = "NavigateLeft", value = "x"},
-        {pattern = "bf 63 xx", name = "NavigateRight", value = "x"},
+        -- Navigation
+        {pattern = "bf 2e xx", name = "NavigateUp", value = "x"},
+        {pattern = "bf 2f xx", name = "NavigateDown", value = "x"},
+        {pattern = "bf 2c xx", name = "NavigateLeft", value = "x"},
+        {pattern = "bf 2d xx", name = "NavigateRight", value = "x"},
 
-        -- Browser controls (CC 0x64-0x65)
-        {pattern = "bf 64 xx", name = "BrowserSelect", value = "x"},
-        {pattern = "bf 65 xx", name = "BrowserBack", value = "x"},
+        -- Browser
+        {pattern = "bf 30 xx", name = "BrowserSelect", value = "x"},
+        {pattern = "bf 33 xx", name = "BrowserBack", value = "x"},
 
-        -- Keyboard (notes on channel 16)
+        -- Keyboard
         {pattern = "<100x>f yy zz", name = "Keyboard"},
     }
-
     remote.define_auto_inputs(inputs)
 
-    -- Define output patterns (MIDI to bridge)
     local outputs = {
-        -- Transport LED feedback
-        {name = "Play", pattern = "bf 50 xx"},
-        {name = "Stop", pattern = "bf 51 xx"},
-        {name = "Record", pattern = "bf 52 xx"},
-        {name = "Loop", pattern = "bf 55 xx"},
-        {name = "Metronome", pattern = "bf 57 xx"},
-
-        -- Tempo display
-        {name = "Tempo", pattern = "bf 16 xx"},
+        -- Using xx pattern for LED feedback (value = item state)
+        {name = "Play", pattern = "bf 55 xx", x = "value"},
+        {name = "Stop", pattern = "bf 1d xx", x = "value"},
+        {name = "Record", pattern = "bf 56 xx", x = "value"},
+        {name = "Loop", pattern = "bf 75 xx", x = "value"},
+        {name = "Metronome", pattern = "bf 09 xx", x = "value"},
     }
-
     remote.define_auto_outputs(outputs)
 end
 
 function remote_on_auto_input(item_index)
-    -- Track timing for input handling
     if item_index > 0 then
         g_last_input_time = remote.get_time_ms()
         g_last_input_item = item_index
-    end
-end
 
-function remote_set_state(changed_items)
-    -- Handle LCD text updates via SysEx
-    for i = 1, 16 do
-        local lcd_name = g_lcd_names[i]
-        if changed_items[lcd_name] then
-            local text = remote.get_item_text_value(remote.get_item_index(lcd_name))
-            text = string.format("%-16.16s", text or "")
+        -- Debug: Log auto-input events
+        local item_name = remote.get_item_name(item_index) or "unknown"
+        local item_value = remote.get_item_value(item_index) or -1
+        log("AUTO_INPUT: item=" .. item_index .. " name=" .. item_name .. " value=" .. tostring(item_value))
 
-            if text ~= g_lcd_state[i].text then
-                g_lcd_state[i].text = text
-                g_lcd_state[i].changed = true
+        -- If Play pressed (item 1), count and dump after 3
+        if item_index == 1 then
+            g_play_press_count = g_play_press_count + 1
+            log("PLAY pressed! Count=" .. g_play_press_count)
+
+            -- Also check if item is enabled (mapped)
+            local is_enabled = remote.is_item_enabled(item_index)
+            log("  is_item_enabled=" .. tostring(is_enabled))
+
+            -- Dump after 3 presses to see what's happening
+            if g_play_press_count >= 3 then
+                dump_log()
             end
         end
     end
 end
 
+function remote_set_state(changed_items)
+    -- Handle Persistent Text Updates (LCD1 -> Line 1, LCD2 -> Line 2)
+    -- Indices: LCD1=16, LCD2=17
+    
+    -- Line 1 (Track Name)
+    if changed_items[16] then 
+        local text = remote.get_item_text_value(16)
+        g_display[1].persistent_text = pad_string(text, 68)
+        g_display[1].dirty = true
+    end
+
+    -- Line 2 (Device/Doc Name)
+    if changed_items[17] then
+        local text = remote.get_item_text_value(17)
+        g_display[2].persistent_text = pad_string(text, 68)
+        g_display[2].dirty = true
+    end
+
+    -- Handle Popups for Controls (Tempo, etc.)
+    -- Tempo is item 8
+    if changed_items[8] then
+        local val = remote.get_item_text_value(8)
+        local name = remote.get_item_name(8)
+        
+        -- Show "Tempo: 120.00" on Line 1
+        g_display[1].popup_text = pad_string(name .. ": " .. val, 68)
+        g_display[1].is_popup = true
+        g_display[1].timer = remote.get_time_ms() + 1500 -- 1.5s popup
+        g_display[1].dirty = true
+    end
+end
+
+function remote_process_midi(event)
+    -- Check for Request LCD SysEx
+    local ret = remote.match_midi("f0 00 11 22 01 4f", event)
+    if ret then
+        -- Mark all lines as dirty to force resend
+        for i=1, 4 do
+            g_display[i].dirty = true
+        end
+        return true
+    end
+    return false
+end
+
 function remote_deliver_midi(max_bytes, port)
-    -- Send any pending LCD updates as SysEx
     local events = {}
+    local time = remote.get_time_ms()
 
-    for i = 1, 16 do
-        if g_lcd_state[i].changed then
-            -- Build SysEx: F0 00 11 22 01 40 [field] [16 chars] F7
-            local sysex = {0xf0, 0x00, 0x11, 0x22, 0x01, MSG_DISPLAY_LINE, i}
+    for i = 1, 2 do -- Only checking lines 1 & 2 for now
+        local line = g_display[i]
 
-            for j = 1, 16 do
-                local char = string.byte(g_lcd_state[i].text, j) or 0x20
-                table.insert(sysex, char)
-            end
+        -- Check Timer Expiry
+        if line.is_popup and time > line.timer then
+            line.is_popup = false
+            line.dirty = true
+        end
 
-            table.insert(sysex, 0xf7)
-            table.insert(events, remote.make_midi(table.unpack(sysex)))
+        -- Determine text to show
+        local current_text = line.is_popup and line.popup_text or line.persistent_text
 
-            g_lcd_state[i].changed = false
+        -- Only send if changed from last sent OR marked dirty
+        if line.dirty or current_text ~= line.last_sent then
+            table.insert(events, create_sysex(MSG_DISPLAY_LINE, i, current_text))
+            
+            line.last_sent = current_text
+            line.dirty = false
         end
     end
 
@@ -199,9 +263,9 @@ function remote_probe(manufacturer, model, prober)
 end
 
 function remote_prepare_for_use()
-    -- Called when Reason is ready to use this surface
+    return {}
 end
 
 function remote_release_from_use()
-    -- Called when disconnecting
+    return {}
 end

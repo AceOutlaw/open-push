@@ -41,21 +41,39 @@ COLOR_OFF = 0
 
 # Button CCs - Complete mapping
 BUTTONS = {
-    # Navigation
+    # Navigation arrows
     'up': 46, 'down': 47, 'left': 44, 'right': 45,
+    'page_left': 62, 'page_right': 63,
 
     # Octave/Transpose
     'octave_up': 55, 'octave_down': 54,
 
     # Mode buttons
     'note': 50, 'session': 51, 'scale': 58, 'accent': 57,
+    'select': 48, 'shift': 49, 'user': 59,
+    'mute': 60, 'solo': 61,
 
     # Transport
     'play': 85, 'record': 86, 'stop': 29,
+    'tap_tempo': 3, 'metronome': 9,
 
-    # Track controls (upper row)
+    # Editing
+    'new': 87, 'duplicate': 88, 'quantize': 116,
+    'double_loop': 117, 'delete': 118, 'undo': 119,
+
+    # Track controls
     'volume': 114, 'pan_send': 115, 'track': 112, 'clip': 113,
-    'device': 110, 'browse': 111,
+    'device': 110, 'browse': 111, 'master': 28,
+
+    # Upper button row (above display) - CC 102-109
+    # PusheR uses these for playhead/forward/rewind navigation
+    'upper_1': 102, 'upper_2': 103, 'upper_3': 104, 'upper_4': 105,
+    'upper_5': 106, 'upper_6': 107, 'upper_7': 108, 'upper_8': 109,
+
+    # Lower button row (below encoders) - CC 20-27
+    # PusheR uses these for track selection
+    'lower_1': 20, 'lower_2': 21, 'lower_3': 22, 'lower_4': 23,
+    'lower_5': 24, 'lower_6': 25, 'lower_7': 26, 'lower_8': 27,
 }
 
 # Reverse lookup
@@ -81,6 +99,7 @@ class OpenPushApp:
         self.current_mode = 'note'  # note, device, mixer, transport
         self.playing = False
         self.recording = False
+        self.shift_held = False
         self.device_name = "No Device"
 
         # Isomorphic Controller State
@@ -97,11 +116,74 @@ class OpenPushApp:
         self.layout.set_scale(self.root_note, SCALE_NAMES[self.scale_index])
         self.layout.set_in_key_mode(True) # Default to in-key
 
-    def create_virtual_ports(self):
-        """Create virtual MIDI ports for Reason to connect to."""
+    def create_virtual_ports(self, use_iac=True):
+        """Create or connect to MIDI ports for Reason.
+
+        Args:
+            use_iac: If True, try to connect to IAC Driver ports first.
+                     Falls back to virtual ports if IAC ports not found.
+        """
         port_names = ["OpenPush Transport", "OpenPush Devices", "OpenPush Mixer"]
 
+        # Check for IAC Driver ports
+        available_inputs = mido.get_input_names()
+        available_outputs = mido.get_output_names()
+
+        if use_iac:
+            # Look for IAC ports (check both with and without leading space)
+            iac_found = False
+            for name in port_names:
+                # IAC port naming: "IAC Driver OpenPush Transport" or just "OpenPush Transport"
+                iac_in = None
+                iac_out = None
+
+                for port in available_inputs:
+                    if name in port and "IAC" in port:
+                        iac_in = port
+                        break
+                for port in available_outputs:
+                    if name in port and "IAC" in port:
+                        iac_out = port
+                        break
+
+                if iac_in and iac_out:
+                    iac_found = True
+                    break
+
+            if iac_found:
+                print("Found IAC Driver ports - using persistent connections")
+                print("(Configure these once in Reason → Preferences → Control Surfaces)")
+                for name in port_names:
+                    try:
+                        # Find the matching IAC ports
+                        iac_in_port = None
+                        iac_out_port = None
+                        for port in available_outputs:  # Our output → Reason's input
+                            if name in port and "IAC" in port:
+                                iac_in_port = port
+                                break
+                        for port in available_inputs:  # Reason's output → Our input
+                            if name in port and "IAC" in port:
+                                iac_out_port = port
+                                break
+
+                        if iac_in_port:
+                            in_port = mido.open_output(iac_in_port)
+                            self.remote_out_ports[name] = in_port
+                            print(f"  Connected: {iac_in_port}")
+
+                        if iac_out_port:
+                            out_port = mido.open_input(iac_out_port)
+                            self.remote_in_ports[name] = out_port
+                            print(f"  Connected: {iac_out_port}")
+
+                    except Exception as e:
+                        print(f"  Error connecting to IAC {name}: {e}")
+                return
+
+        # Fall back to virtual ports
         print("Creating virtual MIDI ports...")
+        print("(Note: These disappear when app closes. For persistence, set up IAC Driver ports.)")
         for name in port_names:
             try:
                 in_port = mido.open_output(f"{name} In", virtual=True)
@@ -114,6 +196,42 @@ class OpenPushApp:
 
             except Exception as e:
                 print(f"  Error creating {name}: {e}")
+
+    @staticmethod
+    def print_iac_setup_instructions():
+        """Print instructions for setting up IAC Driver ports."""
+        print("""
+╔══════════════════════════════════════════════════════════════════════╗
+║                     IAC Driver Setup Instructions                     ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+To create persistent MIDI ports that don't disappear when this app closes:
+
+1. Open "Audio MIDI Setup" (search in Spotlight or find in /Applications/Utilities)
+
+2. Press Cmd+2 or Window → Show MIDI Studio
+
+3. Double-click "IAC Driver" (the red icon)
+
+4. Check "Device is online"
+
+5. In the Ports section, click "+" to add these ports:
+   • OpenPush Transport
+   • OpenPush Devices
+   • OpenPush Mixer
+
+6. Click "Apply" and close
+
+7. Restart this app - it will automatically detect the IAC ports
+
+8. In Reason → Preferences → Control Surfaces:
+   • Add surface: OpenPush Transport
+   • MIDI In: "IAC Driver OpenPush Transport"
+   • MIDI Out: "IAC Driver OpenPush Transport"
+   • Repeat for Devices and Mixer
+
+Once configured, Reason will remember these settings permanently!
+""")
 
     def list_ports(self):
         """List available MIDI ports."""
@@ -292,6 +410,9 @@ class OpenPushApp:
 
     def _midi_loop(self):
         """Main MIDI routing loop."""
+        last_lcd_request = 0
+        LCD_REQUEST_INTERVAL = 0.5  # Request LCD updates every 500ms
+
         while self.running:
             if self.push_in_port:
                 for msg in self.push_in_port.iter_pending():
@@ -300,6 +421,12 @@ class OpenPushApp:
             for name, port in self.remote_in_ports.items():
                 for msg in port.iter_pending():
                     self._handle_reason_message(name, msg)
+
+            # Periodically request LCD updates from Reason
+            now = time.time()
+            if now - last_lcd_request > LCD_REQUEST_INTERVAL:
+                self._request_lcd_update()
+                last_lcd_request = now
 
             time.sleep(0.001)
             
@@ -338,19 +465,42 @@ class OpenPushApp:
         value = msg.value
         button_name = CC_TO_BUTTON.get(cc, f"CC{cc}")
 
+        # Track Shift key state (handled in Python for Play/Stop behavior)
+        if cc == BUTTONS['shift']:
+            self.shift_held = (value > 0)
+            return
+
         if value > 0:  # Button pressed
-            print(f"Button: {button_name} (CC {cc}) value={value}")
+            print(f"Button: {button_name} (CC {cc}) value={value}" + (" [SHIFT]" if self.shift_held else ""))
 
             # Transport controls
             if cc == BUTTONS['play']:
-                if self.playing:
+                if self.shift_held:
+                    # Shift+Play = Stop (return to zero)
                     stop_msg = mido.Message('control_change', channel=0, control=BUTTONS['stop'], value=127)
                     self._send_to_transport(stop_msg)
+                    self.playing = False
+                    self._update_display()
+                    print(f"  -> Sent Stop (Shift+Play = return to zero)")
+                elif self.playing:
+                    stop_msg = mido.Message('control_change', channel=0, control=BUTTONS['stop'], value=127)
+                    self._send_to_transport(stop_msg)
+                    self.playing = False
+                    self._update_display()
+                    print("  -> Sent Stop (toggle)")
                 else:
+                    # Play toggles play/pause in Reason
                     self._send_to_transport(msg)
+                    self.playing = True
+                    self._update_display()
+                    print(f"  -> Sent Play (currently {'playing' if self.playing else 'stopped'})")
 
             elif cc == BUTTONS['record']:
                 self._send_to_transport(msg)
+            elif cc == BUTTONS['stop']:
+                self._send_to_transport(msg)
+                self.playing = False
+                self._update_display()
                 
             # Octave Shift
             elif cc == BUTTONS['octave_up']:
@@ -468,7 +618,6 @@ class OpenPushApp:
                         channel=15,  # Reason expects channel 15
                         control=msg.control,
                         value=msg.value)
-                    # print(f"  -> Transport: {reason_msg}")
                     self.remote_out_ports["OpenPush Transport"].send(reason_msg)
                 else:
                     # print(f"  -> Transport: {msg}")
@@ -501,27 +650,45 @@ class OpenPushApp:
             except Exception as e:
                 print(f"Devices send error: {e}")
 
+    def _request_lcd_update(self):
+        """Send SysEx to Reason requesting current LCD text values."""
+        if "OpenPush Transport" not in self.remote_out_ports:
+            return
+
+        # SysEx: F0 00 11 22 01 4F F7 (request LCD update, msg_type=0x4F)
+        request_sysex = mido.Message('sysex', data=[0x00, 0x11, 0x22, 0x01, 0x4F])
+        try:
+            self.remote_out_ports["OpenPush Transport"].send(request_sysex)
+        except Exception as e:
+            print(f"LCD request error: {e}")
+
     def _handle_reason_message(self, port_name, msg):
         """Handle MIDI message from Reason, route to Push with channel translation."""
-        # print(f"Reason ({port_name}): {msg}")
+        # Debug: show all messages from Reason
         if msg.type == 'sysex':
+            print(f"Reason SysEx ({port_name}): {' '.join(f'{b:02x}' for b in msg.data)}")
             if self._handle_reason_sysex(port_name, msg):
                 return
+        elif msg.type == 'control_change':
+            print(f"Reason CC ({port_name}): ch={msg.channel} cc={msg.control} val={msg.value}")
 
         # Update state based on Reason feedback
         if msg.type == 'control_change':
             # Transport feedback - CC numbers now match Push hardware
+            # Handle these specially with correct LED values (don't forward raw)
             if port_name == "OpenPush Transport":
                 if msg.control == 85:  # Play state
                     self.playing = msg.value > 0
-                    # print(f"  Play state from Reason: {self.playing}")
+                    print(f"  Play state: {self.playing} -> LED {4 if self.playing else 1}")
                     self._set_button_led(BUTTONS['play'], 4 if self.playing else 1)
+                    return  # Don't forward - we handled it with correct LED value
                 elif msg.control == 86:  # Record state
                     self.recording = msg.value > 0
-                    # print(f"  Record state from Reason: {self.recording}")
+                    print(f"  Record state: {self.recording} -> LED {5 if self.recording else 1}")
                     self._set_button_led(BUTTONS['record'], 5 if self.recording else 1)
+                    return  # Don't forward - we handled it with correct LED value
 
-            # Forward CC messages to Push with channel translation (ch15 → ch0)
+            # Forward other CC messages to Push with channel translation (ch15 → ch0)
             if self.push_out_port:
                 try:
                     # Translate Reason (ch15) → Push (ch0)
@@ -535,28 +702,55 @@ class OpenPushApp:
                     print(f"Push send error: {e}")
 
     def _handle_reason_sysex(self, port_name, msg):
-        """Handle SysEx from Reason (auto-detect ping/pong)."""
+        """Handle SysEx from Reason (ping/pong and display updates)."""
         if port_name not in self.remote_out_ports:
+            print(f"  SysEx from unknown port: {port_name}")
             return False
 
         reason_msg = ReasonMessage.from_sysex(list(msg.data))
-        if not reason_msg or reason_msg.msg_type != MessageType.SYSTEM_PING:
+        if not reason_msg:
+            print(f"  SysEx parse failed (not our format)")
             return False
 
-        response = ReasonMessage(
-            port_id=reason_msg.port_id,
-            msg_type=MessageType.SYSTEM_PONG,
-            data=[0x01],
-        )
-        try:
-            self.remote_out_ports[port_name].send(
-                mido.Message('sysex', data=response.to_sysex())
+        print(f"  Parsed: port={reason_msg.port_id.name} type={reason_msg.msg_type.name}")
+
+        # Handle Ping (Auto-detect)
+        if reason_msg.msg_type == MessageType.SYSTEM_PING:
+            response = ReasonMessage(
+                port_id=reason_msg.port_id,
+                msg_type=MessageType.SYSTEM_PONG,
+                data=[0x01],
             )
-        except Exception as e:
-            print(f"Reason probe response error: {e}")
-            return False
+            try:
+                self.remote_out_ports[port_name].send(
+                    mido.Message('sysex', data=response.to_sysex())
+                )
+            except Exception as e:
+                print(f"Reason probe response error: {e}")
+                return False
+            return True
 
-        return True
+        # Handle Display Line Update
+        elif reason_msg.msg_type == MessageType.DISPLAY_LINE:
+            if len(reason_msg.data) < 1:
+                return False
+
+            line_idx = reason_msg.data[0] # 1-4
+            text_bytes = reason_msg.data[1:]
+            text = "".join(chr(c) for c in text_bytes)
+
+            print(f"  LCD Update: line {line_idx} = '{text}'")
+
+            # Split into 4 segments of 17 chars
+            seg0 = text[0:17]
+            seg1 = text[17:34]
+            seg2 = text[34:51]
+            seg3 = text[51:68]
+
+            self._set_lcd_segments(line_idx, seg0, seg1, seg2, seg3)
+            return True
+
+        return False
 
     def close(self):
         """Clean up all ports."""
@@ -599,7 +793,7 @@ def main():
         print("  Manufacturer: OpenPush")
         print("  MIDI Input:   OpenPush Transport In")
         print("  MIDI Output:  OpenPush Transport Out")
-        print("\nCommands: 't' = test LED, 'q' = quit")
+        print("\nCommands: t=test LED, p=test pad, i=IAC setup, h=help, q=quit")
         print("Press buttons on Push to test...")
 
         try:
@@ -624,6 +818,10 @@ def main():
                         time.sleep(0.5)
                         app._set_pad_color(36, COLOR_BLUE)
                         print("Pad test complete")
+                    elif cmd == 'i':
+                        OpenPushApp.print_iac_setup_instructions()
+                    elif cmd == 'h' or cmd == '?':
+                        print("\nCommands: t=test LED, p=test pad, i=IAC setup, q=quit")
         except KeyboardInterrupt:
             print("\n\nShutting down...")
 

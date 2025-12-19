@@ -3,14 +3,6 @@
 # Install OpenPush codecs and remotemaps for Reason
 #
 
-REMOTE_BASE="/Library/Application Support/Propellerhead Software/Remote"
-CODECS_DIR="$REMOTE_BASE/Codecs/Lua Codecs/OpenPush"
-MAPS_DIR="$REMOTE_BASE/Maps/OpenPush"
-
-echo "OpenPush Codec Installer"
-echo "========================"
-echo
-
 # Check if running on macOS
 if [[ "$OSTYPE" != "darwin"* ]]; then
     echo "This script is for macOS only."
@@ -20,12 +12,49 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
     exit 1
 fi
 
+# Find all Reason apps
+echo "Searching for Reason installations..."
+APPS=($(ls -d /Applications/Reason*.app 2>/dev/null))
+
+if [ ${#APPS[@]} -eq 0 ]; then
+    echo "Error: No Reason application found in /Applications."
+    exit 1
+elif [ ${#APPS[@]} -eq 1 ]; then
+    REASON_APP_PATH="${APPS[0]}"
+    echo "Found: $REASON_APP_PATH"
+else
+    echo "Multiple Reason versions found:"
+    for i in "${!APPS[@]}"; do
+        echo "  [$i] ${APPS[$i]}"
+    done
+    
+    echo
+    read -p "Select version to install to (0-$((${#APPS[@]}-1))): " SELECTION
+    
+    if [[ ! "$SELECTION" =~ ^[0-9]+$ ]] || [ "$SELECTION" -ge "${#APPS[@]}" ]; then
+        echo "Invalid selection."
+        exit 1
+    fi
+    
+    REASON_APP_PATH="${APPS[$SELECTION]}"
+    echo "Selected: $REASON_APP_PATH"
+fi
+
+REMOTE_BASE="$REASON_APP_PATH/Contents/Resources/Remote"
+CODECS_DIR="$REMOTE_BASE/Codecs/Lua Codecs/OpenPush"
+MAPS_DIR="$REMOTE_BASE/Maps/OpenPush"
+
+echo
+echo "Installing to:"
+echo "  Codecs: $CODECS_DIR"
+echo "  Maps:   $MAPS_DIR"
+echo
+
 # Check if Reason Remote directory exists
 if [ ! -d "$REMOTE_BASE" ]; then
-    echo "Error: Reason Remote directory not found."
+    echo "Error: Reason Remote directory not found within Reason.app."
     echo "Expected: $REMOTE_BASE"
-    echo
-    echo "Make sure Reason is installed."
+    echo "This might indicate a problem with the Reason installation or an unexpected app bundle structure."
     exit 1
 fi
 
