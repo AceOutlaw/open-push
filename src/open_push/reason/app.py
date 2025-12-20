@@ -306,6 +306,9 @@ Once configured, Reason will remember these settings permanently!
         self._set_button_led(BUTTONS['device'], 1)     # Device - dim
         self._set_button_led(BUTTONS['note'], 4)       # Note - bright (default mode)
         self._set_button_led(BUTTONS['scale'], 1)      # Scale - dim
+        self._set_button_led(BUTTONS['tap_tempo'], 4)  # Tap Tempo - bright
+        self._set_button_led(BUTTONS['metronome'], 1)  # Metronome - dim (off)
+        self._set_button_led(BUTTONS['double_loop'], 1) # Loop - dim (off)
 
     def _set_lcd_segments(self, line, seg0="", seg1="", seg2="", seg3=""):
         """
@@ -414,19 +417,35 @@ Once configured, Reason will remember these settings permanently!
         LCD_REQUEST_INTERVAL = 0.5  # Request LCD updates every 500ms
 
         while self.running:
-            if self.push_in_port:
-                for msg in self.push_in_port.iter_pending():
-                    self._handle_push_message(msg)
+            try:
+                if self.push_in_port:
+                    for msg in self.push_in_port.iter_pending():
+                        try:
+                            self._handle_push_message(msg)
+                        except Exception as e:
+                            print(f"ERROR handling Push message: {e}")
+                            import traceback
+                            traceback.print_exc()
 
-            for name, port in self.remote_in_ports.items():
-                for msg in port.iter_pending():
-                    self._handle_reason_message(name, msg)
+                for name, port in self.remote_in_ports.items():
+                    for msg in port.iter_pending():
+                        try:
+                            self._handle_reason_message(name, msg)
+                        except Exception as e:
+                            print(f"ERROR handling Reason message: {e}")
+                            import traceback
+                            traceback.print_exc()
 
-            # Periodically request LCD updates from Reason
-            now = time.time()
-            if now - last_lcd_request > LCD_REQUEST_INTERVAL:
-                self._request_lcd_update()
-                last_lcd_request = now
+                # Periodically request LCD updates from Reason
+                now = time.time()
+                if now - last_lcd_request > LCD_REQUEST_INTERVAL:
+                    self._request_lcd_update()
+                    last_lcd_request = now
+
+            except Exception as e:
+                print(f"ERROR in MIDI loop: {e}")
+                import traceback
+                traceback.print_exc()
 
             time.sleep(0.001)
             
@@ -531,6 +550,70 @@ Once configured, Reason will remember these settings permanently!
                     self._set_mode('note')
                 else:
                     self._set_mode('scale')
+            elif cc == BUTTONS['track']:
+                self._set_mode('track')
+            elif cc == BUTTONS['clip']:
+                self._set_mode('clip')
+            elif cc == BUTTONS['browse']:
+                self._set_mode('browse')
+
+            # Phase 2: Loop/Metronome/Tap Tempo
+            elif cc == BUTTONS['double_loop']:  # CC 117 - using Double Loop button for Loop On/Off
+                self.loop_on = not getattr(self, 'loop_on', False)
+                self._send_to_transport(msg)
+                self._set_button_led(BUTTONS['double_loop'], 4 if self.loop_on else 1)
+                print(f"  -> Loop {'ON' if self.loop_on else 'OFF'}")
+
+            elif cc == BUTTONS['metronome']:  # CC 9
+                if self.shift_held:
+                    # Shift+Metronome = Pre-count toggle
+                    self.precount_on = not getattr(self, 'precount_on', False)
+                    # Send pre-count CC to Reason (we'll need to add this to Lua)
+                    precount_msg = mido.Message('control_change', channel=0, control=10, value=127 if self.precount_on else 0)
+                    self._send_to_transport(precount_msg)
+                    print(f"  -> Pre-count {'ON' if self.precount_on else 'OFF'}")
+                else:
+                    self.metronome_on = not getattr(self, 'metronome_on', False)
+                    self._send_to_transport(msg)
+                    self._set_button_led(BUTTONS['metronome'], 4 if self.metronome_on else 1)
+                    print(f"  -> Metronome {'ON' if self.metronome_on else 'OFF'}")
+
+            elif cc == BUTTONS['tap_tempo']:  # CC 3
+                self._send_to_transport(msg)
+                print(f"  -> Tap Tempo")
+
+            # Encoders (left side)
+            elif cc == 14:  # Tempo encoder - BPM control
+                # Relative value: 1-63 = CW, 65-127 = CCW
+                # Normalize to small increments: +1 or -1 (with slight acceleration)
+                if value < 64:
+                    # Clockwise - increase
+                    delta = min(value, 3)  # Cap at +3 for fast turns
+                    normalized_value = 64 + delta  # 65-67
+                else:
+                    # Counter-clockwise - decrease
+                    delta = min(128 - value, 3)  # Cap at -3 for fast turns
+                    normalized_value = 64 - delta  # 61-63
+
+                tempo_msg = mido.Message('control_change', channel=0, control=cc, value=normalized_value)
+                self._send_to_transport(tempo_msg)
+                direction = f"+{delta}" if value < 64 else f"-{delta}"
+                print(f"  -> Tempo {direction} BPM")
+
+            elif cc == 15:  # Swing encoder - Click Level
+                # Normalize to small increments
+                if value < 64:
+                    delta = min(value, 5)  # Slightly larger steps for volume
+                    normalized_value = 64 + delta
+                else:
+                    delta = min(128 - value, 5)
+                    normalized_value = 64 - delta
+
+                click_msg = mido.Message('control_change', channel=0, control=cc, value=normalized_value)
+                self._send_to_transport(click_msg)
+                direction = f"+{delta}" if value < 64 else f"-{delta}"
+                print(f"  -> Click Level {direction}")
+
             else:
                 pass
                 # print(f"  (unhandled button)")
@@ -540,47 +623,89 @@ Once configured, Reason will remember these settings permanently!
 
     def _handle_pad(self, msg):
         """Handle pad press/release."""
-        if self.current_mode == 'note':
-            # Isomorphic playing
-            if msg.type == 'note_on' and msg.velocity > 0:
-                # Calculate note from layout
-                midi_note = self.layout.get_midi_note(msg.note)
-                
-                # Apply velocity
-                vel = self.apply_velocity_curve(msg.velocity)
-                
-                # Store active note
-                self.active_notes[msg.note] = midi_note
-                
-                # Send note on
-                out_msg = mido.Message('note_on', note=midi_note, velocity=vel, channel=15)
+        # Filter out non-pad notes (encoder touches are notes 0-10, pads are 36-99)
+        if msg.note < 36 or msg.note > 99:
+            return
+
+        # Scale mode uses pads for selection, not playing
+        if self.current_mode == 'scale':
+            self._handle_scale_pad(msg)
+            return
+
+        # All other modes: pads play notes via isomorphic layout
+        if msg.type == 'note_on' and msg.velocity > 0:
+            # Calculate note from layout
+            midi_note = self.layout.get_midi_note(msg.note)
+
+            # Apply velocity
+            vel = self.apply_velocity_curve(msg.velocity)
+
+            # Store active note
+            self.active_notes[msg.note] = midi_note
+
+            # Send note on
+            out_msg = mido.Message('note_on', note=midi_note, velocity=vel, channel=15)
+            if "OpenPush Devices" in self.remote_out_ports:
+                self.remote_out_ports["OpenPush Devices"].send(out_msg)
+
+            # Flash pad
+            self._set_pad_color(msg.note, COLOR_GREEN)
+
+        elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
+            # Note off
+            if msg.note in self.active_notes:
+                midi_note = self.active_notes.pop(msg.note)
+                out_msg = mido.Message('note_off', note=midi_note, velocity=0, channel=15)
                 if "OpenPush Devices" in self.remote_out_ports:
                     self.remote_out_ports["OpenPush Devices"].send(out_msg)
-                    
-                # Flash pad
-                self._set_pad_color(msg.note, COLOR_GREEN)
-                
-            elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
-                # Note off
-                if msg.note in self.active_notes:
-                    midi_note = self.active_notes.pop(msg.note)
-                    out_msg = mido.Message('note_off', note=midi_note, velocity=0, channel=15)
-                    if "OpenPush Devices" in self.remote_out_ports:
-                        self.remote_out_ports["OpenPush Devices"].send(out_msg)
-                        
-                # Restore grid color
-                self._update_grid()
+
+            # Restore single pad color (more efficient than updating whole grid)
+            pad_note = msg.note
+            row = (pad_note - 36) // 8
+            col = (pad_note - 36) % 8
+            info = self.layout.get_pad_info(row, col)
+
+            if info['is_root']:
+                color = COLOR_BLUE
+            elif info['is_in_scale']:
+                color = COLOR_WHITE
+            else:
+                color = COLOR_OFF if self.layout.in_key_mode else COLOR_WHITE_DIM
+
+            self._set_pad_color(pad_note, color)
+
+    def _handle_scale_pad(self, msg):
+        """Handle pad press in scale selection mode."""
+        if msg.type != 'note_on' or msg.velocity == 0:
+            return
+
+        # Bottom row (row 0): Root note selection C D E F G A B
+        pad_note = msg.note
+        row = (pad_note - 36) // 8
+        col = (pad_note - 36) % 8
+
+        if row == 0 and col < 7:
+            # Root selection: C=0, D=2, E=4, F=5, G=7, A=9, B=11
+            roots = [0, 2, 4, 5, 7, 9, 11]
+            self.root_note = roots[col]
+            self.layout.set_scale(self.root_note, SCALE_NAMES[self.scale_index])
+            self._update_grid()
+            self._update_display()
+            print(f"  Root: {['C','D','E','F','G','A','B'][col]}")
 
     def _set_mode(self, mode):
         """Switch to a different mode and update display."""
         self.current_mode = mode
         print(f"Mode: {mode}")
 
-        # Update button LEDs
+        # Update button LEDs for mode buttons
         self._set_button_led(BUTTONS['volume'], 4 if mode == 'mixer' else 1)
         self._set_button_led(BUTTONS['device'], 4 if mode == 'device' else 1)
         self._set_button_led(BUTTONS['note'], 4 if mode == 'note' else 1)
         self._set_button_led(BUTTONS['scale'], 4 if mode == 'scale' else 1)
+        self._set_button_led(BUTTONS['track'], 4 if mode == 'track' else 1)
+        self._set_button_led(BUTTONS['clip'], 4 if mode == 'clip' else 1)
+        self._set_button_led(BUTTONS['browse'], 4 if mode == 'browse' else 1)
 
         # Update display
         self._update_display()

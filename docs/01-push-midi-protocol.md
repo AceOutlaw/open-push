@@ -374,8 +374,15 @@ F0 47 7F 15 [line] 00 45 00 [68 ASCII bytes] F7
 ### Character Set
 
 - Values 32-126: Standard ASCII printable characters
-- Values 0-31, 127: Device-specific special characters
+- Values 0-31, 127: Device-specific special characters (graphics, not control codes!)
 - All 128 values (0-127) produce visible characters on the LCD
+
+**DISCOVERED Special Characters:**
+| Code | Name | Display |
+|------|------|---------|
+| 2 | STX | **Solid block █** - Use for VU meters, progress bars |
+| 0-31 | Control range | Various graphics (needs further exploration) |
+| 127 | DEL | Special graphic |
 
 ### Example: Display "Hello World" on Line 1
 

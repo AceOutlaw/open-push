@@ -27,9 +27,12 @@ Map	Rewind		Rewind
 Map	Forward		Fast Forward
 Map	Loop		Loop On/Off
 Map	Metronome		Click On/Off
+Map	Precount		Precount On/Off
+Map	TapTempo		Tap Tempo
 
-// Tempo control
+// Tempo and Click controls
 Map	Tempo		Tempo BPM
+Map	ClickLevel		Click Level
 
 // Track navigation
 Map	NavigateUp		Target Previous Track
@@ -54,9 +57,12 @@ Map	Rewind		Rewind
 Map	Forward		Fast Forward
 Map	Loop		Loop On/Off
 Map	Metronome		Click On/Off
+Map	Precount		Precount On/Off
+Map	TapTempo		Tap Tempo
 
-// Tempo control
+// Tempo and Click controls
 Map	Tempo		Tempo BPM
+Map	ClickLevel		Click Level
 
 // Track navigation
 Map	NavigateUp		Target Previous Track
@@ -81,9 +87,12 @@ Map	Rewind		Rewind
 Map	Forward		Fast Forward
 Map	Loop		Loop On/Off
 Map	Metronome		Click On/Off
+Map	Precount		Precount On/Off
+Map	TapTempo		Tap Tempo
 
-// Tempo control
+// Tempo and Click controls
 Map	Tempo		Tempo BPM
+Map	ClickLevel		Click Level
 
 // Track navigation
 Map	NavigateUp		Target Previous Track

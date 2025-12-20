@@ -38,6 +38,8 @@ env/
 # Claude Code
 .claude/
 CLAUDE.md
+AGENTS.md
+GEMINI.md
 
 # Reference files (SDK docs, third-party codecs)
 reference files/

@@ -88,11 +88,14 @@ function remote_init(manufacturer, model)
         {name = "Record", input = "button", output = "value", min = 0, max = 127},
         {name = "Rewind", input = "button"},
         {name = "Forward", input = "button"},
-        {name = "Loop", input = "button", output = "value", min = 0, max = 1},
-        {name = "Metronome", input = "button", output = "value", min = 0, max = 1},
+        {name = "Loop", input = "button", output = "value", min = 0, max = 127},
+        {name = "Metronome", input = "button", output = "value", min = 0, max = 127},
+        {name = "Precount", input = "button", output = "value", min = 0, max = 127},
+        {name = "TapTempo", input = "button"},
 
         -- Tempo encoder
         {name = "Tempo", input = "delta", output = "value", min = 0, max = 999},
+        {name = "ClickLevel", input = "delta", output = "value", min = 0, max = 127},
 
         -- Navigation
         {name = "NavigateUp", input = "button"},
@@ -123,13 +126,19 @@ function remote_init(manufacturer, model)
         {pattern = "bf 56 xx", name = "Record", value = "x"},   -- CC 86
         {pattern = "bf 2c xx", name = "Rewind", value = "x"},   -- CC 44
         {pattern = "bf 2d xx", name = "Forward", value = "x"},  -- CC 45
-        {pattern = "bf 75 ?<???x>", name = "Loop"},     -- CC 117
-        {pattern = "bf 09 ?<???x>", name = "Metronome"},-- CC 9
+        {pattern = "bf 75 xx", name = "Loop", value = "x"},        -- CC 117 (Double Loop button)
+        {pattern = "bf 09 xx", name = "Metronome", value = "x"},  -- CC 9
+        {pattern = "bf 0a xx", name = "Precount", value = "x"},   -- CC 10 (Shift+Metronome)
+        {pattern = "bf 03 xx", name = "TapTempo", value = "x"},   -- CC 3
 
-        -- Tempo encoder (CC 0x0F = 15, Push tempo encoder)
-        {pattern = "bf 0f xx", name = "Tempo", value = "x - 64"},
+        -- Encoders (left side - relative values: 1-63=CW, 65-127=CCW)
+        -- Tempo encoder (CC 0x16/22, relative) - Scaled to reduce sensitivity
+        {pattern = "bf 16 xx", name = "Tempo", value = "(x - 64) / 4"},
+        
+        -- Click Level (CC 0x0E/14, relative) - Scaled
+        {pattern = "bf 0e xx", name = "ClickLevel", value = "(x - 64) / 4"},
 
-        -- Navigation
+        -- Navigation (CC 0x60-0x63)
         {pattern = "bf 2e xx", name = "NavigateUp", value = "x"},
         {pattern = "bf 2f xx", name = "NavigateDown", value = "x"},
         {pattern = "bf 2c xx", name = "NavigateLeft", value = "x"},
@@ -149,8 +158,8 @@ function remote_init(manufacturer, model)
         {name = "Play", pattern = "bf 55 xx", x = "value"},
         {name = "Stop", pattern = "bf 1d xx", x = "value"},
         {name = "Record", pattern = "bf 56 xx", x = "value"},
-        {name = "Loop", pattern = "bf 75 xx", x = "value"},
-        {name = "Metronome", pattern = "bf 09 xx", x = "value"},
+        {name = "Loop", pattern = "bf 75 xx", x = "value"},        -- CC 117
+        {name = "Metronome", pattern = "bf 09 xx", x = "value"},  -- CC 9
     }
     remote.define_auto_outputs(outputs)
 end
