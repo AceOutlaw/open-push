@@ -951,42 +951,44 @@ Once configured, Reason will remember these settings permanently!
         if self.current_mode != 'scale':
             return
 
-        # Upper row (CC 20-27) uses standard button LED values (0/1/4)
-        # Lower row (CC 102-109) uses pad color palette (13/15 for yellow)
-        LED_DIM = 1
-        LED_BRIGHT = 4
-        YELLOW_BRIGHT = 13
-        YELLOW_DIM = 15
+        # Upper row (CC 20-27) has different LED behavior - some values blink
+        # Tested values that DON'T blink on upper row: 7, 10, 13
+        UPPER_BRIGHT = 10  # Selected (yellow, no blink)
+        UPPER_DIM = 7      # Unselected (dimmer, no blink)
+
+        # Lower row (CC 102-109) works with standard color palette
+        LOWER_BRIGHT = 13  # Selected (yellow)
+        LOWER_DIM = 11     # Unselected (dim yellow/orange)
 
         # Check scroll limits
         at_top = self.scale_index == 0
         at_bottom = self.scale_index >= len(SCALE_NAMES) - 1
 
-        # Scale Up (CC 20, upper row) - uses 0/1/4
-        self._set_button_led(SCALE_UP_CC, LED_DIM if at_top else LED_BRIGHT)
-        # Scale Down (CC 102, lower row) - uses color palette
-        self._set_button_led(SCALE_DOWN_CC, YELLOW_DIM if at_bottom else YELLOW_BRIGHT)
+        # Scale Up (CC 20, upper row)
+        self._set_button_led(SCALE_UP_CC, UPPER_DIM if at_top else UPPER_BRIGHT)
+        # Scale Down (CC 102, lower row)
+        self._set_button_led(SCALE_DOWN_CC, LOWER_DIM if at_bottom else LOWER_BRIGHT)
 
-        # Upper row root selection (CC 21-26): uses 0/1/4
+        # Upper row root selection (CC 21-26)
         for i, cc in enumerate(ROOT_UPPER_BUTTONS):
             root_val = ROOT_UPPER_NOTES[i]
             if root_val == self.root_note:
-                self._set_button_led(cc, LED_BRIGHT)  # Bright = selected
+                self._set_button_led(cc, UPPER_BRIGHT)  # Selected
             else:
-                self._set_button_led(cc, LED_DIM)  # Dim = available
+                self._set_button_led(cc, UPPER_DIM)  # Unselected
 
-        # Lower row root selection (CC 103-108): uses color palette
+        # Lower row root selection (CC 103-108)
         for i, cc in enumerate(ROOT_LOWER_BUTTONS):
             root_val = ROOT_LOWER_NOTES[i]
             if root_val == self.root_note:
-                self._set_button_led(cc, YELLOW_BRIGHT)  # Bright = selected
+                self._set_button_led(cc, LOWER_BRIGHT)  # Selected
             else:
-                self._set_button_led(cc, YELLOW_DIM)  # Dim = available
+                self._set_button_led(cc, LOWER_DIM)  # Unselected
 
-        # In Key (CC 27, upper row) - uses 0/1/4
-        self._set_button_led(IN_KEY_CC, LED_BRIGHT if self.in_key_mode else LED_DIM)
-        # Chromatic (CC 109, lower row) - uses color palette
-        self._set_button_led(CHROMAT_CC, YELLOW_BRIGHT if not self.in_key_mode else YELLOW_DIM)
+        # In Key (CC 27, upper row)
+        self._set_button_led(IN_KEY_CC, UPPER_BRIGHT if self.in_key_mode else UPPER_DIM)
+        # Chromatic (CC 109, lower row)
+        self._set_button_led(CHROMAT_CC, LOWER_BRIGHT if not self.in_key_mode else LOWER_DIM)
 
     def _enter_scale_mode(self):
         """Enter scale selection mode.
