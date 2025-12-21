@@ -14,9 +14,38 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from open_push.music.layout import IsomorphicLayout
-from open_push.music.scales import SCALES, SCALE_NAMES, is_in_scale, is_root_note
+from open_push.music.scales import SCALES, SCALE_NAMES, is_in_scale, is_root_note, get_scale_display_name
 from open_push.core.constants import COLORS, BUTTON_CC, note_name
 from open_push.reason.protocol import ReasonMessage, MessageType
+
+# Root note names for display
+ROOT_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+
+# Chromatic layout for root selection buttons
+# Push 1: Upper row (CC 20-27) closer to LCD, Lower row (CC 102-109) closer to pads
+#
+# Scale mode button layout (chromatic ascending left-to-right, top-to-bottom):
+#   Upper row: [ScaleUp] [C] [C#][D] [D#][E] [F] [InKey]
+#              CC 20     21  22  23  24  25  26    27
+#   Lower row: [ScaleDn] [F#][G] [G#][A] [A#][B] [Chromat]
+#              CC 102    103 104 105 106 107 108  109
+#
+# LCD line 3 shows: [scale] | C  C# D | D# E  F | In Key
+# LCD line 4 shows: [scale] | F# G G# | A  A# B | Chromat
+
+# Middle 6 buttons per row for root selection
+# Push 1: CC 20-27 is upper row (closer to LCD), CC 102-109 is lower row (closer to pads)
+ROOT_UPPER_BUTTONS = [21, 22, 23, 24, 25, 26]        # Upper row CC numbers
+ROOT_LOWER_BUTTONS = [103, 104, 105, 106, 107, 108]  # Lower row CC numbers
+ROOT_UPPER_NOTES = [0, 1, 2, 3, 4, 5]    # C, C#, D, D#, E, F (semitones)
+ROOT_LOWER_NOTES = [6, 7, 8, 9, 10, 11]  # F#, G, G#, A, A#, B (semitones)
+
+# Outer buttons for mode/navigation
+# Push 1: CC 20 is upper left, CC 102 is lower left
+SCALE_UP_CC = 20       # Upper left (scroll up = previous scale)
+SCALE_DOWN_CC = 102    # Lower left (scroll down = next scale)
+IN_KEY_CC = 27         # Upper right
+CHROMAT_CC = 109       # Lower right
 
 # Push 1 Constants
 SYSEX_HEADER = [0x47, 0x7F, 0x15]
@@ -65,15 +94,14 @@ BUTTONS = {
     'volume': 114, 'pan_send': 115, 'track': 112, 'clip': 113,
     'device': 110, 'browse': 111, 'master': 28,
 
-    # Upper button row (above display) - CC 102-109
-    # PusheR uses these for playhead/forward/rewind navigation
-    'upper_1': 102, 'upper_2': 103, 'upper_3': 104, 'upper_4': 105,
-    'upper_5': 106, 'upper_6': 107, 'upper_7': 108, 'upper_8': 109,
+    # 16 Buttons Below LCD
+    # Upper row (closer to LCD) = CC 20-27
+    # Lower row (closer to pads) = CC 102-109
+    'upper_1': 20, 'upper_2': 21, 'upper_3': 22, 'upper_4': 23,
+    'upper_5': 24, 'upper_6': 25, 'upper_7': 26, 'upper_8': 27,
 
-    # Lower button row (below encoders) - CC 20-27
-    # PusheR uses these for track selection
-    'lower_1': 20, 'lower_2': 21, 'lower_3': 22, 'lower_4': 23,
-    'lower_5': 24, 'lower_6': 25, 'lower_7': 26, 'lower_8': 27,
+    'lower_1': 102, 'lower_2': 103, 'lower_3': 104, 'lower_4': 105,
+    'lower_5': 106, 'lower_6': 107, 'lower_7': 108, 'lower_8': 109,
 }
 
 # Reverse lookup
@@ -100,12 +128,17 @@ class OpenPushApp:
         self.playing = False
         self.recording = False
         self.shift_held = False
-        self.device_name = "No Device"
+
+        # Display data from Reason (updated via SysEx)
+        # Don't overwrite these - Reason controls this content
+        self.reason_lcd_lines = ["", "", "", ""]  # 4 lines of 68 chars each
 
         # Isomorphic Controller State
         self.layout = IsomorphicLayout()
         self.scale_index = 0
-        self.root_note = 0  # C
+        self.scale_scroll_offset = 0  # Which scale is at top of visible list
+        self.root_note = 0  # C (0-11 semitones)
+        self.in_key_mode = True  # True = In Key, False = Chromatic
         self.accent_mode = False
         self.velocity_curve = 1.0
         self.velocity_min = 40
@@ -114,7 +147,7 @@ class OpenPushApp:
 
         # Initialize layout
         self.layout.set_scale(self.root_note, SCALE_NAMES[self.scale_index])
-        self.layout.set_in_key_mode(True) # Default to in-key
+        self.layout.set_in_key_mode(self.in_key_mode)
 
     def create_virtual_ports(self, use_iac=True):
         """Create or connect to MIDI ports for Reason.
@@ -247,10 +280,34 @@ Once configured, Reason will remember these settings permanently!
             if "OpenPush" not in name:
                 print(f"  [{i}] {name}")
 
-    def find_push_ports(self):
-        """Auto-detect Push ports."""
+    def find_push_ports(self, use_simulator=False):
+        """Auto-detect Push ports.
+
+        Args:
+            use_simulator: If True, look for 'Push Simulator' port instead of real hardware.
+        """
+        if use_simulator:
+            # Look for simulator port
+            in_ports = [p for p in mido.get_input_names() if "Push Simulator" in p]
+            out_ports = [p for p in mido.get_output_names() if "Push Simulator" in p]
+            if in_ports and out_ports:
+                print("Using Push Simulator (virtual hardware)")
+                return in_ports[0], out_ports[0]
+            print("Push Simulator not found. Run push_simulator.py first.")
+            return None, None
+
+        # Look for real Push hardware
         in_ports = [p for p in mido.get_input_names() if "Push" in p and "User" in p and "OpenPush" not in p]
         out_ports = [p for p in mido.get_output_names() if "Push" in p and "User" in p and "OpenPush" not in p]
+
+        # If no real Push found, check for simulator as fallback
+        if not in_ports or not out_ports:
+            sim_in = [p for p in mido.get_input_names() if "Push Simulator" in p]
+            sim_out = [p for p in mido.get_output_names() if "Push Simulator" in p]
+            if sim_in and sim_out:
+                print("Real Push not found, using Push Simulator")
+                return sim_in[0], sim_out[0]
+
         return in_ports[0] if in_ports else None, out_ports[0] if out_ports else None
 
     def connect_push(self, in_name=None, out_name=None):
@@ -310,7 +367,7 @@ Once configured, Reason will remember these settings permanently!
         self._set_button_led(BUTTONS['metronome'], 1)  # Metronome - dim (off)
         self._set_button_led(BUTTONS['double_loop'], 1) # Loop - dim (off)
 
-    def _set_lcd_segments(self, line, seg0="", seg1="", seg2="", seg3=""):
+    def _set_lcd_segments(self, line, seg0="", seg1="", seg2="", seg3="", align="center"):
         """
         Set text on one LCD line using 4 segments of 17 chars each.
 
@@ -320,19 +377,44 @@ Once configured, Reason will remember these settings permanently!
 
         Args:
             line: Line number 1-4
-            seg0-seg3: Text for each segment (max 17 chars, auto-centered)
+            seg0-seg3: Text for each segment (max 17 chars)
+            align: "center", "left", or "right" for all segments
         """
         if not self.push_out_port:
             return
 
-        # Center each segment to 17 chars
+        # Format each segment with specified alignment
         parts = [seg0, seg1, seg2, seg3]
         text = ""
         for part in parts:
-            text += part[:CHARS_PER_SEGMENT].center(CHARS_PER_SEGMENT)
+            segment = part[:CHARS_PER_SEGMENT]
+            if align == "left":
+                text += segment.ljust(CHARS_PER_SEGMENT)
+            elif align == "right":
+                text += segment.rjust(CHARS_PER_SEGMENT)
+            else:  # center
+                text += segment.center(CHARS_PER_SEGMENT)
 
         line_addr = LCD_LINES[line]
         # SysEx format: header + line_addr + offset(0x00) + length(0x45=69) + null + text
+        data = SYSEX_HEADER + [line_addr, 0x00, 0x45, 0x00]
+        data.extend([ord(c) for c in text])
+        msg = mido.Message("sysex", data=data)
+        self.push_out_port.send(msg)
+
+    def _set_lcd_line_raw(self, line, text):
+        """
+        Set LCD line with raw 68-char string (for custom formatting).
+
+        Use when you need different alignment per segment.
+        """
+        if not self.push_out_port:
+            return
+
+        # Pad or truncate to exactly 68 chars
+        text = text[:68].ljust(68)
+
+        line_addr = LCD_LINES[line]
         data = SYSEX_HEADER + [line_addr, 0x00, 0x45, 0x00]
         data.extend([ord(c) for c in text])
         msg = mido.Message("sysex", data=data)
@@ -343,42 +425,22 @@ Once configured, Reason will remember these settings permanently!
         if not self.push_out_port:
             return
 
-        if self.current_mode == 'note':
-            # Isomorphic Layout
+        # Update grid for note mode AND scale mode (so user sees changes live)
+        if self.current_mode in ('note', 'scale'):
+            # Isomorphic Layout with scale highlighting
             for row in range(8):
                 for col in range(8):
                     info = self.layout.get_pad_info(row, col)
                     note = 36 + (row * 8) + col
-                    
+
                     if info['is_root']:
                         color = COLOR_BLUE
                     elif info['is_in_scale']:
                         color = COLOR_WHITE
                     else:
                         color = COLOR_OFF if self.layout.in_key_mode else COLOR_WHITE_DIM
-                    
+
                     self._set_pad_color(note, color)
-                    
-        elif self.current_mode == 'scale':
-            # Scale Selection Mode
-            # Clear grid first
-            for note in range(36, 100):
-                self._set_pad_color(note, COLOR_OFF)
-                
-            # Root selection (bottom rows)
-            for row in range(4, 8):
-                for col in range(8):
-                    # Not fully implemented UI map, simplified for now
-                    # Just replicate logic from bridge.py if needed, 
-                    # but for now let's keep it simple or implement fully.
-                    pass
-            
-            # Simple UI for now:
-            # Row 0: C D E F G A B
-            roots = [0, 2, 4, 5, 7, 9, 11] # C D E F G A B
-            for i, root_val in enumerate(roots):
-                color = COLOR_GREEN if self.root_note == root_val else COLOR_WHITE_DIM
-                self._set_pad_color(36 + i, color)
 
     def _set_pad_color(self, note, color):
         """Set a pad's color via note-on velocity."""
@@ -436,11 +498,12 @@ Once configured, Reason will remember these settings permanently!
                             import traceback
                             traceback.print_exc()
 
-                # Periodically request LCD updates from Reason
-                now = time.time()
-                if now - last_lcd_request > LCD_REQUEST_INTERVAL:
-                    self._request_lcd_update()
-                    last_lcd_request = now
+                # Periodically request LCD updates from Reason (not in scale mode)
+                if self.current_mode != 'scale':
+                    now = time.time()
+                    if now - last_lcd_request > LCD_REQUEST_INTERVAL:
+                        self._request_lcd_update()
+                        last_lcd_request = now
 
             except Exception as e:
                 print(f"ERROR in MIDI loop: {e}")
@@ -491,6 +554,16 @@ Once configured, Reason will remember these settings permanently!
 
         if value > 0:  # Button pressed
             print(f"Button: {button_name} (CC {cc}) value={value}" + (" [SHIFT]" if self.shift_held else ""))
+
+            # Handle scale mode buttons FIRST (before other handlers can intercept)
+            # 16 buttons below LCD: CC 102-109 (upper row), CC 20-27 (lower row)
+            # Plus CC 71 (encoder) for scale scrolling
+            if self.current_mode == 'scale':
+                scale_mode_ccs = [102, 103, 104, 105, 106, 107, 108, 109,
+                                  20, 21, 22, 23, 24, 25, 26, 27, 71]
+                if cc in scale_mode_ccs:
+                    self._handle_scale_mode_button(cc, value)
+                    return
 
             # Transport controls
             if cc == BUTTONS['play']:
@@ -547,9 +620,9 @@ Once configured, Reason will remember these settings permanently!
             elif cc == BUTTONS['scale']:
                 # Toggle scale mode
                 if self.current_mode == 'scale':
-                    self._set_mode('note')
+                    self._exit_scale_mode()
                 else:
-                    self._set_mode('scale')
+                    self._enter_scale_mode()
             elif cc == BUTTONS['track']:
                 self._set_mode('track')
             elif cc == BUTTONS['clip']:
@@ -614,6 +687,9 @@ Once configured, Reason will remember these settings permanently!
                 direction = f"+{delta}" if value < 64 else f"-{delta}"
                 print(f"  -> Click Level {direction}")
 
+            # Note: Scale mode buttons are handled at TOP of this function
+            # (before other handlers can intercept CC 102-109, 20-27, 71)
+
             else:
                 pass
                 # print(f"  (unhandled button)")
@@ -627,12 +703,8 @@ Once configured, Reason will remember these settings permanently!
         if msg.note < 36 or msg.note > 99:
             return
 
-        # Scale mode uses pads for selection, not playing
-        if self.current_mode == 'scale':
-            self._handle_scale_pad(msg)
-            return
-
-        # All other modes: pads play notes via isomorphic layout
+        # Pads always play notes (including in scale mode - user can play while selecting)
+        # Scale/root selection is handled by the 16 buttons below LCD, not pads
         if msg.type == 'note_on' and msg.velocity > 0:
             # Calculate note from layout
             midi_note = self.layout.get_midi_note(msg.note)
@@ -674,25 +746,6 @@ Once configured, Reason will remember these settings permanently!
 
             self._set_pad_color(pad_note, color)
 
-    def _handle_scale_pad(self, msg):
-        """Handle pad press in scale selection mode."""
-        if msg.type != 'note_on' or msg.velocity == 0:
-            return
-
-        # Bottom row (row 0): Root note selection C D E F G A B
-        pad_note = msg.note
-        row = (pad_note - 36) // 8
-        col = (pad_note - 36) % 8
-
-        if row == 0 and col < 7:
-            # Root selection: C=0, D=2, E=4, F=5, G=7, A=9, B=11
-            roots = [0, 2, 4, 5, 7, 9, 11]
-            self.root_note = roots[col]
-            self.layout.set_scale(self.root_note, SCALE_NAMES[self.scale_index])
-            self._update_grid()
-            self._update_display()
-            print(f"  Root: {['C','D','E','F','G','A','B'][col]}")
-
     def _set_mode(self, mode):
         """Switch to a different mode and update display."""
         self.current_mode = mode
@@ -707,31 +760,316 @@ Once configured, Reason will remember these settings permanently!
         self._set_button_led(BUTTONS['clip'], 4 if mode == 'clip' else 1)
         self._set_button_led(BUTTONS['browse'], 4 if mode == 'browse' else 1)
 
-        # Update display
+        # Update LCD display for new mode
         self._update_display()
+
+        # Request LCD data from Reason (may override our display)
+        self._request_lcd_update()
+
+        # Update grid (isomorphic layout, etc.)
         self._update_grid()
 
     def _update_display(self):
         """Update LCD based on current mode."""
-        mode_display = self.current_mode.capitalize()
-        status = "Playing" if self.playing else "Stopped"
-        
-        if self.current_mode == 'note':
-            root_name = note_name(self.layout.root_note) # Base root note
-            scale_name = self.layout.scale_name
-            octave = self.layout.get_octave()
-            accent = "ON" if self.accent_mode else "OFF"
-            
-            self._set_lcd_segments(1, "OpenPush", mode_display, f"{root_name}", f"{scale_name}")
-            self._set_lcd_segments(2, f"Octave: {octave}", f"Accent: {accent}", "", "")
-            self._set_lcd_segments(3, "Transport", "Devices", "Mixer", "Scale")
-            self._set_lcd_segments(4, "Volume", "Device", "Note", "Settings")
-            
+        if self.current_mode == 'scale':
+            self._update_scale_display()
+        elif self.current_mode == 'note':
+            self._update_note_display()
         else:
-            self._set_lcd_segments(1, "OpenPush", mode_display, self.device_name, "v0.3")
-            self._set_lcd_segments(2, status, "", "", "")
-            self._set_lcd_segments(3, "Transport", "Devices", "Mixer", "Scale")
-            self._set_lcd_segments(4, "Volume", "Device", "Note", "")
+            self._update_default_display()
+
+    def _update_note_display(self):
+        """Update LCD for note/play mode.
+
+        If Reason has sent display data, pass it through.
+        Otherwise show our default scale info.
+        """
+        # Check if Reason has sent any display data
+        has_reason_data = any(line.strip() for line in self.reason_lcd_lines)
+
+        if has_reason_data:
+            # Pass through Reason's display data
+            for i, line in enumerate(self.reason_lcd_lines):
+                if line.strip():  # Only update lines that have content
+                    self._set_lcd_line_raw(i + 1, line)
+        else:
+            # No Reason data yet - show default scale info
+            root_name = ROOT_NAMES[self.root_note]
+            scale_name = get_scale_display_name(SCALE_NAMES[self.scale_index])
+            octave = self.layout.get_octave()
+            mode_str = "In-Key" if self.in_key_mode else "Chromatic"
+            status = "Playing" if self.playing else "Stopped"
+
+            self._set_lcd_segments(1, f"{root_name} {scale_name}", f"Octave {octave}", mode_str, status)
+            self._set_lcd_segments(2, "", "", "", "")
+            self._set_lcd_segments(3, "", "", "", "")
+            self._set_lcd_segments(4, "", "", "", "")
+
+    def _update_default_display(self):
+        """Update LCD for other modes (device, mixer, etc.).
+
+        Pass through Reason's display data if available.
+        """
+        # Check if Reason has sent any display data
+        has_reason_data = any(line.strip() for line in self.reason_lcd_lines)
+
+        if has_reason_data:
+            # Pass through Reason's display data
+            for i, line in enumerate(self.reason_lcd_lines):
+                if line.strip():
+                    self._set_lcd_line_raw(i + 1, line)
+        else:
+            # No Reason data - show mode name
+            mode_display = self.current_mode.capitalize()
+            status = "Playing" if self.playing else "Stopped"
+
+            self._set_lcd_segments(1, mode_display, "", "", status)
+            self._set_lcd_segments(2, "", "", "", "")
+            self._set_lcd_segments(3, "", "", "", "")
+            self._set_lcd_segments(4, "", "", "", "")
+
+    def _update_scale_display(self):
+        """Update LCD for scale selection mode.
+
+        Button layout matches LCD (chromatic ascending):
+          Upper: [ScaleUp] [C] [C#][D] [D#][E] [F] [InKey]
+          Lower: [ScaleDn] [F#][G] [G#][A] [A#][B] [Chromat]
+
+        LCD Layout:
+        - Segment 0: 4 scales visible (scrollable list), > marks current
+        - Segments 1-2: Root note labels matching buttons
+        - Segment 3: In Key / Chromat toggle
+        """
+        # Get 4 visible scales based on scroll offset
+        total_scales = len(SCALE_NAMES)
+
+        # Keep current scale visible (adjust scroll if needed)
+        if self.scale_index < self.scale_scroll_offset:
+            self.scale_scroll_offset = self.scale_index
+        elif self.scale_index >= self.scale_scroll_offset + 4:
+            self.scale_scroll_offset = self.scale_index - 3
+
+        # Build scale list for segment 0 of each line (LEFT-aligned)
+        scale_texts = []
+        for i in range(4):
+            idx = self.scale_scroll_offset + i
+            if idx < total_scales:
+                name = get_scale_display_name(SCALE_NAMES[idx])
+                # Add > marker for current selection
+                if idx == self.scale_index:
+                    scale_texts.append(f">{name[:15]}")
+                else:
+                    scale_texts.append(f" {name[:15]}")
+            else:
+                scale_texts.append("")
+
+        # Build root display strings with current selection marked
+        def format_roots(roots_list):
+            """Format 3 root notes for a segment, mark selected with brackets."""
+            parts = []
+            for r in roots_list:
+                label = ROOT_NAMES[r]
+                if r == self.root_note:
+                    parts.append(f"[{label}]")
+                else:
+                    parts.append(f" {label} ")
+            return "  ".join(parts)
+
+        # Root segments matching button layout
+        upper_seg1 = format_roots(ROOT_UPPER_NOTES[:3])  # C G D
+        upper_seg2 = format_roots(ROOT_UPPER_NOTES[3:])  # A E B
+        lower_seg1 = format_roots(ROOT_LOWER_NOTES[:3])  # F Bb Eb
+        lower_seg2 = format_roots(ROOT_LOWER_NOTES[3:])  # Ab Db Gb
+
+        # Mode toggle (RIGHT-aligned in segment 3)
+        in_key_mark = ">" if self.in_key_mode else " "
+        chromat_mark = ">" if not self.in_key_mode else " "
+
+        # Build each line with mixed alignment
+        # Segment 0: left-aligned scale name (17 chars)
+        # Segments 1-2: centered root notes (17 chars each)
+        # Segment 3: right-aligned mode toggle (17 chars)
+
+        def build_line(scale_text, root_seg1, root_seg2, mode_text):
+            seg0 = scale_text[:17].ljust(17)
+            seg1 = root_seg1[:17].center(17)
+            seg2 = root_seg2[:17].center(17)
+            seg3 = mode_text[:17].rjust(17)
+            return seg0 + seg1 + seg2 + seg3
+
+        # Lines 1-2: Scale names only (rest empty)
+        self._set_lcd_line_raw(1, scale_texts[0].ljust(17) + " " * 51)
+        self._set_lcd_line_raw(2, scale_texts[1].ljust(17) + " " * 51)
+
+        # Lines 3-4: Scale + roots + mode
+        self._set_lcd_line_raw(3, build_line(scale_texts[2], upper_seg1, upper_seg2, f"{in_key_mark}In Key"))
+        self._set_lcd_line_raw(4, build_line(scale_texts[3], lower_seg1, lower_seg2, f"{chromat_mark}Chromat"))
+
+    def _update_scale_button_leds(self):
+        """Update button LEDs for scale selection mode.
+
+        Button layout (chromatic ascending):
+          Upper: [ScaleUp] [C] [C#][D] [D#][E] [F] [InKey]
+                 CC 20     21  22  23  24  25  26    27
+          Lower: [ScaleDn] [F#][G] [G#][A] [A#][B] [Chromat]
+                 CC 102    103 104 105 106 107 108  109
+        """
+        if self.current_mode != 'scale':
+            return
+
+        # Scale Up/Down buttons - always lit (navigation)
+        self._set_button_led(SCALE_UP_CC, 4)    # Upper left - bright
+        self._set_button_led(SCALE_DOWN_CC, 4)  # Lower left - bright
+
+        # Upper row root selection (CC 103-108): C, C#, D, D#, E, F
+        for i, cc in enumerate(ROOT_UPPER_BUTTONS):
+            root_val = ROOT_UPPER_NOTES[i]
+            if root_val == self.root_note:
+                self._set_button_led(cc, 4)  # Bright = selected
+            else:
+                self._set_button_led(cc, 1)  # Dim = available
+
+        # Lower row root selection (CC 21-26): F#, G, G#, A, A#, B
+        for i, cc in enumerate(ROOT_LOWER_BUTTONS):
+            root_val = ROOT_LOWER_NOTES[i]
+            if root_val == self.root_note:
+                self._set_button_led(cc, 4)  # Bright = selected
+            else:
+                self._set_button_led(cc, 1)  # Dim = available
+
+        # In Key / Chromatic buttons
+        self._set_button_led(IN_KEY_CC, 4 if self.in_key_mode else 1)
+        self._set_button_led(CHROMAT_CC, 4 if not self.in_key_mode else 1)
+
+    def _enter_scale_mode(self):
+        """Enter scale selection mode.
+
+        Only the LCD and 16 buttons below LCD change.
+        Pad grid stays active for playing while selecting scale.
+        """
+        self.current_mode = 'scale'
+        print("Entering Scale mode")
+
+        # Update button LEDs (only mode buttons and scale selection buttons)
+        self._set_button_led(BUTTONS['scale'], 4)  # Scale button bright
+        self._set_button_led(BUTTONS['note'], 1)   # Note button dim
+        self._update_scale_button_leds()
+
+        # Update display only - pads remain active for playing
+        self._update_display()
+
+    def _apply_scale_changes(self):
+        """Apply current scale settings to layout and update grid immediately."""
+        self.layout.set_scale(self.root_note, SCALE_NAMES[self.scale_index])
+        self.layout.set_in_key_mode(self.in_key_mode)
+        self._update_grid()
+
+    def _exit_scale_mode(self):
+        """Exit scale selection mode."""
+        print(f"Exiting Scale mode -> {ROOT_NAMES[self.root_note]} {get_scale_display_name(SCALE_NAMES[self.scale_index])}")
+
+        # Clear the 16 buttons below LCD (turn off scale selection LEDs)
+        for cc in ROOT_UPPER_BUTTONS + ROOT_LOWER_BUTTONS:
+            self._set_button_led(cc, 0)
+        self._set_button_led(SCALE_UP_CC, 0)
+        self._set_button_led(SCALE_DOWN_CC, 0)
+        self._set_button_led(IN_KEY_CC, 0)
+        self._set_button_led(CHROMAT_CC, 0)
+
+        # Return to note mode
+        self._set_mode('note')
+
+    def _handle_scale_mode_button(self, cc, value):
+        """Handle button press in scale mode.
+
+        Button layout (chromatic ascending):
+          Upper: [ScaleUp] [C] [C#][D] [D#][E] [F] [InKey]
+                 CC 20     21  22  23  24  25  26    27
+          Lower: [ScaleDn] [F#][G] [G#][A] [A#][B] [Chromat]
+                 CC 102    103 104 105 106 107 108  109
+        """
+        # CC 71 = Track 1 encoder - scroll through scales
+        if cc == 71:
+            # Relative encoder: 1-63 = CW (scroll down), 65-127 = CCW (scroll up)
+            if value < 64:
+                self._scroll_scale(1)  # Clockwise = down
+            else:
+                self._scroll_scale(-1)  # Counter-clockwise = up
+            return
+
+        # Scale Down button (CC 102 - upper left, physically higher)
+        # Upper button scrolls DOWN the list (next scale, higher index)
+        if cc == SCALE_UP_CC:
+            self._scroll_scale(1)  # Down = next scale
+            print("  Scale Down (next)")
+            return
+
+        # Scale Up button (CC 20 - lower left, physically lower)
+        # Lower button scrolls UP the list (previous scale, lower index)
+        if cc == SCALE_DOWN_CC:
+            self._scroll_scale(-1)  # Up = previous scale
+            print("  Scale Up (prev)")
+            return
+
+        # In Key button (upper right)
+        if cc == IN_KEY_CC:
+            self.in_key_mode = True
+            print("  Mode: In Key")
+            self._apply_scale_changes()
+            self._update_scale_display()
+            self._update_scale_button_leds()
+            return
+
+        # Chromatic button (lower right)
+        if cc == CHROMAT_CC:
+            self.in_key_mode = False
+            print("  Mode: Chromatic")
+            self._apply_scale_changes()
+            self._update_scale_display()
+            self._update_scale_button_leds()
+            return
+
+        # Upper row root selection: C, C#, D, D#, E, F
+        if cc in ROOT_UPPER_BUTTONS:
+            idx = ROOT_UPPER_BUTTONS.index(cc)
+            self.root_note = ROOT_UPPER_NOTES[idx]
+            print(f"  Root: {ROOT_NAMES[self.root_note]}")
+            self._apply_scale_changes()
+            self._update_scale_display()
+            self._update_scale_button_leds()
+            return
+
+        # Lower row root selection: F#, G, G#, A, A#, B
+        if cc in ROOT_LOWER_BUTTONS:
+            idx = ROOT_LOWER_BUTTONS.index(cc)
+            self.root_note = ROOT_LOWER_NOTES[idx]
+            print(f"  Root: {ROOT_NAMES[self.root_note]}")
+            self._apply_scale_changes()
+            self._update_scale_display()
+            self._update_scale_button_leds()
+            return
+
+    def _scroll_scale(self, direction):
+        """Scroll through scale list.
+
+        Args:
+            direction: +1 to go down (higher index), -1 to go up (lower index)
+        """
+        total_scales = len(SCALE_NAMES)
+        new_index = self.scale_index + direction
+
+        # Clamp to valid range
+        if new_index < 0:
+            new_index = 0
+        elif new_index >= total_scales:
+            new_index = total_scales - 1
+
+        if new_index != self.scale_index:
+            self.scale_index = new_index
+            scale_name = get_scale_display_name(SCALE_NAMES[self.scale_index])
+            print(f"  Scale: {scale_name}")
+            self._apply_scale_changes()
+            self._update_scale_display()
 
     def _send_to_transport(self, msg):
         """Send message to Reason Transport port with channel translation."""
@@ -860,19 +1198,22 @@ Once configured, Reason will remember these settings permanently!
             if len(reason_msg.data) < 1:
                 return False
 
-            line_idx = reason_msg.data[0] # 1-4
+            # Don't let Reason overwrite LCD in scale mode
+            if self.current_mode == 'scale':
+                return True
+
+            line_idx = reason_msg.data[0]  # 1-4
             text_bytes = reason_msg.data[1:]
             text = "".join(chr(c) for c in text_bytes)
 
             print(f"  LCD Update: line {line_idx} = '{text}'")
 
-            # Split into 4 segments of 17 chars
-            seg0 = text[0:17]
-            seg1 = text[17:34]
-            seg2 = text[34:51]
-            seg3 = text[51:68]
+            # Store Reason's display data (0-indexed internally)
+            if 1 <= line_idx <= 4:
+                self.reason_lcd_lines[line_idx - 1] = text.ljust(68)[:68]
 
-            self._set_lcd_segments(line_idx, seg0, seg1, seg2, seg3)
+            # Send directly to LCD
+            self._set_lcd_line_raw(line_idx, text)
             return True
 
         return False
@@ -900,15 +1241,26 @@ Once configured, Reason will remember these settings permanently!
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="OpenPush - Push to Reason Bridge")
+    parser.add_argument('--sim', action='store_true', help="Use Push Simulator instead of real hardware")
+    args = parser.parse_args()
+
     print("=" * 50)
     print("  OpenPush - Push to Reason Bridge")
+    if args.sim:
+        print("  (SIMULATOR MODE)")
     print("=" * 50)
 
     app = OpenPushApp()
     app.create_virtual_ports()
     app.list_ports()
 
-    if app.connect_push():
+    # Find Push ports (real hardware or simulator)
+    use_simulator = args.sim
+    in_port, out_port = app.find_push_ports(use_simulator=use_simulator)
+
+    if app.connect_push(in_port, out_port):
         app.start()
 
         print("\n" + "=" * 50)

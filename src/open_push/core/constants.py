@@ -116,25 +116,26 @@ BUTTON_CC = {
     'stop': 29,
     'master': 28,
 
-    # Upper row buttons (above display)
-    'upper_1': 102,
-    'upper_2': 103,
-    'upper_3': 104,
-    'upper_4': 105,
-    'upper_5': 106,
-    'upper_6': 107,
-    'upper_7': 108,
-    'upper_8': 109,
+    # 16 Buttons Below LCD
+    # Upper row (closer to LCD) = CC 20-27
+    # Lower row (closer to pads) = CC 102-109
+    'upper_1': 20,
+    'upper_2': 21,
+    'upper_3': 22,
+    'upper_4': 23,
+    'upper_5': 24,
+    'upper_6': 25,
+    'upper_7': 26,
+    'upper_8': 27,
 
-    # Lower row buttons (below display)
-    'lower_1': 20,
-    'lower_2': 21,
-    'lower_3': 22,
-    'lower_4': 23,
-    'lower_5': 24,
-    'lower_6': 25,
-    'lower_7': 26,
-    'lower_8': 27,
+    'lower_1': 102,
+    'lower_2': 103,
+    'lower_3': 104,
+    'lower_4': 105,
+    'lower_5': 106,
+    'lower_6': 107,
+    'lower_7': 108,
+    'lower_8': 109,
 }
 
 # Reverse lookup: CC number -> button name
