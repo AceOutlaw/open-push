@@ -57,16 +57,16 @@ CHARS_PER_SEGMENT = 17  # LCD has 4 segments of 17 chars with physical gaps
 # Pad colors (velocity values)
 COLOR_OFF = 0
 COLOR_WHITE = 3
+COLOR_WHITE_DIM = 1
 COLOR_RED = 5
 COLOR_ORANGE = 9
 COLOR_YELLOW = 13
+COLOR_YELLOW_DIM = 15
 COLOR_GREEN = 21
 COLOR_CYAN = 33
 COLOR_BLUE = 45
 COLOR_PURPLE = 49
 COLOR_PINK = 57
-COLOR_WHITE_DIM = 1
-COLOR_OFF = 0
 
 # Button CCs - Complete mapping
 BUTTONS = {
@@ -773,34 +773,60 @@ Once configured, Reason will remember these settings permanently!
         """Update LCD based on current mode."""
         if self.current_mode == 'scale':
             self._update_scale_display()
+        elif self.current_mode == 'track':
+            self._update_track_display()
         elif self.current_mode == 'note':
             self._update_note_display()
         else:
             self._update_default_display()
 
+    def _update_track_display(self):
+        """Update LCD for Track mode - shows track/tempo from Reason.
+
+        Layout based on PusheR Track mode:
+        - Line 1: Track name from Reason (or "Select a track")
+        - Line 2: Document/Song name
+        - Lines 3-4: Reserved for future (tempo, position, loop points)
+        """
+        # Line 1: Track name from Reason
+        track_name = self.reason_lcd_lines[0].strip() if self.reason_lcd_lines[0].strip() else "Select a track"
+        self._set_lcd_segments(1, track_name[:17], "", "", "Track")
+
+        # Line 2: Document name
+        doc_name = self.reason_lcd_lines[1].strip() if self.reason_lcd_lines[1].strip() else ""
+        self._set_lcd_segments(2, doc_name[:17], "", "", "")
+
+        # Lines 3-4: Placeholder for future (tempo, position, loop points)
+        self._set_lcd_segments(3, "", "", "", "")
+        self._set_lcd_segments(4, "", "", "", "")
+
     def _update_note_display(self):
         """Update LCD for note/play mode.
 
-        If Reason has sent display data, pass it through.
-        Otherwise show our default scale info.
+        Always show scale info on line 1. Pass through Reason data on other lines.
         """
+        root_name = ROOT_NAMES[self.root_note]
+        scale_name = get_scale_display_name(SCALE_NAMES[self.scale_index])
+        octave = self.layout.get_octave()
+        mode_str = "In-Key" if self.in_key_mode else "Chromatic"
+        status = "Playing" if self.playing else "Stopped"
+
+        # Line 1: Always show our scale info
+        self._set_lcd_segments(1, f"{root_name} {scale_name}", f"Octave {octave}", mode_str, status)
+
         # Check if Reason has sent any display data
         has_reason_data = any(line.strip() for line in self.reason_lcd_lines)
 
         if has_reason_data:
-            # Pass through Reason's display data
-            for i, line in enumerate(self.reason_lcd_lines):
-                if line.strip():  # Only update lines that have content
+            # Lines 2-4: Reason's display data if available
+            for i in range(1, 4):  # Lines 2, 3, 4
+                line = self.reason_lcd_lines[i] if i < len(self.reason_lcd_lines) else ""
+                if line.strip():
                     self._set_lcd_line_raw(i + 1, line)
+                else:
+                    self._set_lcd_segments(i + 1, "", "", "", "")
         else:
-            # No Reason data yet - show default scale info
-            root_name = ROOT_NAMES[self.root_note]
-            scale_name = get_scale_display_name(SCALE_NAMES[self.scale_index])
-            octave = self.layout.get_octave()
-            mode_str = "In-Key" if self.in_key_mode else "Chromatic"
-            status = "Playing" if self.playing else "Stopped"
-
-            self._set_lcd_segments(1, f"{root_name} {scale_name}", f"Octave {octave}", mode_str, status)
+            # No Reason data - clear remaining lines
             self._set_lcd_segments(2, "", "", "", "")
             self._set_lcd_segments(3, "", "", "", "")
             self._set_lcd_segments(4, "", "", "", "")
@@ -808,23 +834,28 @@ Once configured, Reason will remember these settings permanently!
     def _update_default_display(self):
         """Update LCD for other modes (device, mixer, etc.).
 
-        Pass through Reason's display data if available.
+        Always show mode info on line 1. Pass through Reason data if available.
         """
+        mode_display = self.current_mode.capitalize()
+        status = "Playing" if self.playing else "Stopped"
+
         # Check if Reason has sent any display data
         has_reason_data = any(line.strip() for line in self.reason_lcd_lines)
 
         if has_reason_data:
-            # Pass through Reason's display data
-            for i, line in enumerate(self.reason_lcd_lines):
+            # Line 1: Mode name + status (always show our info)
+            self._set_lcd_segments(1, mode_display, "", "", status)
+            # Lines 2-4: Reason's display data if available
+            for i in range(1, 4):  # Lines 2, 3, 4
+                line = self.reason_lcd_lines[i] if i < len(self.reason_lcd_lines) else ""
                 if line.strip():
                     self._set_lcd_line_raw(i + 1, line)
+                else:
+                    self._set_lcd_segments(i + 1, "", "", "", "")
         else:
-            # No Reason data - show mode name
-            mode_display = self.current_mode.capitalize()
-            status = "Playing" if self.playing else "Stopped"
-
+            # No Reason data - show mode name only
             self._set_lcd_segments(1, mode_display, "", "", status)
-            self._set_lcd_segments(2, "", "", "", "")
+            self._set_lcd_segments(2, "Waiting for", "Reason", "data...", "")
             self._set_lcd_segments(3, "", "", "", "")
             self._set_lcd_segments(4, "", "", "", "")
 
@@ -913,33 +944,49 @@ Once configured, Reason will remember these settings permanently!
                  CC 20     21  22  23  24  25  26    27
           Lower: [ScaleDn] [F#][G] [G#][A] [A#][B] [Chromat]
                  CC 102    103 104 105 106 107 108  109
+
+        The 16 buttons below LCD use pad color values (like pads), not button LED values.
+        Yellow colors: 13 = bright yellow, 15 = dim yellow
         """
         if self.current_mode != 'scale':
             return
 
-        # Scale Up/Down buttons - always lit (navigation)
-        self._set_button_led(SCALE_UP_CC, 4)    # Upper left - bright
-        self._set_button_led(SCALE_DOWN_CC, 4)  # Lower left - bright
+        # Upper row (CC 20-27) uses standard button LED values (0/1/4)
+        # Lower row (CC 102-109) uses pad color palette (13/15 for yellow)
+        LED_DIM = 1
+        LED_BRIGHT = 4
+        YELLOW_BRIGHT = 13
+        YELLOW_DIM = 15
 
-        # Upper row root selection (CC 103-108): C, C#, D, D#, E, F
+        # Check scroll limits
+        at_top = self.scale_index == 0
+        at_bottom = self.scale_index >= len(SCALE_NAMES) - 1
+
+        # Scale Up (CC 20, upper row) - uses 0/1/4
+        self._set_button_led(SCALE_UP_CC, LED_DIM if at_top else LED_BRIGHT)
+        # Scale Down (CC 102, lower row) - uses color palette
+        self._set_button_led(SCALE_DOWN_CC, YELLOW_DIM if at_bottom else YELLOW_BRIGHT)
+
+        # Upper row root selection (CC 21-26): uses 0/1/4
         for i, cc in enumerate(ROOT_UPPER_BUTTONS):
             root_val = ROOT_UPPER_NOTES[i]
             if root_val == self.root_note:
-                self._set_button_led(cc, 4)  # Bright = selected
+                self._set_button_led(cc, LED_BRIGHT)  # Bright = selected
             else:
-                self._set_button_led(cc, 1)  # Dim = available
+                self._set_button_led(cc, LED_DIM)  # Dim = available
 
-        # Lower row root selection (CC 21-26): F#, G, G#, A, A#, B
+        # Lower row root selection (CC 103-108): uses color palette
         for i, cc in enumerate(ROOT_LOWER_BUTTONS):
             root_val = ROOT_LOWER_NOTES[i]
             if root_val == self.root_note:
-                self._set_button_led(cc, 4)  # Bright = selected
+                self._set_button_led(cc, YELLOW_BRIGHT)  # Bright = selected
             else:
-                self._set_button_led(cc, 1)  # Dim = available
+                self._set_button_led(cc, YELLOW_DIM)  # Dim = available
 
-        # In Key / Chromatic buttons
-        self._set_button_led(IN_KEY_CC, 4 if self.in_key_mode else 1)
-        self._set_button_led(CHROMAT_CC, 4 if not self.in_key_mode else 1)
+        # In Key (CC 27, upper row) - uses 0/1/4
+        self._set_button_led(IN_KEY_CC, LED_BRIGHT if self.in_key_mode else LED_DIM)
+        # Chromatic (CC 109, lower row) - uses color palette
+        self._set_button_led(CHROMAT_CC, YELLOW_BRIGHT if not self.in_key_mode else YELLOW_DIM)
 
     def _enter_scale_mode(self):
         """Enter scale selection mode.
@@ -997,18 +1044,18 @@ Once configured, Reason will remember these settings permanently!
                 self._scroll_scale(-1)  # Counter-clockwise = up
             return
 
-        # Scale Down button (CC 102 - upper left, physically higher)
-        # Upper button scrolls DOWN the list (next scale, higher index)
+        # Scale Up button (CC 20 - upper row, closer to LCD)
+        # Top button scrolls UP the list (previous scale, lower index)
         if cc == SCALE_UP_CC:
-            self._scroll_scale(1)  # Down = next scale
-            print("  Scale Down (next)")
-            return
-
-        # Scale Up button (CC 20 - lower left, physically lower)
-        # Lower button scrolls UP the list (previous scale, lower index)
-        if cc == SCALE_DOWN_CC:
             self._scroll_scale(-1)  # Up = previous scale
             print("  Scale Up (prev)")
+            return
+
+        # Scale Down button (CC 102 - lower row, closer to pads)
+        # Bottom button scrolls DOWN the list (next scale, higher index)
+        if cc == SCALE_DOWN_CC:
+            self._scroll_scale(1)  # Down = next scale
+            print("  Scale Down (next)")
             return
 
         # In Key button (upper right)
@@ -1070,6 +1117,7 @@ Once configured, Reason will remember these settings permanently!
             print(f"  Scale: {scale_name}")
             self._apply_scale_changes()
             self._update_scale_display()
+            self._update_scale_button_leds()  # Update scroll limit indicators
 
     def _send_to_transport(self, msg):
         """Send message to Reason Transport port with channel translation."""

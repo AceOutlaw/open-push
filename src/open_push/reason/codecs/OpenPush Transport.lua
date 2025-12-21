@@ -12,7 +12,9 @@ Port ID: 0x01 (Transport)
 ]]--
 
 -- Item indices (must match order in remote_init items table)
-LCD_ITEM_START = 16  -- LCD1 is at index 16
+-- Items: 1-9 transport, 10-11 encoders, 12-15 navigation, 16-17 browser, 18 keyboard, 19-20 LCD
+LCD1_ITEM = 19
+LCD2_ITEM = 20
 
 -- Message types (must match protocol.py MessageType)
 MSG_DISPLAY_LINE = 0x40
@@ -193,27 +195,27 @@ end
 
 function remote_set_state(changed_items)
     -- Handle Persistent Text Updates (LCD1 -> Line 1, LCD2 -> Line 2)
-    -- Indices: LCD1=16, LCD2=17
-    
+    -- Indices: LCD1=19, LCD2=20 (see items table in remote_init)
+
     -- Line 1 (Track Name)
-    if changed_items[16] then 
-        local text = remote.get_item_text_value(16)
+    if changed_items[LCD1_ITEM] then
+        local text = remote.get_item_text_value(LCD1_ITEM)
         g_display[1].persistent_text = pad_string(text, 68)
         g_display[1].dirty = true
     end
 
     -- Line 2 (Device/Doc Name)
-    if changed_items[17] then
-        local text = remote.get_item_text_value(17)
+    if changed_items[LCD2_ITEM] then
+        local text = remote.get_item_text_value(LCD2_ITEM)
         g_display[2].persistent_text = pad_string(text, 68)
         g_display[2].dirty = true
     end
 
     -- Handle Popups for Controls (Tempo, etc.)
-    -- Tempo is item 8
-    if changed_items[8] then
-        local val = remote.get_item_text_value(8)
-        local name = remote.get_item_name(8)
+    -- Tempo is item 10 (see items table)
+    if changed_items[10] then
+        local val = remote.get_item_text_value(10)
+        local name = remote.get_item_name(10)
         
         -- Show "Tempo: 120.00" on Line 1
         g_display[1].popup_text = pad_string(name .. ": " .. val, 68)

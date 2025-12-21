@@ -198,7 +198,9 @@ class IsomorphicLayout:
             row = (pad_note - 36) // 8
             col = (pad_note - 36) % 8
             return self._get_in_key_note(row, col)
-        return self._note_map.get(pad_note, pad_note)
+        # Chromatic mode: add scale_root so first note is the selected key
+        # e.g., if key is D (scale_root=2), first note shifts from C2 to D2
+        return self._note_map.get(pad_note, pad_note) + self.scale_root
 
     def get_note_at(self, row: int, col: int) -> int:
         """
@@ -213,8 +215,9 @@ class IsomorphicLayout:
         """
         if self.in_key_mode:
             return self._get_in_key_note(row, col)
+        # Chromatic mode: add scale_root so first note is the selected key
         pad_note = 36 + (row * 8) + col
-        return self._note_map.get(pad_note, 0)
+        return self._note_map.get(pad_note, 0) + self.scale_root
 
     def _get_in_key_note(self, row: int, col: int) -> int:
         """
