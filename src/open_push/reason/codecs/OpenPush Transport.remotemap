@@ -30,9 +30,9 @@ Map	Metronome		Click On/Off
 Map	Precount		Precount On/Off
 Map	TapTempo		Tap Tempo
 
-// Tempo and Click controls
-Map	Tempo		Tempo BPM
-Map	ClickLevel		Click Level
+// Tempo and Click controls (Scale factor = BPM/units per delta step)
+Map	Tempo		Tempo BPM	1
+Map	ClickLevel		Click Level	5
 
 // Display
 Map	LCD5		Target Track Name
@@ -47,6 +47,7 @@ Map	Track Solo		Target Track Solo
 Map	Patch Select		Select Patch for Target Device (Delta)
 Map	Patch Prev		Select Prev Patch for Target Device
 Map	Patch Next		Select Next Patch for Target Device
+// Encoder controls (delta inputs)
 Map	Playhead Bars		Bar Position
 Map	Playhead Beats		Beat Position
 Map	Left Loop		Left Loop
@@ -55,6 +56,10 @@ Map	Goto Left		Goto Left Locator
 Map	Goto Right		Goto Right Locator
 Map	Move Loop Left		Move Loop Left
 Map	Move Loop Right		Move Loop Right
+
+// Display items (text outputs - only items with distinct remotables)
+Map	Left Loop Bar Display		Left Loop Bar
+Map	Right Loop Bar Display		Right Loop Bar
 Map	Song Position		Song Position
 
 //eos
@@ -73,9 +78,9 @@ Map	Metronome		Click On/Off
 Map	Precount		Precount On/Off
 Map	TapTempo		Tap Tempo
 
-// Tempo and Click controls
-Map	Tempo		Tempo BPM
-Map	ClickLevel		Click Level
+// Tempo and Click controls (Scale factor = BPM/units per delta step)
+Map	Tempo		Tempo BPM	1
+Map	ClickLevel		Click Level	5
 
 // Display
 Map	LCD5		Target Track Name
@@ -90,6 +95,7 @@ Map	Track Solo		Target Track Solo
 Map	Patch Select		Select Patch for Target Device (Delta)
 Map	Patch Prev		Select Prev Patch for Target Device
 Map	Patch Next		Select Next Patch for Target Device
+// Encoder controls (delta inputs)
 Map	Playhead Bars		Bar Position
 Map	Playhead Beats		Beat Position
 Map	Left Loop		Left Loop
@@ -98,6 +104,10 @@ Map	Goto Left		Goto Left Locator
 Map	Goto Right		Goto Right Locator
 Map	Move Loop Left		Move Loop Left
 Map	Move Loop Right		Move Loop Right
+
+// Display items (text outputs - only items with distinct remotables)
+Map	Left Loop Bar Display		Left Loop Bar
+Map	Right Loop Bar Display		Right Loop Bar
 Map	Song Position		Song Position
 
 //eos
@@ -116,9 +126,9 @@ Map	Metronome		Click On/Off
 Map	Precount		Precount On/Off
 Map	TapTempo		Tap Tempo
 
-// Tempo and Click controls
-Map	Tempo		Tempo BPM
-Map	ClickLevel		Click Level
+// Tempo and Click controls (Scale factor = BPM/units per delta step)
+Map	Tempo		Tempo BPM	1
+Map	ClickLevel		Click Level	5
 
 // Display
 Map	LCD5		Target Track Name
@@ -133,6 +143,7 @@ Map	Track Solo		Target Track Solo
 Map	Patch Select		Select Patch for Target Device (Delta)
 Map	Patch Prev		Select Prev Patch for Target Device
 Map	Patch Next		Select Next Patch for Target Device
+// Encoder controls (delta inputs)
 Map	Playhead Bars		Bar Position
 Map	Playhead Beats		Beat Position
 Map	Left Loop		Left Loop
@@ -141,6 +152,10 @@ Map	Goto Left		Goto Left Locator
 Map	Goto Right		Goto Right Locator
 Map	Move Loop Left		Move Loop Left
 Map	Move Loop Right		Move Loop Right
+
+// Display items (text outputs - only items with distinct remotables)
+Map	Left Loop Bar Display		Left Loop Bar
+Map	Right Loop Bar Display		Right Loop Bar
 Map	Song Position		Song Position
 
 //eos

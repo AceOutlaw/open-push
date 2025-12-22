@@ -359,8 +359,16 @@ function remote_set_state(changed_items)
     end
 end
 
+g_deliver_count = 0
+
 function remote_deliver_midi(max_bytes, port)
     local events = {}
+    g_deliver_count = g_deliver_count + 1
+
+    -- Log every 100th call to avoid spam
+    if g_deliver_count % 100 == 1 then
+        log(string.format("remote_deliver_midi called (count=%d)", g_deliver_count))
+    end
 
     -- Poll for device name if not yet set (fallback for static strings)
     if g_device_name_index then
@@ -416,6 +424,7 @@ function remote_deliver_midi(max_bytes, port)
             sysex_str = sysex_str .. string.format(" %02x", char)
         end
         sysex_str = sysex_str .. " f7"
+        log(string.format("SENDING DeviceName SysEx: '%s'", g_lcd_state[17].text))
         table.insert(events, remote.make_midi(sysex_str))
         g_lcd_state[17].changed = false
     end
@@ -424,6 +433,20 @@ function remote_deliver_midi(max_bytes, port)
 end
 
 function remote_process_midi(event)
+    -- Handle REQUEST_LCD SysEx from Python (msg_type 0x4F on port 0x02)
+    -- Pattern: F0 00 11 22 02 4F F7
+    local request = remote.match_midi("f0 00 11 22 02 4f f7", event)
+    if request then
+        log("REQUEST_LCD received - marking all fields dirty")
+        -- Mark all LCD fields as changed to trigger resend
+        for i = 1, 17 do
+            if g_lcd_state[i].text ~= "" then
+                g_lcd_state[i].changed = true
+            end
+        end
+        return true
+    end
+
     -- Manual debug dump on CC117 (Loop/Double Loop button on Push)
     local trigger = remote.match_midi("bf 75 xx", event)
     if trigger and trigger.x > 0 then

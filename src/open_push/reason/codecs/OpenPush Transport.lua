@@ -31,7 +31,9 @@ g_track_state = {
     patch = "",
     device = "",
     song = "",
-    position = "",
+    bars = "",       -- Bar position (separate for proper formatting)
+    beats = "",      -- Beat position (separate for proper formatting)
+    position = "",   -- Combined bars:beats
     left_loop = "",
     right_loop = "",
     loop_state = "",
@@ -88,11 +90,16 @@ end
 local function update_track_display()
     local line1 = pad_string(g_track_state.track, 34) .. pad_string(g_track_state.patch, 34)
     local line2 = pad_string(g_track_state.device, 34) .. pad_string(g_track_state.song, 34)
+    -- Format position as "Bar:Beat", loop points as bar numbers
+    local pos_display = g_track_state.position ~= "" and g_track_state.position or "--"
+    local left_display = g_track_state.left_loop ~= "" and g_track_state.left_loop or "--"
+    local right_display = g_track_state.right_loop ~= "" and g_track_state.right_loop or "--"
+    local tempo_display = g_track_state.tempo ~= "" and g_track_state.tempo or "--"
     local line3 = build_segments(
-        "Pos " .. g_track_state.position,
-        "L " .. g_track_state.left_loop,
-        "R " .. g_track_state.right_loop,
-        "BPM " .. g_track_state.tempo
+        "Pos " .. pos_display,
+        "Loop L " .. left_display,
+        "Loop R " .. right_display,
+        tempo_display .. " BPM"
     )
     local line4 = build_segments("Loop " .. g_track_state.loop_state, "", "", "")
 
@@ -141,9 +148,9 @@ function remote_init(manufacturer, model)
         {name = "Precount", input = "button", output = "value", min = 0, max = 127},
         {name = "TapTempo", input = "button"},
 
-        -- Tempo encoder
-        {name = "Tempo", input = "delta", output = "value", min = 0, max = 999},
-        {name = "ClickLevel", input = "delta", output = "value", min = 0, max = 127},
+        -- Tempo encoder (delta input: min/max defines delta range, Scale in remotemap defines units)
+        {name = "Tempo", input = "delta", min = -127, max = 127},
+        {name = "ClickLevel", input = "delta", min = -127, max = 127},
 
         -- Navigation
         {name = "NavigateUp", input = "button"},
@@ -165,13 +172,17 @@ function remote_init(manufacturer, model)
         {name = "LCD4", output = "text"},
         {name = "LCD5", output = "text"},
 
-        -- Track mode controls and readouts
-        {name = "Track Select", input = "delta", output = "text"},
-        {name = "Patch Select", input = "delta", output = "text"},
-        {name = "Playhead Bars", input = "delta", output = "text"},
-        {name = "Playhead Beats", input = "delta", output = "text"},
-        {name = "Left Loop", input = "delta", output = "text"},
-        {name = "Right Loop", input = "delta", output = "text"},
+        -- Track mode controls (encoder inputs + text output for display)
+        {name = "Track Select", input = "delta"},
+        {name = "Patch Select", input = "delta"},
+        {name = "Playhead Bars", input = "delta", output = "text"},   -- Bar Position (control + display)
+        {name = "Playhead Beats", input = "delta", output = "text"},  -- Beat Position (control + display)
+        {name = "Left Loop", input = "delta"},                        -- Left Loop (control only)
+        {name = "Right Loop", input = "delta"},                       -- Right Loop (control only)
+
+        -- Track mode display (text outputs from distinct Reason remotables)
+        {name = "Left Loop Bar Display", output = "text"},            -- Left Loop Bar (separate remotable)
+        {name = "Right Loop Bar Display", output = "text"},           -- Right Loop Bar (separate remotable)
         {name = "Track Prev", input = "button"},
         {name = "Track Next", input = "button"},
         {name = "Patch Prev", input = "button"},
@@ -200,11 +211,11 @@ function remote_init(manufacturer, model)
         {pattern = "bf 03 xx", name = "TapTempo", value = "x"},   -- CC 3
 
         -- Encoders (left side - relative values: 1-63=CW, 65-127=CCW)
-        -- Tempo encoder (CC 0x0E/14, relative) - Scaled to reduce sensitivity
-        {pattern = "bf 0e xx", name = "Tempo", value = "(x - 64) / 4"},
-        
-        -- Click Level (CC 0x0F/15, relative) - Scaled
-        {pattern = "bf 0f xx", name = "ClickLevel", value = "(x - 64) / 4"},
+        -- Tempo encoder (CC 14) - 1 click = 1 BPM
+        {pattern = "bf 0e xx", name = "Tempo", value = "x - 64"},
+
+        -- Click Level encoder (CC 15) - metronome volume (Scale=10 in remotemap)
+        {pattern = "bf 0f xx", name = "ClickLevel", value = "x - 64"},
 
         -- Navigation (CC 0x60-0x63)
         {pattern = "bf 2e xx", name = "NavigateUp", value = "x"},
@@ -217,12 +228,13 @@ function remote_init(manufacturer, model)
         {pattern = "bf 33 xx", name = "BrowserBack", value = "x"},
 
         -- Track mode encoders (Push 1 encoders above display)
-        {pattern = "bf 48 xx", name = "Track Select", value = "x - 64"},   -- CC 72
-        {pattern = "bf 49 xx", name = "Playhead Bars", value = "x - 64"},  -- CC 73
-        {pattern = "bf 51 xx", name = "Playhead Beats", value = "x - 64"}, -- CC 81 (Shift+Playhead)
-        {pattern = "bf 4a xx", name = "Patch Select", value = "x - 64"},   -- CC 74
-        {pattern = "bf 4b xx", name = "Left Loop", value = "x - 64"},      -- CC 75
-        {pattern = "bf 4c xx", name = "Right Loop", value = "x - 64"},     -- CC 76
+        -- Matches PusheR layout: Enc1=Track, Enc2=Playhead, Enc3=Patch, Enc5=Left, Enc6=Right
+        {pattern = "bf 47 xx", name = "Track Select", value = "x - 64"},   -- CC 71 (Enc 1)
+        {pattern = "bf 48 xx", name = "Playhead Bars", value = "x - 64"},  -- CC 72 (Enc 2)
+        {pattern = "bf 51 xx", name = "Playhead Beats", value = "x - 64"}, -- CC 81 (Shift+Enc2)
+        {pattern = "bf 49 xx", name = "Patch Select", value = "x - 64"},   -- CC 73 (Enc 3)
+        {pattern = "bf 4b xx", name = "Left Loop", value = "x - 64"},      -- CC 75 (Enc 5)
+        {pattern = "bf 4c xx", name = "Right Loop", value = "x - 64"},     -- CC 76 (Enc 6)
 
         -- Track mode buttons (16 buttons below LCD)
         {pattern = "bf 14 xx", name = "Track Prev", value = "x"},          -- CC 20
@@ -298,12 +310,20 @@ function remote_set_state(changed_items)
         ["Select Patch for Target Device"] = true,
     }
     local bars_items = {
-        ["Playhead Bars"] = true,
-        ["Bar Position"] = true,
+        ["Playhead Bars"] = true,        -- Control surface item name
+        ["Bar Position"] = true,         -- Reason remotable name
     }
     local beats_items = {
-        ["Playhead Beats"] = true,
-        ["Beat Position"] = true,
+        ["Playhead Beats"] = true,       -- Control surface item name
+        ["Beat Position"] = true,        -- Reason remotable name
+    }
+    local left_loop_items = {
+        ["Left Loop Bar Display"] = true,  -- Control surface item name
+        ["Left Loop Bar"] = true,          -- Reason remotable name
+    }
+    local right_loop_items = {
+        ["Right Loop Bar Display"] = true, -- Control surface item name
+        ["Right Loop Bar"] = true,         -- Reason remotable name
     }
     local tempo_items = {
         ["Tempo"] = true,
@@ -343,28 +363,36 @@ function remote_set_state(changed_items)
             log(string.format("ITEM %s idx=%d text='%s'", name, idx, g_track_state.patch or ""))
             track_dirty = true
         elseif name and bars_items[name] then
-            g_track_state.position = remote.get_item_text_value(idx) or ""
-            log(string.format("ITEM %s idx=%d text='%s'", name, idx, g_track_state.position or ""))
+            g_track_state.bars = remote.get_item_text_value(idx) or ""
+            log(string.format("ITEM %s idx=%d text='%s'", name, idx, g_track_state.bars or ""))
+            -- Update combined position
+            if g_track_state.beats ~= "" then
+                g_track_state.position = g_track_state.bars .. ":" .. g_track_state.beats
+            else
+                g_track_state.position = g_track_state.bars
+            end
             track_dirty = true
         elseif name and beats_items[name] then
-            local beat = remote.get_item_text_value(idx) or ""
-            log(string.format("ITEM %s idx=%d text='%s'", name, idx, beat or ""))
-            if g_track_state.position ~= "" and beat ~= "" then
-                g_track_state.position = g_track_state.position .. ":" .. beat
-            elseif beat ~= "" then
-                g_track_state.position = beat
+            g_track_state.beats = remote.get_item_text_value(idx) or ""
+            log(string.format("ITEM %s idx=%d text='%s'", name, idx, g_track_state.beats or ""))
+            -- Update combined position
+            if g_track_state.bars ~= "" then
+                g_track_state.position = g_track_state.bars .. ":" .. g_track_state.beats
+            else
+                g_track_state.position = g_track_state.beats
             end
             track_dirty = true
         elseif name == "Song Position" then
-            g_track_state.position = remote.get_item_text_value(idx)
+            -- Fallback: Song Position returns formatted position
+            g_track_state.position = remote.get_item_text_value(idx) or ""
             log(string.format("ITEM %s idx=%d text='%s'", name, idx, g_track_state.position or ""))
             track_dirty = true
-        elseif name == "Left Loop" then
-            g_track_state.left_loop = remote.get_item_text_value(idx)
+        elseif name and left_loop_items[name] then
+            g_track_state.left_loop = remote.get_item_text_value(idx) or ""
             log(string.format("ITEM %s idx=%d text='%s'", name, idx, g_track_state.left_loop or ""))
             track_dirty = true
-        elseif name == "Right Loop" then
-            g_track_state.right_loop = remote.get_item_text_value(idx)
+        elseif name and right_loop_items[name] then
+            g_track_state.right_loop = remote.get_item_text_value(idx) or ""
             log(string.format("ITEM %s idx=%d text='%s'", name, idx, g_track_state.right_loop or ""))
             track_dirty = true
         elseif name == "Loop" then

@@ -23,7 +23,7 @@ Map	Keyboard		Keyboard
 Scope	Propellerheads	Kong Drum Designer
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
 
-// Device name (dynamic instance name from Reason)
+// Device name (dynamic - like Korg Kontrol49)
 Map	Device Name		Device Name
 
 // Master level on encoder 8
@@ -56,7 +56,7 @@ Map	Param Name 8		"Master"
 Scope	Propellerheads	Redrum Drum Computer
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
 
-// Device name
+// Device name (static string)
 Map	Device Name		Device Name
 
 // Master level
@@ -99,7 +99,7 @@ Map	Lower Button 8		Drum 8 Mute
 Scope	Propellerheads	Dr.OctoRex Loop Player
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
 
-// Device name
+// Device name (static string)
 Map	Device Name		Device Name
 
 // Master level
@@ -145,7 +145,7 @@ Map	Lower Button 1		Run
 Scope	Propellerheads	Subtractor Analog Synthesizer
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
 
-// Device name
+// Device name (static string)
 Map	Device Name		Device Name
 
 // Filter and amp envelope
@@ -175,7 +175,7 @@ Map	Param Name 8		"Level"
 Scope	Propellerheads	Thor Polysonic Synthesizer
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
 
-// Device name
+// Device name (static string)
 Map	Device Name		Device Name
 
 // Rotary knobs and buttons
@@ -205,7 +205,7 @@ Map	Param Name 8		"Button 4"
 Scope	Propellerheads	Malstrom Graintable Synthesizer
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
 
-// Device name
+// Device name (static string)
 Map	Device Name		Device Name
 
 // Rotary controls
@@ -226,7 +226,7 @@ Map	Encoder 8		Button 4
 Scope	Propellerheads	NN-XT Advanced Sampler
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
 
-// Device name
+// Device name (static string)
 Map	Device Name		Device Name
 
 // Main controls
@@ -256,7 +256,7 @@ Map	Param Name 8		"Volume"
 Scope	Propellerheads	NN19 Digital Sampler
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
 
-// Device name
+// Device name (static string)
 Map	Device Name		Device Name
 
 //eos
@@ -267,7 +267,7 @@ Map	Device Name		Device Name
 Scope	Propellerheads	Combinator
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
 
-// Device name
+// Device name (static string)
 Map	Device Name		Device Name
 
 // Programmer controls
@@ -296,14 +296,18 @@ Map	Lower Button 1		Run Pattern Devices
 
 //=========================================================================
 // Generic fallback for Rack Extensions and other devices
+// NOTE: Most devices only expose Rotary 1-4 and Button 1-4.
+// Rotary/Button 5-8 are mapped but will be silently ignored by devices
+// that don't support them.
 //=========================================================================
 Scope	Propellerheads	Reason Rack Plugin
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
 
-// Device name
+// Device name (dynamic - returns device instance name)
 Map	Device Name		Device Name
 
-// Standard rotary/button mapping used by most rack extensions
+// Encoder controls - most devices support Rotary 1-4
+// Rotary 5-8 only work for devices that expose them (some Rack Extensions)
 Map	Encoder 1		Rotary 1
 Map	Encoder 2		Rotary 2
 Map	Encoder 3		Rotary 3
@@ -313,6 +317,8 @@ Map	Encoder 6		Rotary 6
 Map	Encoder 7		Rotary 7
 Map	Encoder 8		Rotary 8
 
+// Upper buttons - most devices support Button 1-4
+// Button 5-8 only work for devices that expose them
 Map	Upper Button 1		Button 1
 Map	Upper Button 2		Button 2
 Map	Upper Button 3		Button 3
@@ -321,5 +327,9 @@ Map	Upper Button 5		Button 5
 Map	Upper Button 6		Button 6
 Map	Upper Button 7		Button 7
 Map	Upper Button 8		Button 8
+
+// Lower buttons - patch navigation and device enable
+Map	Lower Button 7		Select Previous Patch
+Map	Lower Button 8		Select Next Patch
 
 //eos

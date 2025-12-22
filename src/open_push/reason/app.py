@@ -105,14 +105,17 @@ BUTTONS = {
 }
 
 # Track mode encoder/button mappings (Push 1 encoders above display)
+# Matches PusheR layout: Enc1=Track, Enc2=Playhead, Enc3=Patch, Enc5=LeftLoop, Enc6=RightLoop
 TRACK_ENCODER_CCS = {
-    'track_select': 72,
-    'playhead_bars': 73,
-    'patch_select': 74,
-    'left_loop': 75,
-    'right_loop': 76,
+    'track_select': 71,    # Encoder 1 (CC 71)
+    'playhead_bars': 72,   # Encoder 2 (CC 72) - Shift+Turn = 16ths
+    'patch_select': 73,    # Encoder 3 (CC 73)
+    'left_loop': 75,       # Encoder 5 (CC 75)
+    'right_loop': 76,      # Encoder 6 (CC 76)
 }
-PLAYHEAD_BEATS_CC = 81  # Shift+Playhead (fine)
+# Virtual CC for Shift+Playhead (fine control) - sent to Lua as different item
+PLAYHEAD_FINE_CC = 81  # Sent when Shift+Encoder2 for 16th step control
+# Note: Encoder 4 (CC 74) and Encoders 7-8 (CC 77-78) are unused in Track mode
 TRACK_BUTTON_CCS = set(range(20, 28)) | set(range(102, 110))
 
 # Reverse lookup
@@ -135,7 +138,8 @@ class OpenPushApp:
         self.midi_thread = None
 
         # Current mode and state
-        self.current_mode = 'note'  # note, device, mixer, transport
+        self.current_mode = 'welcome'  # welcome, note, track, device, mixer, scale
+        self.previous_mode = 'track'   # Mode to return to after scale mode
         self.playing = False
         self.recording = False
         self.shift_held = False
@@ -364,11 +368,8 @@ Once configured, Reason will remember these settings permanently!
         self.push_out_port.send(user_mode)
         time.sleep(0.1)
 
-        # Set up LCD display (4 segments of 17 chars each with gaps)
-        self._set_lcd_segments(1, "OpenPush", "Reason", "Bridge", "v0.3")
-        self._set_lcd_segments(2, "", "", "", "")
-        self._set_lcd_segments(3, "Transport", "Devices", "Mixer", "Scale")
-        self._set_lcd_segments(4, "Ready", "Ready", "Ready", "Ready")
+        # Show welcome screen
+        self._update_welcome_display()
 
         # Light up the pad grid
         self._update_grid()
@@ -557,15 +558,43 @@ Once configured, Reason will remember these settings permanently!
         """Apply velocity curve."""
         if self.accent_mode:
             return 127
-            
+
         # Normalize
         norm = (velocity - 1) / 126.0
         curved = pow(norm, self.velocity_curve)
-        
+
         # Scale
         val_range = self.velocity_max - self.velocity_min
         out = int(self.velocity_min + (curved * val_range))
         return max(1, min(127, out))
+
+    def _normalize_encoder_delta(self, value, max_delta=1):
+        """Normalize relative encoder value to capped delta.
+
+        Push encoders send relative values:
+        - 1-63: clockwise (1=slow, 63=fast)
+        - 65-127: counter-clockwise (127=slow, 65=fast)
+        - 64: no change
+
+        This function caps the delta to max_delta and re-encodes.
+
+        Args:
+            value: Raw encoder CC value (0-127)
+            max_delta: Maximum step size (default 1 for single-step)
+
+        Returns:
+            Normalized CC value with capped delta
+        """
+        if value == 0 or value == 64:
+            return 64  # No change
+        elif value < 64:
+            # Clockwise - cap positive delta
+            delta = min(value, max_delta)
+            return 64 + delta  # e.g., 65 for +1
+        else:
+            # Counter-clockwise - cap negative delta
+            delta = min(128 - value, max_delta)
+            return 64 - delta  # e.g., 63 for -1
 
     def _handle_push_message(self, msg):
         """Handle MIDI message from Push, route to Reason."""
@@ -610,8 +639,19 @@ Once configured, Reason will remember these settings permanently!
             if cc in range(71, 79):
                 if self.current_mode == 'track':
                     if cc == TRACK_ENCODER_CCS['playhead_bars'] and self.shift_held:
-                        fine_msg = mido.Message('control_change', channel=0, control=PLAYHEAD_BEATS_CC, value=value)
+                        # Shift+Playhead = fine control (16th steps)
+                        fine_msg = mido.Message('control_change', channel=0, control=PLAYHEAD_FINE_CC, value=value)
                         self._send_to_transport(fine_msg)
+                    elif cc == TRACK_ENCODER_CCS['track_select']:
+                        # Track select: normalize to single step (+1/-1 per click)
+                        normalized = self._normalize_encoder_delta(value, max_delta=1)
+                        track_msg = mido.Message('control_change', channel=0, control=cc, value=normalized)
+                        self._send_to_transport(track_msg)
+                    elif cc in (TRACK_ENCODER_CCS['left_loop'], TRACK_ENCODER_CCS['right_loop']):
+                        # Loop locators: jump by bars (single step per click)
+                        normalized = self._normalize_encoder_delta(value, max_delta=1)
+                        loop_msg = mido.Message('control_change', channel=0, control=cc, value=normalized)
+                        self._send_to_transport(loop_msg)
                     elif cc in TRACK_ENCODER_CCS.values():
                         self._send_to_transport(msg)
                     return
@@ -816,6 +856,11 @@ Once configured, Reason will remember these settings permanently!
 
     def _set_mode(self, mode):
         """Switch to a different mode and update display."""
+        # Track previous mode for returning from scale mode
+        # Only track non-scale, non-welcome modes
+        if self.current_mode in ('track', 'device', 'mixer', 'note'):
+            self.previous_mode = self.current_mode
+
         self.current_mode = mode
         print(f"Mode: {mode}")
 
@@ -839,7 +884,9 @@ Once configured, Reason will remember these settings permanently!
 
     def _update_display(self):
         """Update LCD based on current mode."""
-        if self.current_mode == 'scale':
+        if self.current_mode == 'welcome':
+            self._update_welcome_display()
+        elif self.current_mode == 'scale':
             self._update_scale_display()
         elif self.current_mode == 'track':
             self._update_track_display()
@@ -852,23 +899,42 @@ Once configured, Reason will remember these settings permanently!
         else:
             self._update_default_display()
 
-    def _update_track_display(self):
-        """Update LCD for Track mode - shows track/tempo from Reason.
-
-        Layout based on PusheR Track mode:
-        - Line 1: Header ("Track")
-        - Line 2: Track name from Reason
-        - Line 3: Document/Song name from Reason
-        - Line 4: Reserved
-        """
-        raw_track = self.reason_lcd_lines[0] if self.reason_lcd_lines else ""
-        track_text = self._clean_reason_text(raw_track)
-        device_text = self._clean_reason_text(self.device_name)
-
-        self._set_lcd_line_raw(1, f"Track: {track_text or '(waiting)'}")
-        self._set_lcd_line_raw(2, f"Device: {device_text or '(waiting)'}")
+    def _update_welcome_display(self):
+        """Show welcome screen on initial load."""
+        self._set_lcd_segments(1, "", "OpenPush", "", "")
+        self._set_lcd_segments(2, "", "Reason Bridge", "", "")
         self._set_lcd_segments(3, "", "", "", "")
-        self._set_lcd_segments(4, "", "", "", "")
+        self._set_lcd_segments(4, "Track", "Device", "Mixer", "to start")
+
+    def _update_track_display(self):
+        """Update LCD for Track mode - shows track/position/loop/tempo from Reason.
+
+        The Lua codec formats 4 complete display lines:
+        - Line 1: Track name + Patch name
+        - Line 2: Device name + Song name
+        - Line 3: Position | Left Loop | Right Loop | BPM
+        - Line 4: Loop state
+
+        We pass these through directly since Lua already formats them
+        with proper segment alignment.
+        """
+        # Check if we have any data from Reason
+        has_data = any(line.strip() for line in self.reason_lcd_lines)
+
+        if has_data:
+            # Pass through the pre-formatted lines from Lua codec
+            for i in range(4):
+                line = self.reason_lcd_lines[i] if i < len(self.reason_lcd_lines) else ""
+                if line.strip():
+                    self._set_lcd_line_raw(i + 1, line)
+                else:
+                    self._set_lcd_segments(i + 1, "", "", "", "")
+        else:
+            # No data yet - show waiting message
+            self._set_lcd_segments(1, "Track Mode", "", "", "")
+            self._set_lcd_segments(2, "Waiting for", "Reason", "data...", "")
+            self._set_lcd_segments(3, "", "", "", "")
+            self._set_lcd_segments(4, "", "", "", "")
 
     def _update_note_display(self):
         """Update LCD for note/play mode.
@@ -1107,7 +1173,7 @@ Once configured, Reason will remember these settings permanently!
         self._update_grid()
 
     def _exit_scale_mode(self):
-        """Exit scale selection mode."""
+        """Exit scale selection mode and return to previous mode."""
         print(f"Exiting Scale mode -> {ROOT_NAMES[self.root_note]} {get_scale_display_name(SCALE_NAMES[self.scale_index])}")
 
         # Clear the 16 buttons below LCD (turn off scale selection LEDs)
@@ -1118,8 +1184,10 @@ Once configured, Reason will remember these settings permanently!
         self._set_button_led(IN_KEY_CC, 0)
         self._set_button_led(CHROMAT_CC, 0)
 
-        # Return to note mode
-        self._set_mode('note')
+        # Return to previous mode (track, device, mixer, or note)
+        return_mode = self.previous_mode if self.previous_mode else 'track'
+        print(f"  Returning to: {return_mode}")
+        self._set_mode(return_mode)
 
     def _handle_scale_mode_button(self, cc, value):
         """Handle button press in scale mode.
@@ -1258,15 +1326,23 @@ Once configured, Reason will remember these settings permanently!
 
     def _request_lcd_update(self):
         """Send SysEx to Reason requesting current LCD text values."""
-        if "OpenPush Transport" not in self.remote_out_ports:
-            return
+        # Request from Transport (port 0x01)
+        if "OpenPush Transport" in self.remote_out_ports:
+            # SysEx: F0 00 11 22 01 4F F7 (request LCD update, msg_type=0x4F)
+            request_sysex = mido.Message('sysex', data=[0x00, 0x11, 0x22, 0x01, 0x4F])
+            try:
+                self.remote_out_ports["OpenPush Transport"].send(request_sysex)
+            except Exception as e:
+                print(f"Transport LCD request error: {e}")
 
-        # SysEx: F0 00 11 22 01 4F F7 (request LCD update, msg_type=0x4F)
-        request_sysex = mido.Message('sysex', data=[0x00, 0x11, 0x22, 0x01, 0x4F])
-        try:
-            self.remote_out_ports["OpenPush Transport"].send(request_sysex)
-        except Exception as e:
-            print(f"LCD request error: {e}")
+        # Request from Devices (port 0x02)
+        if "OpenPush Devices" in self.remote_out_ports:
+            # SysEx: F0 00 11 22 02 4F F7 (request LCD update, msg_type=0x4F)
+            request_sysex = mido.Message('sysex', data=[0x00, 0x11, 0x22, 0x02, 0x4F])
+            try:
+                self.remote_out_ports["OpenPush Devices"].send(request_sysex)
+            except Exception as e:
+                print(f"Devices LCD request error: {e}")
 
     def _handle_reason_message(self, port_name, msg):
         """Handle MIDI message from Reason, route to Push with channel translation."""
@@ -1382,6 +1458,7 @@ Once configured, Reason will remember these settings permanently!
         # Handle Device Name Updates
         elif reason_msg.msg_type == MessageType.DEVICE_NAME:
             text = "".join(chr(c) for c in reason_msg.data).rstrip()
+            print(f"  *** DEVICE_NAME received: '{text}'")
             self.device_name = text
 
             if self.current_mode in ('device', 'track'):
