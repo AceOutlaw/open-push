@@ -144,6 +144,9 @@ class OpenPushApp:
         self.recording = False
         self.shift_held = False
 
+        # Debug verbosity (set to True for full SysEx logging)
+        self.verbose_sysex = False
+
         # Display data from Reason (updated via SysEx)
         # Don't overwrite these - Reason controls this content
         self.reason_lcd_lines = ["", "", "", ""]  # 4 lines of 68 chars each
@@ -1346,13 +1349,15 @@ Once configured, Reason will remember these settings permanently!
 
     def _handle_reason_message(self, port_name, msg):
         """Handle MIDI message from Reason, route to Push with channel translation."""
-        # Debug: show all messages from Reason
+        # Handle messages from Reason
         if msg.type == 'sysex':
-            print(f"Reason SysEx ({port_name}): {' '.join(f'{b:02x}' for b in msg.data)}")
+            if self.verbose_sysex:
+                print(f"Reason SysEx ({port_name}): {' '.join(f'{b:02x}' for b in msg.data)}")
             if self._handle_reason_sysex(port_name, msg):
                 return
         elif msg.type == 'control_change':
-            print(f"Reason CC ({port_name}): ch={msg.channel} cc={msg.control} val={msg.value}")
+            if self.verbose_sysex:
+                print(f"Reason CC ({port_name}): ch={msg.channel} cc={msg.control} val={msg.value}")
 
         # Update state based on Reason feedback
         if msg.type == 'control_change':
@@ -1394,7 +1399,8 @@ Once configured, Reason will remember these settings permanently!
             print(f"  SysEx parse failed (not our format)")
             return False
 
-        print(f"  Parsed: port={reason_msg.port_id.name} type={reason_msg.msg_type.name}")
+        if self.verbose_sysex:
+            print(f"  Parsed: port={reason_msg.port_id.name} type={reason_msg.msg_type.name}")
 
         # Handle Ping (Auto-detect)
         if reason_msg.msg_type == MessageType.SYSTEM_PING:
@@ -1425,7 +1431,8 @@ Once configured, Reason will remember these settings permanently!
             text_bytes = reason_msg.data[1:]
             text = "".join(chr(c) for c in text_bytes)
 
-            print(f"  LCD Update: line {line_idx} = '{text}'")
+            if self.verbose_sysex:
+                print(f"  LCD Update: line {line_idx} = '{text}'")
 
             # Store Reason's display data (0-indexed internally)
             if 1 <= line_idx <= 4:
@@ -1458,7 +1465,8 @@ Once configured, Reason will remember these settings permanently!
         # Handle Device Name Updates
         elif reason_msg.msg_type == MessageType.DEVICE_NAME:
             text = "".join(chr(c) for c in reason_msg.data).rstrip()
-            print(f"  *** DEVICE_NAME received: '{text}'")
+            if self.verbose_sysex:
+                print(f"  Device: '{text}'")
             self.device_name = text
 
             if self.current_mode in ('device', 'track'):
@@ -1532,15 +1540,19 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="OpenPush - Push to Reason Bridge")
     parser.add_argument('--sim', action='store_true', help="Use Push Simulator instead of real hardware")
+    parser.add_argument('-v', '--verbose', action='store_true', help="Enable verbose SysEx logging")
     args = parser.parse_args()
 
     print("=" * 50)
     print("  OpenPush - Push to Reason Bridge")
     if args.sim:
         print("  (SIMULATOR MODE)")
+    if args.verbose:
+        print("  (VERBOSE LOGGING)")
     print("=" * 50)
 
     app = OpenPushApp()
+    app.verbose_sysex = args.verbose
     app.create_virtual_ports()
     app.list_ports()
 
