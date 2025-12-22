@@ -104,6 +104,17 @@ BUTTONS = {
     'lower_5': 106, 'lower_6': 107, 'lower_7': 108, 'lower_8': 109,
 }
 
+# Track mode encoder/button mappings (Push 1 encoders above display)
+TRACK_ENCODER_CCS = {
+    'track_select': 72,
+    'playhead_bars': 73,
+    'patch_select': 74,
+    'left_loop': 75,
+    'right_loop': 76,
+}
+PLAYHEAD_BEATS_CC = 81  # Shift+Playhead (fine)
+TRACK_BUTTON_CCS = set(range(20, 28)) | set(range(102, 110))
+
 # Reverse lookup
 CC_TO_BUTTON = {v: k for k, v in BUTTONS.items()}
 
@@ -132,6 +143,12 @@ class OpenPushApp:
         # Display data from Reason (updated via SysEx)
         # Don't overwrite these - Reason controls this content
         self.reason_lcd_lines = ["", "", "", ""]  # 4 lines of 68 chars each
+        self.device_param_names = [""] * 8
+        self.device_param_values = [""] * 8
+        self.device_name = ""
+        self.mixer_track_names = [""] * 8
+        self.mixer_volume_values = [""] * 8
+        self.mixer_levels = [0] * 8
 
         # Isomorphic Controller State
         self.layout = IsomorphicLayout()
@@ -420,6 +437,30 @@ Once configured, Reason will remember these settings permanently!
         msg = mido.Message("sysex", data=data)
         self.push_out_port.send(msg)
 
+    @staticmethod
+    def _clean_reason_text(text):
+        """Normalize Reason text by stripping nulls/control chars."""
+        cleaned = []
+        for ch in text or "":
+            code = ord(ch)
+            if code == 0:
+                continue
+            if 32 <= code < 127:
+                cleaned.append(ch)
+            else:
+                cleaned.append(" ")
+        return "".join(cleaned).strip()
+
+    @staticmethod
+    def _format_8x8_line(fields):
+        """Format 8 fields of 8 chars into a 68-char LCD line."""
+        padded = [str(f or "")[:8].ljust(8) for f in fields]
+        seg0 = padded[0] + " " + padded[1]
+        seg1 = padded[2] + " " + padded[3]
+        seg2 = padded[4] + " " + padded[5]
+        seg3 = padded[6] + " " + padded[7]
+        return seg0 + seg1 + seg2 + seg3
+
     def _update_grid(self):
         """Update pad grid based on current mode."""
         if not self.push_out_port:
@@ -565,6 +606,22 @@ Once configured, Reason will remember these settings permanently!
                     self._handle_scale_mode_button(cc, value)
                     return
 
+            # Track mode encoders (route to Reason Transport)
+            if cc in range(71, 79):
+                if self.current_mode == 'track':
+                    if cc == TRACK_ENCODER_CCS['playhead_bars'] and self.shift_held:
+                        fine_msg = mido.Message('control_change', channel=0, control=PLAYHEAD_BEATS_CC, value=value)
+                        self._send_to_transport(fine_msg)
+                    elif cc in TRACK_ENCODER_CCS.values():
+                        self._send_to_transport(msg)
+                    return
+                elif self.current_mode == 'device':
+                    self._send_to_devices(msg)
+                    return
+                elif self.current_mode == 'mixer':
+                    self._send_to_mixer(msg)
+                    return
+
             # Transport controls
             if cc == BUTTONS['play']:
                 if self.shift_held:
@@ -630,10 +687,21 @@ Once configured, Reason will remember these settings permanently!
             elif cc == BUTTONS['browse']:
                 self._set_mode('browse')
 
+            # Track mode buttons (16 buttons below LCD)
+            elif self.current_mode == 'track' and cc in TRACK_BUTTON_CCS:
+                self._send_to_transport(msg)
+                return
+
+            # Track mode mute/solo buttons
+            elif self.current_mode == 'track' and cc in (BUTTONS['mute'], BUTTONS['solo']):
+                self._send_to_transport(msg)
+                return
+
             # Phase 2: Loop/Metronome/Tap Tempo
             elif cc == BUTTONS['double_loop']:  # CC 117 - using Double Loop button for Loop On/Off
                 self.loop_on = not getattr(self, 'loop_on', False)
                 self._send_to_transport(msg)
+                self._send_to_devices(msg)
                 self._set_button_led(BUTTONS['double_loop'], 4 if self.loop_on else 1)
                 print(f"  -> Loop {'ON' if self.loop_on else 'OFF'}")
 
@@ -777,6 +845,10 @@ Once configured, Reason will remember these settings permanently!
             self._update_track_display()
         elif self.current_mode == 'note':
             self._update_note_display()
+        elif self.current_mode == 'device':
+            self._update_device_display()
+        elif self.current_mode == 'mixer':
+            self._update_mixer_display()
         else:
             self._update_default_display()
 
@@ -784,19 +856,17 @@ Once configured, Reason will remember these settings permanently!
         """Update LCD for Track mode - shows track/tempo from Reason.
 
         Layout based on PusheR Track mode:
-        - Line 1: Track name from Reason (or "Select a track")
-        - Line 2: Document/Song name
-        - Lines 3-4: Reserved for future (tempo, position, loop points)
+        - Line 1: Header ("Track")
+        - Line 2: Track name from Reason
+        - Line 3: Document/Song name from Reason
+        - Line 4: Reserved
         """
-        # Line 1: Track name from Reason
-        track_name = self.reason_lcd_lines[0].strip() if self.reason_lcd_lines[0].strip() else "Select a track"
-        self._set_lcd_segments(1, track_name[:17], "", "", "Track")
+        raw_track = self.reason_lcd_lines[0] if self.reason_lcd_lines else ""
+        track_text = self._clean_reason_text(raw_track)
+        device_text = self._clean_reason_text(self.device_name)
 
-        # Line 2: Document name
-        doc_name = self.reason_lcd_lines[1].strip() if self.reason_lcd_lines[1].strip() else ""
-        self._set_lcd_segments(2, doc_name[:17], "", "", "")
-
-        # Lines 3-4: Placeholder for future (tempo, position, loop points)
+        self._set_lcd_line_raw(1, f"Track: {track_text or '(waiting)'}")
+        self._set_lcd_line_raw(2, f"Device: {device_text or '(waiting)'}")
         self._set_lcd_segments(3, "", "", "", "")
         self._set_lcd_segments(4, "", "", "", "")
 
@@ -819,12 +889,15 @@ Once configured, Reason will remember these settings permanently!
 
         if has_reason_data:
             # Lines 2-4: Reason's display data if available
-            for i in range(1, 4):  # Lines 2, 3, 4
+            # Map Reason Line 0 (Track Name) -> Physical Line 2
+            # Map Reason Line 1 (Doc Name)   -> Physical Line 3
+            # Map Reason Line 2              -> Physical Line 4
+            for i in range(0, 3):
                 line = self.reason_lcd_lines[i] if i < len(self.reason_lcd_lines) else ""
                 if line.strip():
-                    self._set_lcd_line_raw(i + 1, line)
+                    self._set_lcd_line_raw(i + 2, line)
                 else:
-                    self._set_lcd_segments(i + 1, "", "", "", "")
+                    self._set_lcd_segments(i + 2, "", "", "", "")
         else:
             # No Reason data - clear remaining lines
             self._set_lcd_segments(2, "", "", "", "")
@@ -846,18 +919,38 @@ Once configured, Reason will remember these settings permanently!
             # Line 1: Mode name + status (always show our info)
             self._set_lcd_segments(1, mode_display, "", "", status)
             # Lines 2-4: Reason's display data if available
-            for i in range(1, 4):  # Lines 2, 3, 4
+            # Map Reason Line 0 (Track Name) -> Physical Line 2
+            for i in range(0, 3):
                 line = self.reason_lcd_lines[i] if i < len(self.reason_lcd_lines) else ""
                 if line.strip():
-                    self._set_lcd_line_raw(i + 1, line)
+                    self._set_lcd_line_raw(i + 2, line)
                 else:
-                    self._set_lcd_segments(i + 1, "", "", "", "")
+                    self._set_lcd_segments(i + 2, "", "", "", "")
         else:
             # No Reason data - show mode name only
             self._set_lcd_segments(1, mode_display, "", "", status)
             self._set_lcd_segments(2, "Waiting for", "Reason", "data...", "")
             self._set_lcd_segments(3, "", "", "", "")
             self._set_lcd_segments(4, "", "", "", "")
+
+    def _update_device_display(self):
+        """Update LCD for device mode using Reason parameter data."""
+        status = "Playing" if self.playing else "Stopped"
+        device_name = self.device_name.strip() or "Device"
+
+        self._set_lcd_segments(1, "Device", device_name, "", status)
+        self._set_lcd_line_raw(2, self._format_8x8_line(self.device_param_names))
+        self._set_lcd_line_raw(3, self._format_8x8_line(self.device_param_values))
+        self._set_lcd_segments(4, "", "", "", "")
+
+    def _update_mixer_display(self):
+        """Update LCD for mixer mode using Reason track data."""
+        status = "Playing" if self.playing else "Stopped"
+
+        self._set_lcd_segments(1, "Mixer", "", "", status)
+        self._set_lcd_line_raw(2, self._format_8x8_line(self.mixer_track_names))
+        self._set_lcd_line_raw(3, self._format_8x8_line(self.mixer_volume_values))
+        self._set_lcd_segments(4, "", "", "", "")
 
     def _update_scale_display(self):
         """Update LCD for scale selection mode.
@@ -1262,8 +1355,76 @@ Once configured, Reason will remember these settings permanently!
             if 1 <= line_idx <= 4:
                 self.reason_lcd_lines[line_idx - 1] = text.ljust(68)[:68]
 
-            # Send directly to LCD
-            self._set_lcd_line_raw(line_idx, text)
+            # Update display based on current mode
+            self._update_display()
+            return True
+
+        # Handle Device Param Updates (names/values)
+        elif reason_msg.msg_type == MessageType.DEVICE_PARAM:
+            if len(reason_msg.data) < 2:
+                return False
+
+            param_index = reason_msg.data[0]  # 1-8
+            field_type = reason_msg.data[1]  # 0=name, 1=value
+            text = "".join(chr(c) for c in reason_msg.data[2:]).rstrip()
+
+            if 1 <= param_index <= 8:
+                idx = param_index - 1
+                if field_type == 0:
+                    self.device_param_names[idx] = text
+                elif field_type == 1:
+                    self.device_param_values[idx] = text
+
+            if self.current_mode == 'device':
+                self._update_display()
+            return True
+
+        # Handle Device Name Updates
+        elif reason_msg.msg_type == MessageType.DEVICE_NAME:
+            text = "".join(chr(c) for c in reason_msg.data).rstrip()
+            self.device_name = text
+
+            if self.current_mode in ('device', 'track'):
+                self._update_display()
+            return True
+
+        # Handle Mixer Track Names
+        elif reason_msg.msg_type == MessageType.MIXER_NAME:
+            if len(reason_msg.data) < 1:
+                return False
+
+            channel = reason_msg.data[0]
+            text = "".join(chr(c) for c in reason_msg.data[1:]).rstrip()
+            if 0 <= channel < 8:
+                self.mixer_track_names[channel] = text
+
+            if self.current_mode == 'mixer':
+                self._update_display()
+            return True
+
+        # Handle Mixer Volume Display Values
+        elif reason_msg.msg_type == MessageType.MIXER_VOLUME:
+            if len(reason_msg.data) < 1:
+                return False
+
+            channel = reason_msg.data[0]
+            text = "".join(chr(c) for c in reason_msg.data[1:]).rstrip()
+            if 0 <= channel < 8:
+                self.mixer_volume_values[channel] = text
+
+            if self.current_mode == 'mixer':
+                self._update_display()
+            return True
+
+        # Handle Mixer Meter Levels
+        elif reason_msg.msg_type == MessageType.MIXER_LEVEL:
+            if len(reason_msg.data) < 2:
+                return False
+
+            channel = reason_msg.data[0]
+            level = reason_msg.data[1]
+            if 0 <= channel < 8:
+                self.mixer_levels[channel] = level
             return True
 
         return False

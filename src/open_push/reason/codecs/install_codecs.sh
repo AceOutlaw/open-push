@@ -12,9 +12,12 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
     exit 1
 fi
 
-# Find all Reason apps
+# Find all Reason apps (handle spaces in app names)
 echo "Searching for Reason installations..."
-APPS=($(ls -d /Applications/Reason*.app 2>/dev/null))
+APPS=()
+while IFS= read -r -d '' app; do
+    APPS+=("$app")
+done < <(find /Applications -maxdepth 1 -type d -name "Reason*.app" -print0 2>/dev/null)
 
 if [ ${#APPS[@]} -eq 0 ]; then
     echo "Error: No Reason application found in /Applications."
@@ -29,7 +32,7 @@ else
     done
     
     echo
-    read -p "Select version to install to (0-$((${#APPS[@]}-1))): " SELECTION
+    read -r -p "Select version to install to (0-$((${#APPS[@]}-1))): " SELECTION
     
     if [[ ! "$SELECTION" =~ ^[0-9]+$ ]] || [ "$SELECTION" -ge "${#APPS[@]}" ]; then
         echo "Invalid selection."
@@ -41,13 +44,13 @@ else
 fi
 
 REMOTE_BASE="$REASON_APP_PATH/Contents/Resources/Remote"
-CODECS_DIR="$REMOTE_BASE/Codecs/Lua Codecs/OpenPush"
-MAPS_DIR="$REMOTE_BASE/Maps/OpenPush"
+DEFAULT_CODECS_DIR="$REMOTE_BASE/DefaultCodecs/Lua Codecs/OpenPush"
+DEFAULT_MAPS_DIR="$REMOTE_BASE/DefaultMaps/OpenPush"
 
 echo
 echo "Installing to:"
-echo "  Codecs: $CODECS_DIR"
-echo "  Maps:   $MAPS_DIR"
+echo "  DefaultCodecs: $DEFAULT_CODECS_DIR"
+echo "  DefaultMaps:   $DEFAULT_MAPS_DIR"
 echo
 
 # Check if Reason Remote directory exists
@@ -62,24 +65,24 @@ fi
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 echo "Installing to:"
-echo "  Codecs: $CODECS_DIR"
-echo "  Maps:   $MAPS_DIR"
+echo "  DefaultCodecs: $DEFAULT_CODECS_DIR"
+echo "  DefaultMaps:   $DEFAULT_MAPS_DIR"
 echo
 
 # Create directories if they don't exist
 echo "Creating directories..."
-sudo mkdir -p "$CODECS_DIR"
-sudo mkdir -p "$MAPS_DIR"
+sudo mkdir -p "$DEFAULT_CODECS_DIR"
+sudo mkdir -p "$DEFAULT_MAPS_DIR"
 
-# Copy codec files (.lua and .luacodec)
+# Copy codec files (.lua, .luacodec, .png)
 echo
 echo "Installing codec files..."
-for ext in lua luacodec; do
+for ext in lua luacodec png; do
     for file in "$SCRIPT_DIR"/OpenPush*.$ext; do
         if [ -f "$file" ]; then
             filename=$(basename "$file")
-            echo "  $filename -> Codecs/"
-            sudo cp "$file" "$CODECS_DIR/"
+            echo "  $filename -> DefaultCodecs/"
+            sudo cp "$file" "$DEFAULT_CODECS_DIR/"
         fi
     done
 done
@@ -90,8 +93,8 @@ echo "Installing remotemap files..."
 for file in "$SCRIPT_DIR"/*.remotemap; do
     if [ -f "$file" ]; then
         filename=$(basename "$file")
-        echo "  $filename -> Maps/"
-        sudo cp "$file" "$MAPS_DIR/"
+        echo "  $filename -> DefaultMaps/"
+        sudo cp "$file" "$DEFAULT_MAPS_DIR/"
     fi
 done
 
@@ -99,10 +102,10 @@ echo
 echo "Installation complete!"
 echo
 echo "Installed files:"
-echo "  Codecs:"
-ls -la "$CODECS_DIR" 2>/dev/null | grep -E "\.(lua|luacodec)$" | awk '{print "    " $NF}'
-echo "  Maps:"
-ls -la "$MAPS_DIR" 2>/dev/null | grep -E "\.remotemap$" | awk '{print "    " $NF}'
+echo "  DefaultCodecs:"
+ls -la "$DEFAULT_CODECS_DIR" 2>/dev/null | grep -E "\.(lua|luacodec)$" | awk '{print "    " $NF}'
+echo "  DefaultMaps:"
+ls -la "$DEFAULT_MAPS_DIR" 2>/dev/null | grep -E "\.remotemap$" | awk '{print "    " $NF}'
 echo
 echo "Next steps:"
 echo "1. Start the OpenPush bridge application"

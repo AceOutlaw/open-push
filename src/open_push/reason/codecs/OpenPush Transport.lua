@@ -11,11 +11,6 @@ Communication with the Python bridge uses custom SysEx:
 Port ID: 0x01 (Transport)
 ]]--
 
--- Item indices (must match order in remote_init items table)
--- Items: 1-9 transport, 10-11 encoders, 12-15 navigation, 16-17 browser, 18 keyboard, 19-20 LCD
-LCD1_ITEM = 19
-LCD2_ITEM = 20
-
 -- Message types (must match protocol.py MessageType)
 MSG_DISPLAY_LINE = 0x40
 MSG_REQUEST_LCD = 0x4F
@@ -29,9 +24,19 @@ g_last_input_item = 0
 
 -- Debug logging (see docs/18-lua-debugging-and-logging.md)
 -- Set to true to enable debug crash dump after 3 Play presses
-g_debug_enabled = false
+g_debug_enabled = true
 g_log_buffer = "=== OpenPush Transport Debug ===\n"
-g_play_press_count = 0
+g_track_state = {
+    track = "",
+    patch = "",
+    device = "",
+    song = "",
+    position = "",
+    left_loop = "",
+    right_loop = "",
+    loop_state = "",
+    tempo = "",
+}
 
 function log(msg)
     if g_debug_enabled then
@@ -66,6 +71,47 @@ local function pad_string(str, length)
     else
         return str .. string.rep(" ", length - string.len(str))
     end
+end
+
+local function build_segments(seg0, seg1, seg2, seg3)
+    return pad_string(seg0, 17) .. pad_string(seg1, 17) .. pad_string(seg2, 17) .. pad_string(seg3, 17)
+end
+
+local function set_display_line(line_idx, text)
+    local padded = pad_string(text, 68)
+    if g_display[line_idx].persistent_text ~= padded then
+        g_display[line_idx].persistent_text = padded
+        g_display[line_idx].dirty = true
+    end
+end
+
+local function update_track_display()
+    local line1 = pad_string(g_track_state.track, 34) .. pad_string(g_track_state.patch, 34)
+    local line2 = pad_string(g_track_state.device, 34) .. pad_string(g_track_state.song, 34)
+    local line3 = build_segments(
+        "Pos " .. g_track_state.position,
+        "L " .. g_track_state.left_loop,
+        "R " .. g_track_state.right_loop,
+        "BPM " .. g_track_state.tempo
+    )
+    local line4 = build_segments("Loop " .. g_track_state.loop_state, "", "", "")
+
+    set_display_line(1, line1)
+    set_display_line(2, line2)
+    set_display_line(3, line3)
+    set_display_line(4, line4)
+end
+
+local function get_changed_indices(changed_items)
+    local indices = {}
+    for k, v in pairs(changed_items) do
+        if type(k) == "number" and type(v) == "number" then
+            table.insert(indices, v)
+        elseif type(k) == "number" and v == true then
+            table.insert(indices, k)
+        end
+    end
+    return indices
 end
 
 -- Helper: Create OpenPush SysEx
@@ -116,7 +162,27 @@ function remote_init(manufacturer, model)
         -- We map LCD1 to Line 1 (Track Name) and LCD2 to Line 2 (Device/Doc Name)
         {name = "LCD1", output = "text"},
         {name = "LCD2", output = "text"},
-        -- ... add more if needed
+        {name = "LCD4", output = "text"},
+        {name = "LCD5", output = "text"},
+
+        -- Track mode controls and readouts
+        {name = "Track Select", input = "delta", output = "text"},
+        {name = "Patch Select", input = "delta", output = "text"},
+        {name = "Playhead Bars", input = "delta", output = "text"},
+        {name = "Playhead Beats", input = "delta", output = "text"},
+        {name = "Left Loop", input = "delta", output = "text"},
+        {name = "Right Loop", input = "delta", output = "text"},
+        {name = "Track Prev", input = "button"},
+        {name = "Track Next", input = "button"},
+        {name = "Patch Prev", input = "button"},
+        {name = "Patch Next", input = "button"},
+        {name = "Goto Left", input = "button"},
+        {name = "Goto Right", input = "button"},
+        {name = "Move Loop Left", input = "button"},
+        {name = "Move Loop Right", input = "button"},
+        {name = "Track Mute", input = "button", output = "value", min = 0, max = 1},
+        {name = "Track Solo", input = "button", output = "value", min = 0, max = 1},
+        {name = "Song Position", output = "text"},
     }
     remote.define_items(items)
 
@@ -134,11 +200,11 @@ function remote_init(manufacturer, model)
         {pattern = "bf 03 xx", name = "TapTempo", value = "x"},   -- CC 3
 
         -- Encoders (left side - relative values: 1-63=CW, 65-127=CCW)
-        -- Tempo encoder (CC 0x16/22, relative) - Scaled to reduce sensitivity
-        {pattern = "bf 16 xx", name = "Tempo", value = "(x - 64) / 4"},
+        -- Tempo encoder (CC 0x0E/14, relative) - Scaled to reduce sensitivity
+        {pattern = "bf 0e xx", name = "Tempo", value = "(x - 64) / 4"},
         
-        -- Click Level (CC 0x0E/14, relative) - Scaled
-        {pattern = "bf 0e xx", name = "ClickLevel", value = "(x - 64) / 4"},
+        -- Click Level (CC 0x0F/15, relative) - Scaled
+        {pattern = "bf 0f xx", name = "ClickLevel", value = "(x - 64) / 4"},
 
         -- Navigation (CC 0x60-0x63)
         {pattern = "bf 2e xx", name = "NavigateUp", value = "x"},
@@ -149,6 +215,36 @@ function remote_init(manufacturer, model)
         -- Browser
         {pattern = "bf 30 xx", name = "BrowserSelect", value = "x"},
         {pattern = "bf 33 xx", name = "BrowserBack", value = "x"},
+
+        -- Track mode encoders (Push 1 encoders above display)
+        {pattern = "bf 48 xx", name = "Track Select", value = "x - 64"},   -- CC 72
+        {pattern = "bf 49 xx", name = "Playhead Bars", value = "x - 64"},  -- CC 73
+        {pattern = "bf 51 xx", name = "Playhead Beats", value = "x - 64"}, -- CC 81 (Shift+Playhead)
+        {pattern = "bf 4a xx", name = "Patch Select", value = "x - 64"},   -- CC 74
+        {pattern = "bf 4b xx", name = "Left Loop", value = "x - 64"},      -- CC 75
+        {pattern = "bf 4c xx", name = "Right Loop", value = "x - 64"},     -- CC 76
+
+        -- Track mode buttons (16 buttons below LCD)
+        {pattern = "bf 14 xx", name = "Track Prev", value = "x"},          -- CC 20
+        {pattern = "bf 15 xx", name = "Track Next", value = "x"},          -- CC 21
+        {pattern = "bf 16 xx", name = "Patch Prev", value = "x"},          -- CC 22
+        {pattern = "bf 17 xx", name = "Patch Next", value = "x"},          -- CC 23
+        {pattern = "bf 18 xx", name = "Goto Left", value = "x"},           -- CC 24
+        {pattern = "bf 19 xx", name = "Goto Right", value = "x"},          -- CC 25
+        {pattern = "bf 1a xx", name = "Move Loop Left", value = "x"},      -- CC 26
+        {pattern = "bf 1b xx", name = "Move Loop Right", value = "x"},     -- CC 27
+        {pattern = "bf 66 xx", name = "Track Prev", value = "x"},          -- CC 102
+        {pattern = "bf 67 xx", name = "Track Next", value = "x"},          -- CC 103
+        {pattern = "bf 68 xx", name = "Patch Prev", value = "x"},          -- CC 104
+        {pattern = "bf 69 xx", name = "Patch Next", value = "x"},          -- CC 105
+        {pattern = "bf 6a xx", name = "Goto Left", value = "x"},           -- CC 106
+        {pattern = "bf 6b xx", name = "Goto Right", value = "x"},          -- CC 107
+        {pattern = "bf 6c xx", name = "Move Loop Left", value = "x"},      -- CC 108
+        {pattern = "bf 6d xx", name = "Move Loop Right", value = "x"},     -- CC 109
+
+        -- Track mute/solo buttons (dedicated hardware buttons)
+        {pattern = "bf 3c xx", name = "Track Mute", value = "x"},          -- CC 60
+        {pattern = "bf 3d xx", name = "Track Solo", value = "x"},          -- CC 61
 
         -- Keyboard
         {pattern = "<100x>f yy zz", name = "Keyboard"},
@@ -176,56 +272,123 @@ function remote_on_auto_input(item_index)
         local item_value = remote.get_item_value(item_index) or -1
         log("AUTO_INPUT: item=" .. item_index .. " name=" .. item_name .. " value=" .. tostring(item_value))
 
-        -- If Play pressed (item 1), count and dump after 3
-        if item_index == 1 then
-            g_play_press_count = g_play_press_count + 1
-            log("PLAY pressed! Count=" .. g_play_press_count)
-
-            -- Also check if item is enabled (mapped)
-            local is_enabled = remote.is_item_enabled(item_index)
-            log("  is_item_enabled=" .. tostring(is_enabled))
-
-            -- Dump after 3 presses to see what's happening
-            if g_play_press_count >= 3 then
-                dump_log()
-            end
-        end
     end
 end
 
 function remote_set_state(changed_items)
-    -- Handle Persistent Text Updates (LCD1 -> Line 1, LCD2 -> Line 2)
-    -- Indices: LCD1=19, LCD2=20 (see items table in remote_init)
+    local changed = get_changed_indices(changed_items)
+    local track_dirty = false
+    local track_name_items = {
+        ["LCD1"] = true,
+        ["LCD5"] = true,
+        ["Target Track Name"] = true,
+    }
+    local song_name_items = {
+        ["LCD2"] = true,
+        ["LCD4"] = true,
+        ["Document Name"] = true,
+    }
+    local device_name_items = {
+        ["Device Name"] = true,
+        ["Target Device Name"] = true,
+    }
+    local patch_items = {
+        ["Patch Select"] = true,
+        ["Select Patch for Target Device (Delta)"] = true,
+        ["Select Patch for Target Device"] = true,
+    }
+    local bars_items = {
+        ["Playhead Bars"] = true,
+        ["Bar Position"] = true,
+    }
+    local beats_items = {
+        ["Playhead Beats"] = true,
+        ["Beat Position"] = true,
+    }
+    local tempo_items = {
+        ["Tempo"] = true,
+        ["Tempo BPM"] = true,
+    }
 
-    -- Line 1 (Track Name)
-    if changed_items[LCD1_ITEM] then
-        local text = remote.get_item_text_value(LCD1_ITEM)
-        g_display[1].persistent_text = pad_string(text, 68)
-        g_display[1].dirty = true
+    for _, idx in ipairs(changed) do
+        local name = remote.get_item_name(idx)
+        if name then
+            log(string.format("CHANGED idx=%d name=%s", idx, name))
+        end
+
+        if name and track_name_items[name] then
+            g_track_state.track = remote.get_item_text_value(idx) or ""
+            log(string.format("ITEM %s idx=%d text='%s'", name, idx, g_track_state.track or ""))
+            track_dirty = true
+        elseif name and song_name_items[name] then
+            g_track_state.song = remote.get_item_text_value(idx) or ""
+            log(string.format("ITEM %s idx=%d text='%s'", name, idx, g_track_state.song or ""))
+            track_dirty = true
+        elseif name and device_name_items[name] then
+            g_track_state.device = remote.get_item_text_value(idx) or ""
+            log(string.format("ITEM %s idx=%d text='%s'", name, idx, g_track_state.device or ""))
+            track_dirty = true
+        elseif name and tempo_items[name] then
+            local val = remote.get_item_text_value(idx) or ""
+            local tempo_name = name == "Tempo BPM" and "Tempo" or name
+            log(string.format("ITEM %s idx=%d text='%s'", tempo_name, idx, val or ""))
+            g_display[1].popup_text = pad_string(tempo_name .. ": " .. val, 68)
+            g_display[1].is_popup = true
+            g_display[1].timer = remote.get_time_ms() + 1500 -- 1.5s popup
+            g_display[1].dirty = true
+            g_track_state.tempo = val
+            track_dirty = true
+        elseif name and patch_items[name] then
+            g_track_state.patch = remote.get_item_text_value(idx) or ""
+            log(string.format("ITEM %s idx=%d text='%s'", name, idx, g_track_state.patch or ""))
+            track_dirty = true
+        elseif name and bars_items[name] then
+            g_track_state.position = remote.get_item_text_value(idx) or ""
+            log(string.format("ITEM %s idx=%d text='%s'", name, idx, g_track_state.position or ""))
+            track_dirty = true
+        elseif name and beats_items[name] then
+            local beat = remote.get_item_text_value(idx) or ""
+            log(string.format("ITEM %s idx=%d text='%s'", name, idx, beat or ""))
+            if g_track_state.position ~= "" and beat ~= "" then
+                g_track_state.position = g_track_state.position .. ":" .. beat
+            elseif beat ~= "" then
+                g_track_state.position = beat
+            end
+            track_dirty = true
+        elseif name == "Song Position" then
+            g_track_state.position = remote.get_item_text_value(idx)
+            log(string.format("ITEM %s idx=%d text='%s'", name, idx, g_track_state.position or ""))
+            track_dirty = true
+        elseif name == "Left Loop" then
+            g_track_state.left_loop = remote.get_item_text_value(idx)
+            log(string.format("ITEM %s idx=%d text='%s'", name, idx, g_track_state.left_loop or ""))
+            track_dirty = true
+        elseif name == "Right Loop" then
+            g_track_state.right_loop = remote.get_item_text_value(idx)
+            log(string.format("ITEM %s idx=%d text='%s'", name, idx, g_track_state.right_loop or ""))
+            track_dirty = true
+        elseif name == "Loop" then
+            local loop_val = remote.get_item_value(idx) or 0
+            g_track_state.loop_state = loop_val > 0 and "On" or "Off"
+            log(string.format("ITEM %s idx=%d value=%s", name, idx, tostring(loop_val)))
+            track_dirty = true
+        end
     end
 
-    -- Line 2 (Device/Doc Name)
-    if changed_items[LCD2_ITEM] then
-        local text = remote.get_item_text_value(LCD2_ITEM)
-        g_display[2].persistent_text = pad_string(text, 68)
-        g_display[2].dirty = true
-    end
-
-    -- Handle Popups for Controls (Tempo, etc.)
-    -- Tempo is item 10 (see items table)
-    if changed_items[10] then
-        local val = remote.get_item_text_value(10)
-        local name = remote.get_item_name(10)
-        
-        -- Show "Tempo: 120.00" on Line 1
-        g_display[1].popup_text = pad_string(name .. ": " .. val, 68)
-        g_display[1].is_popup = true
-        g_display[1].timer = remote.get_time_ms() + 1500 -- 1.5s popup
-        g_display[1].dirty = true
+    if track_dirty then
+        update_track_display()
     end
 end
 
 function remote_process_midi(event)
+    -- Manual debug dump on CC117 (Loop/Double Loop button on Push)
+    local trigger = remote.match_midi("bf 75 xx", event)
+    if trigger and trigger.x > 0 then
+        log("DEBUG dump triggered by CC117")
+        dump_log()
+        return true
+    end
+
     -- Check for Request LCD SysEx
     local ret = remote.match_midi("f0 00 11 22 01 4f", event)
     if ret then
@@ -242,7 +405,7 @@ function remote_deliver_midi(max_bytes, port)
     local events = {}
     local time = remote.get_time_ms()
 
-    for i = 1, 2 do -- Only checking lines 1 & 2 for now
+    for i = 1, 4 do
         local line = g_display[i]
 
         -- Check Timer Expiry

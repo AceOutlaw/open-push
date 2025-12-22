@@ -5,18 +5,22 @@ OpenPush Transport Control Surface Definition
 This file tells Reason about the OpenPush Transport control surface.
 ]]--
 
+version = {1, 0, 0}
+
 function remote_supported_control_surfaces()
     local surfaces = {
         {
             manufacturer = "OpenPush",
             model = "Transport",
             source = "OpenPush Transport.lua",
+            picture = "OpenPush Transport.png",
             in_ports = {
                 {description = "OpenPush Transport In"}
             },
             out_ports = {
                 {description = "OpenPush Transport Out"}
             },
+            has_keyboard = true,
         }
     }
     return surfaces

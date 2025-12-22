@@ -34,12 +34,45 @@ g_last_input_time = 0
 g_encoder_touch = {}
 g_lcd_state = {}
 
+-- Cached item indices (set in remote_init)
+g_device_name_index = nil
+g_param_name_indices = {}
+g_param_value_indices = {}
+
+-- Debug logging (see docs/18-lua-debugging-and-logging.md)
+g_debug_enabled = true
+g_log_buffer = "=== OpenPush Devices Debug ===\n"
+
 for i = 1, 8 do
     g_encoder_touch[i] = false
 end
 
 for i = 1, 24 do
     g_lcd_state[i] = {text = string.rep(" ", 8), changed = false}
+end
+
+local function log(msg)
+    if g_debug_enabled then
+        g_log_buffer = g_log_buffer .. msg .. "\n"
+    end
+end
+
+local function dump_log()
+    if g_debug_enabled then
+        error(g_log_buffer)
+    end
+end
+
+local function get_changed_indices(changed_items)
+    local indices = {}
+    for k, v in pairs(changed_items) do
+        if type(k) == "number" and type(v) == "number" then
+            table.insert(indices, v)
+        elseif type(k) == "number" and v == true then
+            table.insert(indices, k)
+        end
+    end
+    return indices
 end
 
 ------------------------------------------------------------------------
@@ -210,6 +243,24 @@ function remote_init(manufacturer, model)
     }
 
     remote.define_auto_outputs(outputs)
+
+    -- Cache item indices for faster lookup
+    -- Items are 1-indexed in Lua, indices match position in items table:
+    -- Encoders(1-8), Touch(9-16), Upper(17-24), Lower(25-32),
+    -- DevNav(33-35), Keyboard(36), ParamName(37-44), ParamValue(45-52), DeviceName(53)
+    g_device_name_index = 53
+    for i = 1, 8 do
+        g_param_name_indices[i] = 36 + i  -- 37-44
+        g_param_value_indices[i] = 44 + i  -- 45-52
+    end
+
+    log(string.format("INIT: Device Name index = %d", g_device_name_index or -1))
+
+    if g_debug_enabled then
+        g_lcd_state[17].text = string.format("%-16.16s", "DEV CODEC OK")
+        g_lcd_state[17].changed = true
+        log("INIT: queued device name debug marker")
+    end
 end
 
 function remote_on_auto_input(item_index)
@@ -219,46 +270,115 @@ function remote_on_auto_input(item_index)
 end
 
 function remote_set_state(changed_items)
-    -- Handle LCD parameter name updates
-    for i = 1, 8 do
-        local name_item = string.format("Param Name %d", i)
-        if changed_items[name_item] then
-            local text = remote.get_item_text_value(remote.get_item_index(name_item))
-            text = string.format("%-8.8s", text or "")
-            if text ~= g_lcd_state[i].text then
-                g_lcd_state[i].text = text
-                g_lcd_state[i].changed = true
-            end
-        end
-    end
+    local changed = get_changed_indices(changed_items)
 
-    -- Handle LCD parameter value updates
-    for i = 1, 8 do
-        local value_item = string.format("Param Value %d", i)
-        if changed_items[value_item] then
-            local text = remote.get_item_text_value(remote.get_item_index(value_item))
-            text = string.format("%-8.8s", text or "")
-            local idx = i + 8
-            if text ~= g_lcd_state[idx].text then
-                g_lcd_state[idx].text = text
-                g_lcd_state[idx].changed = true
-            end
-        end
-    end
+    for _, idx in ipairs(changed) do
+        local name = remote.get_item_name(idx) or ""
+        log(string.format("CHANGED idx=%d name='%s'", idx, name))
 
-    -- Handle device name
-    if changed_items["Device Name"] then
-        local text = remote.get_item_text_value(remote.get_item_index("Device Name"))
-        text = string.format("%-16.16s", text or "")
-        if text ~= g_lcd_state[17].text then
-            g_lcd_state[17].text = text
-            g_lcd_state[17].changed = true
+        -- Check for Device Name by cached index (static strings return empty name)
+        if g_device_name_index and idx == g_device_name_index then
+            -- Try multiple SDK functions to read static string value
+            local text = remote.get_item_text_value(idx)
+            log(string.format("  DeviceName via text_value: '%s'", text or "nil"))
+
+            -- If empty, try get_item_name (static strings may be the "name")
+            if not text or text == "" then
+                text = remote.get_item_name(idx)
+                log(string.format("  DeviceName via item_name: '%s'", text or "nil"))
+            end
+
+            -- If still empty, try name_and_value
+            if not text or text == "" then
+                text = remote.get_item_name_and_value(idx)
+                log(string.format("  DeviceName via name_and_value: '%s'", text or "nil"))
+            end
+
+            -- If we got something, update LCD
+            if text and text ~= "" then
+                text = string.format("%-16.16s", text)
+                if text ~= g_lcd_state[17].text then
+                    g_lcd_state[17].text = text
+                    g_lcd_state[17].changed = true
+                    log(string.format("  DeviceName UPDATED to: '%s'", text))
+                end
+            end
+
+        -- Check for Param Name by cached indices
+        else
+            local handled = false
+            for i = 1, 8 do
+                if g_param_name_indices[i] and idx == g_param_name_indices[i] then
+                    local text = remote.get_item_text_value(idx)
+                    text = string.format("%-8.8s", text or "")
+                    if text ~= g_lcd_state[i].text then
+                        g_lcd_state[i].text = text
+                        g_lcd_state[i].changed = true
+                    end
+                    handled = true
+                    break
+                elseif g_param_value_indices[i] and idx == g_param_value_indices[i] then
+                    local text = remote.get_item_text_value(idx)
+                    text = string.format("%-8.8s", text or "")
+                    local slot = i + 8
+                    if text ~= g_lcd_state[slot].text then
+                        g_lcd_state[slot].text = text
+                        g_lcd_state[slot].changed = true
+                    end
+                    handled = true
+                    break
+                end
+            end
+
+            -- Fallback: match by name for backward compatibility
+            if not handled and name ~= "" then
+                if string.sub(name, 1, 11) == "Param Name " then
+                    local i = tonumber(string.sub(name, 12))
+                    if i and i >= 1 and i <= 8 then
+                        local text = remote.get_item_text_value(idx)
+                        text = string.format("%-8.8s", text or "")
+                        if text ~= g_lcd_state[i].text then
+                            g_lcd_state[i].text = text
+                            g_lcd_state[i].changed = true
+                        end
+                    end
+                elseif string.sub(name, 1, 12) == "Param Value " then
+                    local i = tonumber(string.sub(name, 13))
+                    if i and i >= 1 and i <= 8 then
+                        local text = remote.get_item_text_value(idx)
+                        text = string.format("%-8.8s", text or "")
+                        local slot = i + 8
+                        if text ~= g_lcd_state[slot].text then
+                            g_lcd_state[slot].text = text
+                            g_lcd_state[slot].changed = true
+                        end
+                    end
+                end
+            end
         end
     end
 end
 
 function remote_deliver_midi(max_bytes, port)
     local events = {}
+
+    -- Poll for device name if not yet set (fallback for static strings)
+    if g_device_name_index then
+        local enabled = remote.is_item_enabled(g_device_name_index)
+        if enabled then
+            local text = remote.get_item_text_value(g_device_name_index)
+            if not text or text == "" then
+                text = remote.get_item_name(g_device_name_index)
+            end
+            if text and text ~= "" then
+                local formatted = string.format("%-16.16s", text)
+                if formatted ~= g_lcd_state[17].text then
+                    g_lcd_state[17].text = formatted
+                    g_lcd_state[17].changed = true
+                end
+            end
+        end
+    end
 
     -- Send parameter name updates (fields 1-8)
     for i = 1, 8 do
@@ -303,6 +423,18 @@ function remote_deliver_midi(max_bytes, port)
     return events
 end
 
+function remote_process_midi(event)
+    -- Manual debug dump on CC117 (Loop/Double Loop button on Push)
+    local trigger = remote.match_midi("bf 75 xx", event)
+    if trigger and trigger.x > 0 then
+        log("DEBUG dump triggered by CC117")
+        dump_log()
+        return true
+    end
+
+    return false
+end
+
 function remote_probe(manufacturer, model, prober)
     return {
         request = "f0 00 11 22 02 f0 f7",
@@ -311,6 +443,19 @@ function remote_probe(manufacturer, model, prober)
 end
 
 function remote_prepare_for_use()
+    -- Force initial device name check on surface activation
+    if g_device_name_index then
+        local text = remote.get_item_text_value(g_device_name_index)
+        if not text or text == "" then
+            text = remote.get_item_name(g_device_name_index)
+        end
+        if text and text ~= "" then
+            text = string.format("%-16.16s", text)
+            g_lcd_state[17].text = text
+            g_lcd_state[17].changed = true
+            log(string.format("PREPARE: initial device name = '%s'", text))
+        end
+    end
     return {}
 end
 

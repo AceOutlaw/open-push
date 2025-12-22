@@ -8,6 +8,7 @@ Map Version	1.0.0
 //=========================================================================
 // OpenPush Devices Remotemap
 // Maps Devices codec items to Reason device parameters
+// NOTE: Device Name remotable only exists within device-specific scopes
 //=========================================================================
 
 Scope	Propellerheads	Master Keyboard
@@ -22,8 +23,8 @@ Map	Keyboard		Keyboard
 Scope	Propellerheads	Kong Drum Designer
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
 
-// Display device name
-Map	Device Name		"Kong"
+// Device name (dynamic instance name from Reason)
+Map	Device Name		Device Name
 
 // Master level on encoder 8
 Map	Encoder 8		Master Level
@@ -55,8 +56,8 @@ Map	Param Name 8		"Master"
 Scope	Propellerheads	Redrum Drum Computer
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
 
-// Display device name
-Map	Device Name		"Redrum"
+// Device name
+Map	Device Name		Device Name
 
 // Master level
 Map	Encoder 8		Master Level
@@ -98,8 +99,8 @@ Map	Lower Button 8		Drum 8 Mute
 Scope	Propellerheads	Dr.OctoRex Loop Player
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
 
-// Display device name
-Map	Device Name		"Dr.OctoRex"
+// Device name
+Map	Device Name		Device Name
 
 // Master level
 Map	Encoder 8		Master Level
@@ -144,7 +145,8 @@ Map	Lower Button 1		Run
 Scope	Propellerheads	Subtractor Analog Synthesizer
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
 
-Map	Device Name		"Subtractor"
+// Device name
+Map	Device Name		Device Name
 
 // Filter and amp envelope
 Map	Encoder 1		Filter Freq
@@ -173,7 +175,8 @@ Map	Param Name 8		"Level"
 Scope	Propellerheads	Thor Polysonic Synthesizer
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
 
-Map	Device Name		"Thor"
+// Device name
+Map	Device Name		Device Name
 
 // Rotary knobs and buttons
 Map	Encoder 1		Rotary 1
@@ -202,7 +205,8 @@ Map	Param Name 8		"Button 4"
 Scope	Propellerheads	Malstrom Graintable Synthesizer
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
 
-Map	Device Name		"Malstrom"
+// Device name
+Map	Device Name		Device Name
 
 // Rotary controls
 Map	Encoder 1		Rotary 1
@@ -222,7 +226,8 @@ Map	Encoder 8		Button 4
 Scope	Propellerheads	NN-XT Advanced Sampler
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
 
-Map	Device Name		"NN-XT"
+// Device name
+Map	Device Name		Device Name
 
 // Main controls
 Map	Encoder 1		Filter Freq
@@ -246,12 +251,24 @@ Map	Param Name 8		"Volume"
 //eos
 
 //=========================================================================
+// NN-19 Digital Sampler
+//=========================================================================
+Scope	Propellerheads	NN19 Digital Sampler
+//	Control Surface Item	Key	Remotable Item	Scale	Mode
+
+// Device name
+Map	Device Name		Device Name
+
+//eos
+
+//=========================================================================
 // Combinator - Combination Device
 //=========================================================================
 Scope	Propellerheads	Combinator
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
 
-Map	Device Name		"Combinator"
+// Device name
+Map	Device Name		Device Name
 
 // Programmer controls
 Map	Encoder 1		Rotary 1
@@ -282,6 +299,9 @@ Map	Lower Button 1		Run Pattern Devices
 //=========================================================================
 Scope	Propellerheads	Reason Rack Plugin
 //	Control Surface Item	Key	Remotable Item	Scale	Mode
+
+// Device name
+Map	Device Name		Device Name
 
 // Standard rotary/button mapping used by most rack extensions
 Map	Encoder 1		Rotary 1

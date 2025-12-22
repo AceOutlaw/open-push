@@ -5,12 +5,15 @@ OpenPush Devices Control Surface Definition
 This file tells Reason about the OpenPush Devices control surface.
 ]]--
 
+version = {1, 0, 0}
+
 function remote_supported_control_surfaces()
     local surfaces = {
         {
             manufacturer = "OpenPush",
             model = "Devices",
             source = "OpenPush Devices.lua",
+            picture = "OpenPush Devices.png",
             in_ports = {
                 {description = "OpenPush Devices In"}
             },

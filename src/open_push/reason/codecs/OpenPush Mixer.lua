@@ -43,6 +43,18 @@ for i = 1, 8 do
     g_track_meters[i] = 0
 end
 
+local function get_changed_indices(changed_items)
+    local indices = {}
+    for k, v in pairs(changed_items) do
+        if type(k) == "number" and type(v) == "number" then
+            table.insert(indices, v)
+        elseif type(k) == "number" and v == true then
+            table.insert(indices, k)
+        end
+    end
+    return indices
+end
+
 ------------------------------------------------------------------------
 -- REMOTE SDK CALLBACKS
 ------------------------------------------------------------------------
@@ -297,39 +309,38 @@ function remote_on_auto_input(item_index)
 end
 
 function remote_set_state(changed_items)
-    -- Track names (fields 1-8)
-    for i = 1, 8 do
-        local name_item = string.format("Track Name %d", i)
-        if changed_items[name_item] then
-            local text = remote.get_item_text_value(remote.get_item_index(name_item))
-            text = string.format("%-8.8s", text or "")
-            if text ~= g_lcd_state[i].text then
-                g_lcd_state[i].text = text
-                g_lcd_state[i].changed = true
-            end
-        end
-    end
+    local changed = get_changed_indices(changed_items)
 
-    -- Volume displays (fields 9-16)
-    for i = 1, 8 do
-        local value_item = string.format("Volume Display %d", i)
-        if changed_items[value_item] then
-            local text = remote.get_item_text_value(remote.get_item_index(value_item))
-            text = string.format("%-8.8s", text or "")
-            local idx = i + 8
-            if text ~= g_lcd_state[idx].text then
-                g_lcd_state[idx].text = text
-                g_lcd_state[idx].changed = true
+    for _, item_index in ipairs(changed) do
+        local item_name = remote.get_item_name(item_index)
+        if item_name then
+            local track_index = string.match(item_name, "^Track Name (%d+)$")
+            if track_index then
+                local text = remote.get_item_text_value(item_index) or ""
+                text = string.format("%-8.8s", text)
+                local idx = tonumber(track_index)
+                if text ~= g_lcd_state[idx].text then
+                    g_lcd_state[idx].text = text
+                    g_lcd_state[idx].changed = true
+                end
+            else
+                local volume_index = string.match(item_name, "^Volume Display (%d+)$")
+                if volume_index then
+                    local text = remote.get_item_text_value(item_index) or ""
+                    text = string.format("%-8.8s", text)
+                    local idx = tonumber(volume_index) + 8
+                    if text ~= g_lcd_state[idx].text then
+                        g_lcd_state[idx].text = text
+                        g_lcd_state[idx].changed = true
+                    end
+                else
+                    local meter_index = string.match(item_name, "^Meter (%d+)$")
+                    if meter_index then
+                        local value = remote.get_item_value(item_index)
+                        g_track_meters[tonumber(meter_index)] = value or 0
+                    end
+                end
             end
-        end
-    end
-
-    -- Meters (for pad color feedback)
-    for i = 1, 8 do
-        local meter_item = string.format("Meter %d", i)
-        if changed_items[meter_item] then
-            local value = remote.get_item_value(remote.get_item_index(meter_item))
-            g_track_meters[i] = value or 0
         end
     end
 end

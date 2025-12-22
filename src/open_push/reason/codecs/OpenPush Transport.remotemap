@@ -34,15 +34,28 @@ Map	TapTempo		Tap Tempo
 Map	Tempo		Tempo BPM
 Map	ClickLevel		Click Level
 
-// Track navigation
-Map	NavigateUp		Target Previous Track
-Map	NavigateDown		Target Next Track
-Map	NavigateLeft		Select Prev Patch for Target Device
-Map	NavigateRight		Select Next Patch for Target Device
-
 // Display
-Map	LCD1		Target Track Name
-Map	LCD2		Document Name
+Map	LCD5		Target Track Name
+Map	LCD4		Document Name
+
+// Track mode controls
+Map	Track Select		Target Track (Delta)
+Map	Track Prev		Target Previous Track
+Map	Track Next		Target Next Track
+Map	Track Mute		Target Track Mute
+Map	Track Solo		Target Track Solo
+Map	Patch Select		Select Patch for Target Device (Delta)
+Map	Patch Prev		Select Prev Patch for Target Device
+Map	Patch Next		Select Next Patch for Target Device
+Map	Playhead Bars		Bar Position
+Map	Playhead Beats		Beat Position
+Map	Left Loop		Left Loop
+Map	Right Loop		Right Loop
+Map	Goto Left		Goto Left Locator
+Map	Goto Right		Goto Right Locator
+Map	Move Loop Left		Move Loop Left
+Map	Move Loop Right		Move Loop Right
+Map	Song Position		Song Position
 
 //eos
 
@@ -64,15 +77,28 @@ Map	TapTempo		Tap Tempo
 Map	Tempo		Tempo BPM
 Map	ClickLevel		Click Level
 
-// Track navigation
-Map	NavigateUp		Target Previous Track
-Map	NavigateDown		Target Next Track
-Map	NavigateLeft		Select Prev Patch for Target Device
-Map	NavigateRight		Select Next Patch for Target Device
-
 // Display
-Map	LCD1		Target Track Name
-Map	LCD2		Document Name
+Map	LCD5		Target Track Name
+Map	LCD4		Document Name
+
+// Track mode controls
+Map	Track Select		Target Track (Delta)
+Map	Track Prev		Target Previous Track
+Map	Track Next		Target Next Track
+Map	Track Mute		Target Track Mute
+Map	Track Solo		Target Track Solo
+Map	Patch Select		Select Patch for Target Device (Delta)
+Map	Patch Prev		Select Prev Patch for Target Device
+Map	Patch Next		Select Next Patch for Target Device
+Map	Playhead Bars		Bar Position
+Map	Playhead Beats		Beat Position
+Map	Left Loop		Left Loop
+Map	Right Loop		Right Loop
+Map	Goto Left		Goto Left Locator
+Map	Goto Right		Goto Right Locator
+Map	Move Loop Left		Move Loop Left
+Map	Move Loop Right		Move Loop Right
+Map	Song Position		Song Position
 
 //eos
 
@@ -94,14 +120,27 @@ Map	TapTempo		Tap Tempo
 Map	Tempo		Tempo BPM
 Map	ClickLevel		Click Level
 
-// Track navigation
-Map	NavigateUp		Target Previous Track
-Map	NavigateDown		Target Next Track
-Map	NavigateLeft		Select Prev Patch for Target Device
-Map	NavigateRight		Select Next Patch for Target Device
-
 // Display
-Map	LCD1		Target Track Name
-Map	LCD2		Document Name
+Map	LCD5		Target Track Name
+Map	LCD4		Document Name
+
+// Track mode controls
+Map	Track Select		Target Track (Delta)
+Map	Track Prev		Target Previous Track
+Map	Track Next		Target Next Track
+Map	Track Mute		Target Track Mute
+Map	Track Solo		Target Track Solo
+Map	Patch Select		Select Patch for Target Device (Delta)
+Map	Patch Prev		Select Prev Patch for Target Device
+Map	Patch Next		Select Next Patch for Target Device
+Map	Playhead Bars		Bar Position
+Map	Playhead Beats		Beat Position
+Map	Left Loop		Left Loop
+Map	Right Loop		Right Loop
+Map	Goto Left		Goto Left Locator
+Map	Goto Right		Goto Right Locator
+Map	Move Loop Left		Move Loop Left
+Map	Move Loop Right		Move Loop Right
+Map	Song Position		Song Position
 
 //eos

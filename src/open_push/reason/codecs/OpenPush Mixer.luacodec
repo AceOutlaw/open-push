@@ -5,12 +5,15 @@ OpenPush Mixer Control Surface Definition
 This file tells Reason about the OpenPush Mixer control surface.
 ]]--
 
+version = {1, 0, 0}
+
 function remote_supported_control_surfaces()
     local surfaces = {
         {
             manufacturer = "OpenPush",
             model = "Mixer",
             source = "OpenPush Mixer.lua",
+            picture = "OpenPush Mixer.png",
             in_ports = {
                 {description = "OpenPush Mixer In"}
             },
