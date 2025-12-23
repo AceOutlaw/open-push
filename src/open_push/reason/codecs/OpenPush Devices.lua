@@ -459,10 +459,47 @@ function remote_process_midi(event)
 end
 
 function remote_probe(manufacturer, model, prober)
-    return {
-        request = "f0 00 11 22 02 f0 f7",
-        response = "f0 00 11 22 02 f1 ?? f7"
-    }
+    -- Dynamic prober: find our specific port by name and verify with ping/pong
+    local port_name = "OpenPush Devices"
+    local request = "f0 00 11 22 02 70 f7"
+    local response = "f0 00 11 22 02 71 ?? f7"
+
+    -- Find input port (we receive from this = Reason's output)
+    local in_port = nil
+    for i = 1, prober:num_midi_outputs() do
+        local name = prober:midi_output_name(i)
+        if name and string.find(name, port_name) then
+            in_port = i
+            break
+        end
+    end
+
+    -- Find output port (we send to this = Reason's input)
+    local out_port = nil
+    for i = 1, prober:num_midi_inputs() do
+        local name = prober:midi_input_name(i)
+        if name and string.find(name, port_name) then
+            out_port = i
+            break
+        end
+    end
+
+    if not in_port or not out_port then
+        return nil  -- Port not found
+    end
+
+    -- Send probe and check response
+    prober:send_midi(out_port, remote.make_midi(request))
+    local received = prober:receive_midi(in_port, 200)  -- 200ms timeout
+
+    if received and remote.match_midi(response, received) then
+        return {
+            in_ports = {in_port},
+            out_ports = {out_port}
+        }
+    end
+
+    return nil
 end
 
 function remote_prepare_for_use()

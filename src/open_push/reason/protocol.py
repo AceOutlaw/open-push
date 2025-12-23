@@ -67,11 +67,11 @@ class MessageType(IntEnum):
     DISPLAY_CLEAR = 0x42       # Clear display
     REQUEST_LCD = 0x4F         # Request LCD text update from Reason
 
-    # System messages (0xF0-0xFF)
-    SYSTEM_PING = 0xF0
-    SYSTEM_PONG = 0xF1
-    SYSTEM_VERSION = 0xF2
-    SYSTEM_ERROR = 0xFF
+    # System messages (0x70-0x7F) - Must be <=0x7F for valid SysEx data
+    SYSTEM_PING = 0x70
+    SYSTEM_PONG = 0x71
+    SYSTEM_VERSION = 0x72
+    SYSTEM_ERROR = 0x7F
 
 
 @dataclass

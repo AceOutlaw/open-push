@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 from open_push.music.layout import IsomorphicLayout
 from open_push.music.scales import SCALES, SCALE_NAMES, is_in_scale, is_root_note, get_scale_display_name
 from open_push.core.constants import COLORS, BUTTON_CC, note_name
-from open_push.reason.protocol import ReasonMessage, MessageType
+from open_push.reason.protocol import ReasonMessage, MessageType, PortID
 
 # Root note names for display
 ROOT_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
@@ -253,6 +253,11 @@ class OpenPushApp:
 
             except Exception as e:
                 print(f"  Error creating {name}: {e}")
+
+        # Print Reason connection instructions
+        print("\n--- Ready for Reason ---")
+        print("If Reason is already running: Preferences → Control Surfaces → Auto-detect")
+        print("Otherwise, start Reason now and surfaces will be detected automatically")
 
     @staticmethod
     def print_iac_setup_instructions():
@@ -1381,9 +1386,16 @@ Once configured, Reason will remember these settings permanently!
             print(f"  SysEx from unknown port: {port_name}")
             return False
 
-        reason_msg = ReasonMessage.from_sysex(list(msg.data))
+        sysex_bytes = list(msg.data)
+        reason_msg = ReasonMessage.from_sysex(sysex_bytes)
         if not reason_msg:
-            print(f"  SysEx parse failed (not our format)")
+            # Silently ignore Universal SysEx Identity Request (standard MIDI discovery)
+            if sysex_bytes[:2] == [0x7e, 0x7f] or sysex_bytes[:2] == [0x7e, 0x00]:
+                return False
+            # Show the actual bytes for debugging other unknown messages
+            if self.verbose_sysex:
+                hex_str = ' '.join(f'{b:02x}' for b in sysex_bytes[:20])
+                print(f"  SysEx parse failed: {hex_str}{'...' if len(sysex_bytes) > 20 else ''}")
             return False
 
         if self.verbose_sysex:
@@ -1391,6 +1403,18 @@ Once configured, Reason will remember these settings permanently!
 
         # Handle Ping (Auto-detect)
         if reason_msg.msg_type == MessageType.SYSTEM_PING:
+            # Only respond if probe arrived on the correct port for this codec
+            expected_ports = {
+                PortID.TRANSPORT: "OpenPush Transport",
+                PortID.DEVICES: "OpenPush Devices",
+                PortID.MIXER: "OpenPush Mixer",
+            }
+            expected_port = expected_ports.get(reason_msg.port_id)
+            if port_name != expected_port:
+                # Probe arrived on wrong port - ignore to prevent duplicates
+                return False
+
+            print(f"Reason probe received on {port_name}")
             response = ReasonMessage(
                 port_id=reason_msg.port_id,
                 msg_type=MessageType.SYSTEM_PONG,
@@ -1400,6 +1424,7 @@ Once configured, Reason will remember these settings permanently!
                 self.remote_out_ports[port_name].send(
                     mido.Message('sysex', data=response.to_sysex())
                 )
+                print(f"  Probe response sent")
             except Exception as e:
                 print(f"Reason probe response error: {e}")
                 return False
