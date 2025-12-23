@@ -173,86 +173,95 @@ class OpenPushApp:
         self.layout.set_scale(self.root_note, SCALE_NAMES[self.scale_index])
         self.layout.set_in_key_mode(self.in_key_mode)
 
-    def create_virtual_ports(self, use_iac=True):
+    def create_virtual_ports(self, use_existing=True):
         """Create or connect to MIDI ports for Reason.
 
         Args:
-            use_iac: If True, try to connect to IAC Driver ports first.
-                     Falls back to virtual ports if IAC ports not found.
+            use_existing: If True, try to connect to existing ports (IAC/persistent) first.
+                          Falls back to creating virtual ports if not found.
         """
         port_names = ["OpenPush Transport", "OpenPush Devices", "OpenPush Mixer"]
 
-        # Check for IAC Driver ports
+        # Check for existing ports before creating new ones
         available_inputs = mido.get_input_names()
         available_outputs = mido.get_output_names()
 
-        if use_iac:
-            # Look for IAC ports (check both with and without leading space)
-            iac_found = False
+        def find_port(port_list, target_name):
+            """Find a port by exact name or with 'IAC Driver' prefix."""
+            if target_name in port_list:
+                return target_name
+            iac_name = f"IAC Driver {target_name}"
+            if iac_name in port_list:
+                return iac_name
+            return None
+
+        existing_ports = {}
+        missing_ports = []
+
+        if use_existing:
             for name in port_names:
-                # IAC port naming: "IAC Driver OpenPush Transport" or just "OpenPush Transport"
-                iac_in = None
-                iac_out = None
+                # Port naming convention:
+                # - "X In" = We WRITE to this, Reason READS from this
+                # - "X Out" = Reason WRITES to this, We READ from this
+                in_port_name = find_port(available_outputs, f"{name} In")  # We write (output)
+                out_port_name = find_port(available_inputs, f"{name} Out")  # We read (input)
 
-                for port in available_inputs:
-                    if name in port and "IAC" in port:
-                        iac_in = port
-                        break
-                for port in available_outputs:
-                    if name in port and "IAC" in port:
-                        iac_out = port
-                        break
+                if in_port_name and out_port_name:
+                    existing_ports[name] = (in_port_name, out_port_name)
+                else:
+                    missing_ports.append(name)
+        else:
+            missing_ports = list(port_names)
 
-                if iac_in and iac_out:
-                    iac_found = True
-                    break
+        if existing_ports:
+            print("Found existing MIDI ports - using persistent connections")
+            for name, (in_port_name, out_port_name) in existing_ports.items():
+                try:
+                    # "In" port: we SEND to it (open as output)
+                    in_port = mido.open_output(in_port_name)
+                    self.remote_out_ports[name] = in_port
+                    print(f"  Connected (send): {in_port_name}")
 
-            if iac_found:
-                print("Found IAC Driver ports - using persistent connections")
-                print("(Configure these once in Reason → Preferences → Control Surfaces)")
-                for name in port_names:
-                    try:
-                        # Find the matching IAC ports
-                        iac_in_port = None
-                        iac_out_port = None
-                        for port in available_outputs:  # Our output → Reason's input
-                            if name in port and "IAC" in port:
-                                iac_in_port = port
-                                break
-                        for port in available_inputs:  # Reason's output → Our input
-                            if name in port and "IAC" in port:
-                                iac_out_port = port
-                                break
+                    # "Out" port: we RECEIVE from it (open as input)
+                    out_port = mido.open_input(out_port_name)
+                    self.remote_in_ports[name] = out_port
+                    print(f"  Connected (recv): {out_port_name}")
 
-                        if iac_in_port:
-                            in_port = mido.open_output(iac_in_port)
-                            self.remote_out_ports[name] = in_port
-                            print(f"  Connected: {iac_in_port}")
+                except Exception as e:
+                    print(f"  Error connecting to {name}: {e}")
+                    missing_ports.append(name)
 
-                        if iac_out_port:
-                            out_port = mido.open_input(iac_out_port)
-                            self.remote_in_ports[name] = out_port
-                            print(f"  Connected: {iac_out_port}")
-
-                    except Exception as e:
-                        print(f"  Error connecting to IAC {name}: {e}")
+            if not missing_ports:
                 return
 
-        # Fall back to virtual ports
-        print("Creating virtual MIDI ports...")
-        print("(Note: These disappear when app closes. For persistence, set up IAC Driver ports.)")
-        for name in port_names:
-            try:
-                in_port = mido.open_output(f"{name} In", virtual=True)
-                self.remote_out_ports[name] = in_port
-                print(f"  Created: {name} In")
+        # Fall back to virtual ports for any missing
+        if missing_ports:
+            if existing_ports:
+                print("Creating virtual MIDI ports for missing surfaces...")
+            else:
+                print("Creating virtual MIDI ports...")
+            print("(Note: Virtual ports disappear when app closes. Use IAC Driver for persistence.)")
 
-                out_port = mido.open_input(f"{name} Out", virtual=True)
-                self.remote_in_ports[name] = out_port
-                print(f"  Created: {name} Out")
+            for name in missing_ports:
+                try:
+                    in_port_name = f"{name} In"
+                    out_port_name = f"{name} Out"
 
-            except Exception as e:
-                print(f"  Error creating {name}: {e}")
+                    in_port = mido.open_output(in_port_name, virtual=True)
+                    self.remote_out_ports[name] = in_port
+                    print(f"  Created: {in_port_name}")
+
+                    out_port = mido.open_input(out_port_name, virtual=True)
+                    self.remote_in_ports[name] = out_port
+                    print(f"  Created: {out_port_name}")
+
+                except Exception as e:
+                    print(f"  Error creating {name}: {e}")
+
+        # Show actual port names visible to system (for debugging reconnection issues)
+        print("\nSystem MIDI ports (for Reason port matching):")
+        print(f"  Inputs:  {[p for p in mido.get_input_names() if 'OpenPush' in p]}")
+        print(f"  Outputs: {[p for p in mido.get_output_names() if 'OpenPush' in p]}")
 
         # Print Reason connection instructions
         print("\n--- Ready for Reason ---")
@@ -1387,12 +1396,34 @@ Once configured, Reason will remember these settings permanently!
             return False
 
         sysex_bytes = list(msg.data)
+
+        # Handle Universal SysEx Identity Request (standard MIDI discovery)
+        # Format: 7E [channel] 06 01 = Identity Request
+        if len(sysex_bytes) >= 4 and sysex_bytes[0] == 0x7e and sysex_bytes[2] == 0x06 and sysex_bytes[3] == 0x01:
+            # Respond with Identity Reply to help Reason recognize us
+            # Format: 7E [channel] 06 02 [mfr] [family_lo] [family_hi] [model_lo] [model_hi] [ver...]
+            channel = sysex_bytes[1]  # Echo back the channel (7F or 00)
+            identity_reply = [
+                0x7e, channel, 0x06, 0x02,  # Universal Non-RT, Identity Reply
+                0x00, 0x11, 0x22,           # Manufacturer ID (our custom ID)
+                0x01, 0x00,                 # Family: OpenPush
+                0x01, 0x00,                 # Model: v1
+                0x01, 0x00, 0x00, 0x00      # Version: 1.0.0.0
+            ]
+            try:
+                self.remote_out_ports[port_name].send(
+                    mido.Message('sysex', data=identity_reply)
+                )
+                if self.verbose_sysex:
+                    print(f"  Identity Reply sent on {port_name}")
+            except Exception as e:
+                if self.verbose_sysex:
+                    print(f"  Identity Reply error: {e}")
+            return True
+
         reason_msg = ReasonMessage.from_sysex(sysex_bytes)
         if not reason_msg:
-            # Silently ignore Universal SysEx Identity Request (standard MIDI discovery)
-            if sysex_bytes[:2] == [0x7e, 0x7f] or sysex_bytes[:2] == [0x7e, 0x00]:
-                return False
-            # Show the actual bytes for debugging other unknown messages
+            # Show the actual bytes for debugging unknown messages
             if self.verbose_sysex:
                 hex_str = ' '.join(f'{b:02x}' for b in sysex_bytes[:20])
                 print(f"  SysEx parse failed: {hex_str}{'...' if len(sysex_bytes) > 20 else ''}")
@@ -1428,6 +1459,19 @@ Once configured, Reason will remember these settings permanently!
             except Exception as e:
                 print(f"Reason probe response error: {e}")
                 return False
+            return True
+
+        # Handle Connection Notification (sent by remote_prepare_for_use)
+        elif reason_msg.msg_type == MessageType.SYSTEM_VERSION:
+            port_names = {
+                PortID.TRANSPORT: "Transport",
+                PortID.DEVICES: "Devices",
+                PortID.MIXER: "Mixer",
+            }
+            surface_name = port_names.get(reason_msg.port_id, "Unknown")
+            print(f"Reason connected: OpenPush {surface_name}")
+            # Request LCD update now that we're connected
+            self._request_lcd_update()
             return True
 
         # Handle Display Line Update
