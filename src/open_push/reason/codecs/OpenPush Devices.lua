@@ -503,13 +503,6 @@ function remote_probe(manufacturer, model, prober)
 end
 
 function remote_prepare_for_use()
-    -- Called when Reason activates this surface (startup or after auto-detect)
-    local events = {}
-
-    -- Send a "hello" message so Python knows we're connected
-    local hello_sysex = "f0 00 11 22 02 72 f7"  -- 0x72 = connected notification
-    table.insert(events, remote.make_midi(hello_sysex))
-
     -- Force initial device name check on surface activation
     if g_device_name_index then
         local text = remote.get_item_text_value(g_device_name_index)
@@ -523,7 +516,7 @@ function remote_prepare_for_use()
             log(string.format("PREPARE: initial device name = '%s'", text))
         end
     end
-    return events
+    return {}
 end
 
 function remote_release_from_use()

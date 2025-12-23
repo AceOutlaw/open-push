@@ -433,10 +433,7 @@ function remote_probe(manufacturer, model, prober)
 end
 
 function remote_prepare_for_use()
-    -- Called when Reason activates this surface (startup or after auto-detect)
-    -- Send a "hello" message so Python knows we're connected
-    local hello_sysex = "f0 00 11 22 03 72 f7"  -- 0x72 = connected notification
-    return {remote.make_midi(hello_sysex)}
+    return {}
 end
 
 function remote_release_from_use()
