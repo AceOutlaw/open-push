@@ -148,9 +148,9 @@ function remote_init(manufacturer, model)
         {name = "Precount", input = "button", output = "value", min = 0, max = 127},
         {name = "TapTempo", input = "button"},
 
-        -- Tempo encoder (delta input: min/max defines delta range, Scale in remotemap defines units)
-        {name = "Tempo", input = "delta", min = -127, max = 127},
-        {name = "ClickLevel", input = "delta", min = -127, max = 127},
+        -- Tempo encoder (delta input + value output for display, Scale in remotemap defines units)
+        {name = "Tempo", input = "delta", output = "value", min = -127, max = 127},
+        {name = "ClickLevel", input = "delta", output = "value", min = -127, max = 127},
 
         -- Navigation
         {name = "NavigateUp", input = "button"},

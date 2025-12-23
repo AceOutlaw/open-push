@@ -625,6 +625,20 @@ Once configured, Reason will remember these settings permanently!
             self.shift_held = (value > 0)
             return
 
+        # Tempo/Click encoders should always route to Transport (all modes).
+        if cc in (14, 15):
+            max_delta = 3 if cc == 14 else 5
+            normalized = self._normalize_encoder_delta(value, max_delta=max_delta)
+            if normalized != 64:
+                out_msg = mido.Message('control_change', channel=0, control=cc, value=normalized)
+                self._send_to_transport(out_msg)
+                delta = normalized - 64
+                if cc == 14:
+                    print(f"  -> Tempo {delta:+d} BPM")
+                else:
+                    print(f"  -> Click Level {delta:+d}")
+            return
+
         if value > 0:  # Button pressed
             print(f"Button: {button_name} (CC {cc}) value={value}" + (" [SHIFT]" if self.shift_held else ""))
 
@@ -655,6 +669,11 @@ Once configured, Reason will remember these settings permanently!
                         normalized = self._normalize_encoder_delta(value, max_delta=1)
                         loop_msg = mido.Message('control_change', channel=0, control=cc, value=normalized)
                         self._send_to_transport(loop_msg)
+                    elif cc == TRACK_ENCODER_CCS['playhead_bars']:
+                        # Playhead: move by single bars per click (not raw encoder value)
+                        normalized = self._normalize_encoder_delta(value, max_delta=1)
+                        playhead_msg = mido.Message('control_change', channel=0, control=cc, value=normalized)
+                        self._send_to_transport(playhead_msg)
                     elif cc in TRACK_ENCODER_CCS.values():
                         self._send_to_transport(msg)
                     return
@@ -765,38 +784,6 @@ Once configured, Reason will remember these settings permanently!
             elif cc == BUTTONS['tap_tempo']:  # CC 3
                 self._send_to_transport(msg)
                 print(f"  -> Tap Tempo")
-
-            # Encoders (left side)
-            elif cc == 14:  # Tempo encoder - BPM control
-                # Relative value: 1-63 = CW, 65-127 = CCW
-                # Normalize to small increments: +1 or -1 (with slight acceleration)
-                if value < 64:
-                    # Clockwise - increase
-                    delta = min(value, 3)  # Cap at +3 for fast turns
-                    normalized_value = 64 + delta  # 65-67
-                else:
-                    # Counter-clockwise - decrease
-                    delta = min(128 - value, 3)  # Cap at -3 for fast turns
-                    normalized_value = 64 - delta  # 61-63
-
-                tempo_msg = mido.Message('control_change', channel=0, control=cc, value=normalized_value)
-                self._send_to_transport(tempo_msg)
-                direction = f"+{delta}" if value < 64 else f"-{delta}"
-                print(f"  -> Tempo {direction} BPM")
-
-            elif cc == 15:  # Swing encoder - Click Level
-                # Normalize to small increments
-                if value < 64:
-                    delta = min(value, 5)  # Slightly larger steps for volume
-                    normalized_value = 64 + delta
-                else:
-                    delta = min(128 - value, 5)
-                    normalized_value = 64 - delta
-
-                click_msg = mido.Message('control_change', channel=0, control=cc, value=normalized_value)
-                self._send_to_transport(click_msg)
-                direction = f"+{delta}" if value < 64 else f"-{delta}"
-                print(f"  -> Click Level {direction}")
 
             # Note: Scale mode buttons are handled at TOP of this function
             # (before other handlers can intercept CC 102-109, 20-27, 71)
