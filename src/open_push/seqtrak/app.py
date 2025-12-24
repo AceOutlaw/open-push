@@ -28,6 +28,7 @@ from open_push.seqtrak.protocol import (
     SeqtrakProtocol, MuteState, Track, Address,
     find_seqtrak_port
 )
+from open_push.seqtrak.presets import get_preset_name_short
 
 # =============================================================================
 # PUSH CONSTANTS (matching Reason app)
@@ -153,7 +154,8 @@ class SeqtrakBridge:
         self.protocol = None
 
         # Track program/bank info per channel (for preset display)
-        self.track_bank_msb = [0] * 12   # Bank MSB per track (index 0 unused)
+        # Initialize MSB to 63 for tracks 1-10 (Drum/Synth/DX), 62 for track 11 (Sampler)
+        self.track_bank_msb = [0, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 62]
         self.track_bank_lsb = [0] * 12   # Bank LSB per track
         self.track_program = [0] * 12    # Program number per track
 
@@ -205,7 +207,7 @@ class SeqtrakBridge:
                     bank = self.track_bank_msb[channel]
                     sub = self.track_bank_lsb[channel]
                     prog = msg.program
-                    self.patch_name = f"B{bank}:{sub} P{prog}"
+                    self.patch_name = get_preset_name_short(channel, bank, sub, prog)
                     print(f"  Preset: {self.patch_name}")
                     self.update_display()
 
@@ -648,6 +650,10 @@ class SeqtrakBridge:
             self.set_button_led(BUTTONS['upper_1'], LED_OFF)
             self.set_button_led(BUTTONS['lower_1'], LED_OFF)
 
+        # Patch cycling buttons always available (CC 22, CC 104)
+        self.set_button_led(BUTTONS['upper_3'], LED_ON)  # CC 22 - prev patch
+        self.set_button_led(BUTTONS['lower_3'], LED_ON)  # CC 104 - next patch
+
         # Update display
         self.update_display()
 
@@ -739,6 +745,12 @@ class SeqtrakBridge:
         elif self.current_mode == 'track' and cc == BUTTONS['lower_1']:  # CC 102
             self._select_next_track()
 
+        # Patch cycling: CC 22 = prev patch, CC 104 = next patch
+        elif cc == BUTTONS['upper_3']:  # CC 22
+            self._cycle_patch(-1)
+        elif cc == BUTTONS['lower_3']:  # CC 104
+            self._cycle_patch(1)
+
         # Mode buttons (matching Reason app pattern)
         elif cc == BUTTONS['track']:
             self._set_mode('track')
@@ -756,27 +768,42 @@ class SeqtrakBridge:
 
     def handle_encoder(self, cc, value):
         """Handle encoder turn."""
+        # Relative encoder: 1-63 = clockwise, 65-127 = counter-clockwise
+        if value < 64:
+            delta = 1  # Clockwise
+        else:
+            delta = -1  # Counter-clockwise
+
         # Tempo encoder (CC 14)
         if cc == 14:
-            # Relative encoder: 1-63 = clockwise, 65-127 = counter-clockwise
+            # Use actual delta for tempo (faster turns = bigger change)
             if value < 64:
-                delta = value
+                tempo_delta = value
             else:
-                delta = value - 128
+                tempo_delta = value - 128
 
-            new_tempo = max(20, min(300, self.tempo + delta))
+            new_tempo = max(20, min(300, self.tempo + tempo_delta))
             if new_tempo != self.tempo:
                 self.tempo = new_tempo
                 self.protocol.set_tempo(self.tempo)
                 self.update_display()
                 print(f"Tempo: {self.tempo}")
 
-        # Scale mode encoder for scrolling
-        elif cc == 71 and self.current_mode == 'scale':
-            if value < 64:
-                self._scroll_scale(1)
+        # Track encoder (CC 71) - cycle through tracks
+        elif cc == 71:
+            if self.current_mode == 'scale':
+                # In scale mode, scroll scales
+                self._scroll_scale(delta)
             else:
-                self._scroll_scale(-1)
+                # In other modes, cycle through tracks
+                if delta > 0:
+                    self._select_next_track()
+                else:
+                    self._select_prev_track()
+
+        # Patch encoder (CC 73) - cycle through patches
+        elif cc == 73:
+            self._cycle_patch(delta)
 
     def handle_pad(self, note, velocity):
         """Handle pad press/release."""
@@ -856,8 +883,46 @@ class SeqtrakBridge:
         sub = self.track_bank_lsb[track]
         prog = self.track_program[track]
         if bank or sub or prog:
-            return f"B{bank}:{sub} P{prog}"
+            return get_preset_name_short(track, bank, sub, prog)
         return ""
+
+    def _cycle_patch(self, delta):
+        """Cycle through patches for the current track."""
+        track = self.keyboard_track
+        bank = self.track_bank_msb[track]
+        sub = self.track_bank_lsb[track]
+        prog = self.track_program[track]
+
+        # Calculate new program/bank
+        new_prog = prog + delta
+
+        if new_prog > 127:
+            # Wrap to next bank
+            new_prog = 0
+            new_sub = sub + 1
+            if new_sub > 31:  # Max preset bank LSB
+                new_sub = 0
+        elif new_prog < 0:
+            # Wrap to previous bank
+            new_prog = 127
+            new_sub = sub - 1
+            if new_sub < 0:
+                new_sub = 31
+        else:
+            new_sub = sub
+
+        # Send Bank Select + Program Change to Seqtrak
+        channel = track - 1  # Convert to 0-indexed MIDI channel
+        self.seqtrak.send(mido.Message('control_change', channel=channel, control=0, value=bank))
+        self.seqtrak.send(mido.Message('control_change', channel=channel, control=32, value=new_sub))
+        self.seqtrak.send(mido.Message('program_change', channel=channel, program=new_prog))
+
+        # Update local state
+        self.track_bank_lsb[track] = new_sub
+        self.track_program[track] = new_prog
+        self.patch_name = get_preset_name_short(track, bank, new_sub, new_prog)
+        self.update_display()
+        print(f"  Patch: {self.patch_name}")
 
     def _select_prev_track(self):
         """Select previous track (wraps around)."""
@@ -997,8 +1062,13 @@ class SeqtrakBridge:
             time.sleep(0.5)
             self._set_mode('track')
 
-            # Select initial track
+            # Select initial track and set initial patch name
             self.protocol.select_track(self.keyboard_track)
+            self.patch_name = self._get_track_preset_display(self.keyboard_track)
+            self.update_display()
+
+            # Request current preset info from Seqtrak
+            self.protocol.request_parameter(Address.PRESET_NAME)
 
             # Main loop - poll both Push and Seqtrak inputs
             self.running = True
