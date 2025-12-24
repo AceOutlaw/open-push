@@ -142,6 +142,9 @@ class SeqtrakBridge:
         # Tempo (for display, updated from Seqtrak feedback)
         self.tempo = 120
 
+        # Master volume (0-127)
+        self.master_volume = 100
+
         # Isomorphic layout (same as Reason app)
         self.layout = IsomorphicLayout()
         self.layout.set_scale(self.root_note, SCALE_NAMES[self.scale_index])
@@ -158,6 +161,10 @@ class SeqtrakBridge:
         self.track_bank_msb = [0, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 62]
         self.track_bank_lsb = [0] * 12   # Bank LSB per track
         self.track_program = [0] * 12    # Program number per track
+
+        # Encoder accumulators for slower response (require multiple ticks)
+        self.patch_encoder_accum = 0
+        self.patch_encoder_threshold = 4  # Ticks needed per patch change
 
         self.running = False
 
@@ -801,9 +808,28 @@ class SeqtrakBridge:
                 else:
                     self._select_prev_track()
 
-        # Patch encoder (CC 73) - cycle through patches
+        # Patch encoder (CC 73) - cycle through patches (with accumulator for slower response)
         elif cc == 73:
-            self._cycle_patch(delta)
+            self.patch_encoder_accum += delta
+            if abs(self.patch_encoder_accum) >= self.patch_encoder_threshold:
+                # Trigger patch change
+                patch_delta = 1 if self.patch_encoder_accum > 0 else -1
+                self._cycle_patch(patch_delta)
+                self.patch_encoder_accum = 0  # Reset accumulator
+
+        # Master volume encoder (CC 79)
+        elif cc == 79:
+            # Use actual encoder value for smoother volume control
+            if value < 64:
+                vol_delta = value * 2  # Clockwise, scale up for faster response
+            else:
+                vol_delta = (value - 128) * 2  # Counter-clockwise
+
+            new_volume = max(0, min(127, self.master_volume + vol_delta))
+            if new_volume != self.master_volume:
+                self.master_volume = new_volume
+                self.protocol.set_master_volume(self.master_volume)
+                print(f"Master Volume: {self.master_volume}")
 
     def handle_pad(self, note, velocity):
         """Handle pad press/release."""
