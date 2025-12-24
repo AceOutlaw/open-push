@@ -147,6 +147,11 @@ class Address:
     PATTERN_STEPS = [0x30, 0x40, 0x7A]  # 2 bytes, 1-128
     SWING = [0x30, 0x40, 0x7C]          # 2 bytes, increments by 2
 
+    # Transport State (for SysEx control/feedback)
+    PLAY_STATE = [0x01, 0x10, 0x20]     # 01=Playing, 00=Stopped
+    RECORD_STATE = [0x01, 0x10, 0x21]   # 01=Recording, 00=Stopped
+    PRESET_NAME = [0x01, 0x10, 0x35]    # ASCII preset name (up to 16 chars)
+
     # Scale/Key
     SCALE = [0x30, 0x40, 0x7E]          # 0-7
     KEY = [0x30, 0x40, 0x7F]            # 0x40-0x4B (C-B)
@@ -272,6 +277,35 @@ class SeqtrakProtocol:
     def continue_playback(self):
         """Continue from current position (MIDI Realtime Continue)."""
         self.port.send(mido.Message('continue'))
+
+    def tap_tempo(self):
+        """Tap tempo - Seqtrak doesn't have external tap tempo, so this is a no-op for now.
+        Could potentially be implemented by tracking tap times and setting tempo."""
+        # TODO: Implement tap tempo by measuring intervals between calls
+        pass
+
+    def record(self, enable=True):
+        """
+        Start/stop recording via SysEx.
+
+        Sends: F0 43 10 7F 1C 0C 01 10 21 [01/00] F7
+        """
+        self._send_sysex(Address.RECORD_STATE, [0x01 if enable else 0x00])
+
+    def request_parameter(self, address):
+        """
+        Request a parameter value from Seqtrak.
+
+        Format: F0 43 3n 7F 1C 0C [addr_h] [addr_m] [addr_l] F7
+        (0x30 for Parameter Request per MIDI Data Format doc)
+
+        Args:
+            address: 3-byte address list [h, m, l]
+        """
+        # Parameter Request header uses 0x30 instead of 0x10
+        request_header = [0x43, 0x30, 0x7F, 0x1C, 0x0C]
+        sysex_data = request_header + address
+        self.port.send(mido.Message('sysex', data=sysex_data))
 
     # -------------------------------------------------------------------------
     # SysEx Helpers

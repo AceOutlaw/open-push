@@ -4,24 +4,17 @@ OpenPush Seqtrak Bridge
 =======================
 Control Yamaha Seqtrak from Ableton Push hardware.
 
-Uses:
-- Core Push hardware abstraction (LCD, buttons, pads)
-- Music module (scales, isomorphic layout)
-- Seqtrak protocol (SysEx addresses)
+Reuses the same UI paradigm as the Reason bridge:
+- Pads (notes 36-99) for isomorphic keyboard
+- Scale button (CC 58) for scale/root selection
+- 16 buttons below LCD (CC 20-27, CC 102-109) are dynamic per mode
+- Octave up/down, transport controls
 
 Usage:
     python -m open_push.seqtrak.app
-
-Features:
-- Transport control (Play/Stop)
-- Track mute/solo (bottom row of pads)
-- Isomorphic keyboard (upper rows)
-- Scale/key selection
-- LCD status display
 """
 
 import mido
-import threading
 import time
 import sys
 import os
@@ -30,32 +23,41 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from open_push.music.layout import IsomorphicLayout
-from open_push.music.scales import SCALES, SCALE_NAMES, is_in_scale, is_root_note
+from open_push.music.scales import SCALES, SCALE_NAMES, get_scale_display_name
 from open_push.seqtrak.protocol import (
-    SeqtrakProtocol, MuteState, Scale, Key, Track,
-    find_seqtrak_port, SYSEX_HEADER
+    SeqtrakProtocol, MuteState, Track, Address,
+    find_seqtrak_port
 )
 
 # =============================================================================
-# PUSH CONSTANTS (from core)
+# PUSH CONSTANTS (matching Reason app)
 # =============================================================================
 
-PUSH_SYSEX_HEADER = [0x47, 0x7F, 0x15]
+SYSEX_HEADER = [0x47, 0x7F, 0x15]
 USER_MODE = [0x62, 0x00, 0x01, 0x01]
 
 LCD_LINES = {1: 0x18, 2: 0x19, 3: 0x1A, 4: 0x1B}
 CHARS_PER_SEGMENT = 17
 
-# Button CCs
-BUTTONS = {
-    'play': 85, 'stop': 29, 'record': 86,
-    'octave_up': 55, 'octave_down': 54,
-    'scale': 58, 'note': 50, 'session': 51,
-    'mute': 60, 'solo': 61,
-    'up': 46, 'down': 47, 'left': 44, 'right': 45,
-}
+# Root note names
+ROOT_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
-# Pad colors
+# Scale mode button layout (chromatic ascending):
+#   Upper: [ScaleUp] [C] [C#][D] [D#][E] [F] [InKey]
+#          CC 20     21  22  23  24  25  26    27
+#   Lower: [ScaleDn] [F#][G] [G#][A] [A#][B] [Chromat]
+#          CC 102    103 104 105 106 107 108  109
+ROOT_UPPER_BUTTONS = [21, 22, 23, 24, 25, 26]
+ROOT_LOWER_BUTTONS = [103, 104, 105, 106, 107, 108]
+ROOT_UPPER_NOTES = [0, 1, 2, 3, 4, 5]    # C, C#, D, D#, E, F
+ROOT_LOWER_NOTES = [6, 7, 8, 9, 10, 11]  # F#, G, G#, A, A#, B
+
+SCALE_UP_CC = 20
+SCALE_DOWN_CC = 102
+IN_KEY_CC = 27
+CHROMAT_CC = 109
+
+# Pad colors (velocity values)
 COLOR_OFF = 0
 COLOR_DIM = 1
 COLOR_WHITE = 3
@@ -72,6 +74,35 @@ LED_OFF = 0
 LED_DIM = 1
 LED_ON = 4
 
+# Button CCs (matching Reason app)
+BUTTONS = {
+    # Transport
+    'play': 85, 'stop': 29, 'record': 86,
+    'tap_tempo': 3, 'metronome': 9,
+
+    # Mode buttons
+    'note': 50, 'session': 51, 'scale': 58,
+    'volume': 114,    # Mixer mode
+    'track': 112,     # Track mode
+    'device': 110,    # Device mode
+    'clip': 113, 'browse': 111, 'master': 28,
+
+    # Performance
+    'octave_up': 55, 'octave_down': 54,
+    'mute': 60, 'solo': 61, 'accent': 57,
+
+    # Navigation
+    'up': 46, 'down': 47, 'left': 44, 'right': 45,
+    'page_left': 62, 'page_right': 63,
+    'shift': 49, 'select': 48,
+
+    # 16 Buttons Below LCD
+    'upper_1': 20, 'upper_2': 21, 'upper_3': 22, 'upper_4': 23,
+    'upper_5': 24, 'upper_6': 25, 'upper_7': 26, 'upper_8': 27,
+    'lower_1': 102, 'lower_2': 103, 'lower_3': 104, 'lower_4': 105,
+    'lower_5': 106, 'lower_6': 107, 'lower_7': 108, 'lower_8': 109,
+}
+
 
 # =============================================================================
 # SEQTRAK BRIDGE APP
@@ -80,33 +111,40 @@ LED_ON = 4
 class SeqtrakBridge:
     """
     Bridge between Push hardware and Yamaha Seqtrak.
+    Uses the same UI paradigm as the Reason bridge.
     """
 
     def __init__(self):
-        # State
+        # State (matching Reason app patterns)
         self.is_playing = False
-        self.current_mode = 'note'  # 'note', 'mute', 'session'
-        self.octave = 0
-        self.root = 0  # C
-        self.scale_index = 1  # Minor (index 0=major, 1=minor)
+        self.is_recording = False
+        self.current_mode = 'welcome'  # welcome, note, track, device, mixer, scale
+        self.previous_mode = 'track'   # Mode to return to after scale mode
+        self.shift_held = False
 
         # Track states (1-11)
         self.track_states = [MuteState.UNMUTED] * 11
 
         # Selected track for keyboard input (default SYNTH 1)
-        self.keyboard_track = Track.SYNTH1  # Channel 8
+        self.keyboard_track = Track.SYNTH1
+        self.patch_name = ""  # Patch name (updated from Seqtrak feedback)
 
-        # Track active notes for proper note-off
+        # Active notes for proper note-off
         self.active_notes = {}  # {pad_note: midi_note}
 
-        # Layout (root_note=36 is C2, row_interval=5 is fourths, col_interval=1 is semitones)
-        self.layout = IsomorphicLayout(
-            root_note=36,
-            row_interval=5,
-            col_interval=1
-        )
-        # Set the scale
-        self.layout.set_scale(self.root, SCALE_NAMES[self.scale_index])
+        # Scale settings
+        self.scale_index = 1  # Minor
+        self.scale_scroll_offset = 0
+        self.root_note = 0  # C
+        self.in_key_mode = True
+
+        # Tempo (for display, updated from Seqtrak feedback)
+        self.tempo = 120
+
+        # Isomorphic layout (same as Reason app)
+        self.layout = IsomorphicLayout()
+        self.layout.set_scale(self.root_note, SCALE_NAMES[self.scale_index])
+        self.layout.set_in_key_mode(self.in_key_mode)
 
         # Ports (set in run())
         self.push_in = None
@@ -114,7 +152,11 @@ class SeqtrakBridge:
         self.seqtrak = None
         self.protocol = None
 
-        # Threading
+        # Track program/bank info per channel (for preset display)
+        self.track_bank_msb = [0] * 12   # Bank MSB per track (index 0 unused)
+        self.track_bank_lsb = [0] * 12   # Bank LSB per track
+        self.track_program = [0] * 12    # Program number per track
+
         self.running = False
 
     # -------------------------------------------------------------------------
@@ -138,12 +180,91 @@ class SeqtrakBridge:
         return push_in, push_out
 
     # -------------------------------------------------------------------------
+    # Seqtrak Message Handling
+    # -------------------------------------------------------------------------
+
+    def handle_seqtrak_message(self, msg):
+        """Handle any MIDI message from Seqtrak."""
+        if msg.type == 'sysex':
+            self.handle_seqtrak_sysex(msg.data)
+        elif msg.type == 'control_change':
+            # Bank Select messages
+            channel = msg.channel + 1  # Convert to 1-indexed track
+            if 1 <= channel <= 11:
+                if msg.control == 0:  # Bank Select MSB
+                    self.track_bank_msb[channel] = msg.value
+                elif msg.control == 32:  # Bank Select LSB
+                    self.track_bank_lsb[channel] = msg.value
+        elif msg.type == 'program_change':
+            # Program change - update track preset info
+            channel = msg.channel + 1  # Convert to 1-indexed track
+            if 1 <= channel <= 11:
+                self.track_program[channel] = msg.program
+                # If this is the currently selected track, update display
+                if channel == self.keyboard_track:
+                    bank = self.track_bank_msb[channel]
+                    sub = self.track_bank_lsb[channel]
+                    prog = msg.program
+                    self.patch_name = f"B{bank}:{sub} P{prog}"
+                    print(f"  Preset: {self.patch_name}")
+                    self.update_display()
+
+    def handle_seqtrak_sysex(self, data):
+        """Parse and handle SysEx from Seqtrak."""
+        # Expected format: 43 10 7F 1C 0C [addr_h] [addr_m] [addr_l] [data...]
+        if len(data) < 8:
+            return
+
+        # Check Yamaha header
+        if data[0] != 0x43:
+            return
+
+        # Check Seqtrak model ID (0x0C at position 4)
+        if len(data) < 5 or data[4] != 0x0C:
+            return
+
+        # Extract address (bytes 5-7) and data (byte 8+)
+        addr = list(data[5:8])
+        sysex_data = list(data[8:])
+
+        # Debug: show address for preset-related messages
+        if addr == Address.PRESET_NAME:
+            print(f"  [SysEx] Got PRESET_NAME response, {len(sysex_data)} bytes")
+
+        # Play State
+        if addr == Address.PLAY_STATE and sysex_data:
+            self.is_playing = (sysex_data[0] == 0x01)
+            self.update_transport_leds()
+            self.update_display()
+            print(f"Seqtrak: {'PLAYING' if self.is_playing else 'STOPPED'}")
+
+        # Record State
+        elif addr == Address.RECORD_STATE and sysex_data:
+            self.is_recording = (sysex_data[0] == 0x01)
+            self.set_button_led(BUTTONS['record'], LED_ON if self.is_recording else LED_DIM)
+            self.update_display()
+            print(f"Seqtrak: RECORD {'ON' if self.is_recording else 'OFF'}")
+
+        # Preset Name
+        elif addr == Address.PRESET_NAME and sysex_data:
+            # Extract ASCII name from data
+            name_bytes = []
+            for b in sysex_data:
+                if b == 0x00:
+                    break
+                if 0x20 <= b <= 0x7E:
+                    name_bytes.append(b)
+            self.patch_name = bytes(name_bytes).decode('ascii', errors='ignore').strip()
+            self.update_display()
+            print(f"Seqtrak: Preset '{self.patch_name}'")
+
+    # -------------------------------------------------------------------------
     # Push Communication
     # -------------------------------------------------------------------------
 
     def send_sysex(self, data):
         """Send SysEx to Push."""
-        msg = mido.Message('sysex', data=PUSH_SYSEX_HEADER + data)
+        msg = mido.Message('sysex', data=SYSEX_HEADER + data)
         self.push_out.send(msg)
 
     def set_lcd_segments(self, line, seg0="", seg1="", seg2="", seg3=""):
@@ -153,6 +274,14 @@ class SeqtrakBridge:
         for part in parts:
             text += part[:CHARS_PER_SEGMENT].center(CHARS_PER_SEGMENT)
 
+        line_addr = LCD_LINES.get(line, LCD_LINES[1])
+        data = [line_addr, 0x00, 0x45, 0x00]
+        data.extend([ord(c) for c in text])
+        self.send_sysex(data)
+
+    def set_lcd_line_raw(self, line, text):
+        """Set LCD line with raw 68-char string."""
+        text = text[:68].ljust(68)
         line_addr = LCD_LINES.get(line, LCD_LINES[1])
         data = [line_addr, 0x00, 0x45, 0x00]
         data.extend([ord(c) for c in text])
@@ -176,26 +305,140 @@ class SeqtrakBridge:
     # -------------------------------------------------------------------------
 
     def update_display(self):
-        """Update LCD with current state."""
-        # Line 1: Mode and status
-        mode_text = self.current_mode.upper()
+        """Update LCD based on current mode."""
+        if self.current_mode == 'welcome':
+            self._update_welcome_display()
+        elif self.current_mode == 'scale':
+            self._update_scale_display()
+        elif self.current_mode == 'track':
+            self._update_track_display()
+        elif self.current_mode == 'device':
+            self._update_device_display()
+        elif self.current_mode == 'mixer':
+            self._update_mixer_display()
+        elif self.current_mode == 'note':
+            self._update_note_display()
+        else:
+            self._update_note_display()
+
+    def _update_welcome_display(self):
+        """Show welcome/loading screen."""
+        self.set_lcd_segments(1, "", "OpenPush", "", "")
+        self.set_lcd_segments(2, "", "Seqtrak Bridge", "", "")
+        self.set_lcd_segments(3, "", "", "", "")
+        self.set_lcd_segments(4, "Track", "Device", "Mixer", "to start")
+
+    def _update_track_display(self):
+        """Update LCD for track mode."""
+        kb_track = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
+        root_name = ROOT_NAMES[self.root_note]
+        scale_name = get_scale_display_name(SCALE_NAMES[self.scale_index])
+        octave = self.layout.get_octave()
+
+        # Line 1: Track name, patch info, tempo
+        self.set_lcd_segments(1, kb_track, self.patch_name or "", "", f"{self.tempo} BPM")
+        # Line 2: Scale, octave info
+        self.set_lcd_segments(2, f"{root_name} {scale_name}", f"Oct {octave}", "", "")
+        # Line 3: Available for future use
+        self.set_lcd_segments(3, "", "", "", "")
+        # Line 4: Available for future use
+        self.set_lcd_segments(4, "", "", "", "")
+
+    def _update_device_display(self):
+        """Update LCD for device mode."""
+        transport = "PLAYING" if self.is_playing else "STOPPED"
+        kb_track = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
+
+        self.set_lcd_segments(1, "DEVICE", kb_track, "", transport)
+        self.set_lcd_segments(2, "", "", "", "")
+        self.set_lcd_segments(3, "", "", "", "")
+        self.set_lcd_segments(4, "", "", "", "open-push")
+
+    def _update_mixer_display(self):
+        """Update LCD for mixer mode."""
         transport = "PLAYING" if self.is_playing else "STOPPED"
 
-        self.set_lcd_segments(1, "SEQTRAK", mode_text, transport, f"Oct:{self.octave:+d}")
+        self.set_lcd_segments(1, "MIXER", "", "", transport)
+        self.set_lcd_segments(2, "Mute/Solo", "", "", "")
+        self.set_lcd_segments(3, "", "", "", "")
+        self.set_lcd_segments(4, "", "", "", "open-push")
 
-        # Line 2: Scale info and keyboard target
-        root_name = Key.NAMES[self.root]
-        scale_name = SCALE_NAMES[self.scale_index][:8]
+    def _update_note_display(self):
+        """Update LCD for note/play mode."""
+        root_name = ROOT_NAMES[self.root_note]
+        scale_name = get_scale_display_name(SCALE_NAMES[self.scale_index])
+        octave = self.layout.get_octave()
+        mode_str = "In-Key" if self.in_key_mode else "Chromatic"
+        transport = "PLAYING" if self.is_playing else "STOPPED"
+
         kb_track = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
-        self.set_lcd_segments(2, f"Key: {root_name}", f"Scale: {scale_name}", f"KB: {kb_track}", "")
 
-        # Line 3-4: Context-dependent
-        if self.current_mode == 'mute':
-            self.set_lcd_segments(3, "Tracks 1-8", "Row2: 9-11", "", "")
-            self.set_lcd_segments(4, "Pad = Toggle", "Red=Mute", "Yel=Solo", "")
-        else:
-            self.set_lcd_segments(3, "Play/Stop", "Mute/Solo", "Oct Up/Dn", "")
-            self.set_lcd_segments(4, "Bottom row", "= Track mutes", "", "open-push")
+        self.set_lcd_segments(1, "SEQTRAK", f"{root_name} {scale_name}", f"Oct {octave}", transport)
+        self.set_lcd_segments(2, f"KB: {kb_track}", mode_str, "", "")
+        self.set_lcd_segments(3, "Play/Stop", "Mute mode", "Oct Up/Dn", "Scale")
+        self.set_lcd_segments(4, "", "", "", "open-push")
+
+    def _update_mute_display(self):
+        """Update LCD for mute mode."""
+        transport = "PLAYING" if self.is_playing else "STOPPED"
+        self.set_lcd_segments(1, "SEQTRAK", "MUTE MODE", transport, "")
+        self.set_lcd_segments(2, "Tracks 1-8", "Row 2: 9-11", "", "")
+        self.set_lcd_segments(3, "Pad = Toggle", "Red=Mute", "Yel=Solo", "Grn=Play")
+        self.set_lcd_segments(4, "", "", "", "")
+
+    def _update_scale_display(self):
+        """Update LCD for scale selection mode (matches Reason app)."""
+        total_scales = len(SCALE_NAMES)
+
+        # Keep current scale visible
+        if self.scale_index < self.scale_scroll_offset:
+            self.scale_scroll_offset = self.scale_index
+        elif self.scale_index >= self.scale_scroll_offset + 4:
+            self.scale_scroll_offset = self.scale_index - 3
+
+        # Build scale list
+        scale_texts = []
+        for i in range(4):
+            idx = self.scale_scroll_offset + i
+            if idx < total_scales:
+                name = get_scale_display_name(SCALE_NAMES[idx])
+                if idx == self.scale_index:
+                    scale_texts.append(f">{name[:15]}")
+                else:
+                    scale_texts.append(f" {name[:15]}")
+            else:
+                scale_texts.append("")
+
+        # Root display
+        def format_roots(roots_list):
+            parts = []
+            for r in roots_list:
+                label = ROOT_NAMES[r]
+                if r == self.root_note:
+                    parts.append(f"[{label}]")
+                else:
+                    parts.append(f" {label} ")
+            return "  ".join(parts)
+
+        upper_seg1 = format_roots(ROOT_UPPER_NOTES[:3])
+        upper_seg2 = format_roots(ROOT_UPPER_NOTES[3:])
+        lower_seg1 = format_roots(ROOT_LOWER_NOTES[:3])
+        lower_seg2 = format_roots(ROOT_LOWER_NOTES[3:])
+
+        in_key_mark = ">" if self.in_key_mode else " "
+        chromat_mark = ">" if not self.in_key_mode else " "
+
+        def build_line(scale_text, root_seg1, root_seg2, mode_text):
+            seg0 = scale_text[:17].ljust(17)
+            seg1 = root_seg1[:17].center(17)
+            seg2 = root_seg2[:17].center(17)
+            seg3 = mode_text[:17].rjust(17)
+            return seg0 + seg1 + seg2 + seg3
+
+        self.set_lcd_line_raw(1, scale_texts[0].ljust(17) + " " * 51)
+        self.set_lcd_line_raw(2, scale_texts[1].ljust(17) + " " * 51)
+        self.set_lcd_line_raw(3, build_line(scale_texts[2], upper_seg1, upper_seg2, f"{in_key_mark}In Key"))
+        self.set_lcd_line_raw(4, build_line(scale_texts[3], lower_seg1, lower_seg2, f"{chromat_mark}Chromat"))
 
     def update_transport_leds(self):
         """Update Play/Stop button LEDs."""
@@ -214,37 +457,23 @@ class SeqtrakBridge:
             self._update_note_grid()
 
     def _update_note_grid(self):
-        """Update grid for note mode (isomorphic keyboard + mute row)."""
+        """Update grid for note mode (isomorphic keyboard)."""
         for row in range(8):
             for col in range(8):
                 note = 36 + (row * 8) + col
+                info = self.layout.get_pad_info(row, col)
 
-                if row == 0:
-                    # Bottom row = track mutes (tracks 1-8)
-                    track = col + 1
-                    state = self.track_states[track - 1]
-                    if state == MuteState.MUTED:
-                        color = COLOR_RED
-                    elif state == MuteState.SOLO:
-                        color = COLOR_YELLOW
-                    else:
-                        color = COLOR_GREEN
+                if info['is_root']:
+                    color = COLOR_BLUE
+                elif info['is_in_scale']:
+                    color = COLOR_WHITE
                 else:
-                    # Upper rows = isomorphic keyboard
-                    midi_note = self.layout.get_note_at(row - 1, col) + (self.octave * 12)
-                    semitone = midi_note % 12
-
-                    if is_root_note(semitone, self.root):
-                        color = COLOR_BLUE
-                    elif is_in_scale(semitone, self.root, self.layout.scale):
-                        color = COLOR_WHITE
-                    else:
-                        color = COLOR_DIM
+                    color = COLOR_OFF if self.in_key_mode else COLOR_DIM
 
                 self.set_pad_color(note, color)
 
     def _update_mute_grid(self):
-        """Update grid for mute mode (all tracks visible)."""
+        """Update grid for mute mode (track mutes on bottom rows)."""
         for row in range(8):
             for col in range(8):
                 note = 36 + (row * 8) + col
@@ -269,21 +498,207 @@ class SeqtrakBridge:
                         color = COLOR_GREEN
                     self.set_pad_color(note, color)
 
+    def _update_scale_button_leds(self):
+        """Update button LEDs for scale selection mode."""
+        if self.current_mode != 'scale':
+            return
+
+        UPPER_BRIGHT = 10
+        UPPER_DIM = 7
+        LOWER_BRIGHT = 13
+        LOWER_DIM = 11
+
+        at_top = self.scale_index == 0
+        at_bottom = self.scale_index >= len(SCALE_NAMES) - 1
+
+        self.set_button_led(SCALE_UP_CC, UPPER_DIM if at_top else UPPER_BRIGHT)
+        self.set_button_led(SCALE_DOWN_CC, LOWER_DIM if at_bottom else LOWER_BRIGHT)
+
+        for i, cc in enumerate(ROOT_UPPER_BUTTONS):
+            root_val = ROOT_UPPER_NOTES[i]
+            self.set_button_led(cc, UPPER_BRIGHT if root_val == self.root_note else UPPER_DIM)
+
+        for i, cc in enumerate(ROOT_LOWER_BUTTONS):
+            root_val = ROOT_LOWER_NOTES[i]
+            self.set_button_led(cc, LOWER_BRIGHT if root_val == self.root_note else LOWER_DIM)
+
+        self.set_button_led(IN_KEY_CC, UPPER_BRIGHT if self.in_key_mode else UPPER_DIM)
+        self.set_button_led(CHROMAT_CC, LOWER_BRIGHT if not self.in_key_mode else LOWER_DIM)
+
+    # -------------------------------------------------------------------------
+    # Scale Mode
+    # -------------------------------------------------------------------------
+
+    def _enter_scale_mode(self):
+        """Enter scale selection mode."""
+        self.previous_mode = self.current_mode
+        self.current_mode = 'scale'
+        print("Entering Scale mode")
+        self.set_button_led(BUTTONS['scale'], LED_ON)
+        self._update_scale_button_leds()
+        self.update_display()
+
+    def _exit_scale_mode(self):
+        """Exit scale selection mode."""
+        print(f"Exiting Scale mode -> {ROOT_NAMES[self.root_note]} {get_scale_display_name(SCALE_NAMES[self.scale_index])}")
+
+        # Clear scale buttons
+        for cc in ROOT_UPPER_BUTTONS + ROOT_LOWER_BUTTONS + [SCALE_UP_CC, SCALE_DOWN_CC, IN_KEY_CC, CHROMAT_CC]:
+            self.set_button_led(cc, 0)
+
+        self.current_mode = self.previous_mode if self.previous_mode != 'scale' else 'note'
+        self.set_button_led(BUTTONS['scale'], LED_DIM)
+        self.update_display()
+        self.update_grid()
+
+    def _apply_scale_changes(self):
+        """Apply current scale settings to layout."""
+        self.layout.set_scale(self.root_note, SCALE_NAMES[self.scale_index])
+        self.layout.set_in_key_mode(self.in_key_mode)
+        self.update_grid()
+
+    def _scroll_scale(self, direction):
+        """Scroll through scale list."""
+        total_scales = len(SCALE_NAMES)
+        new_index = max(0, min(total_scales - 1, self.scale_index + direction))
+
+        if new_index != self.scale_index:
+            self.scale_index = new_index
+            print(f"  Scale: {get_scale_display_name(SCALE_NAMES[self.scale_index])}")
+            self._apply_scale_changes()
+            self.update_display()
+            self._update_scale_button_leds()
+
+    def _handle_scale_mode_button(self, cc, value):
+        """Handle button press in scale mode."""
+        if cc == 71:  # Encoder for scrolling
+            if value < 64:
+                self._scroll_scale(1)
+            else:
+                self._scroll_scale(-1)
+            return
+
+        if cc == SCALE_UP_CC:
+            self._scroll_scale(-1)
+            return
+
+        if cc == SCALE_DOWN_CC:
+            self._scroll_scale(1)
+            return
+
+        if cc == IN_KEY_CC:
+            self.in_key_mode = True
+            print("  Mode: In Key")
+            self._apply_scale_changes()
+            self.update_display()
+            self._update_scale_button_leds()
+            return
+
+        if cc == CHROMAT_CC:
+            self.in_key_mode = False
+            print("  Mode: Chromatic")
+            self._apply_scale_changes()
+            self.update_display()
+            self._update_scale_button_leds()
+            return
+
+        if cc in ROOT_UPPER_BUTTONS:
+            idx = ROOT_UPPER_BUTTONS.index(cc)
+            self.root_note = ROOT_UPPER_NOTES[idx]
+            print(f"  Root: {ROOT_NAMES[self.root_note]}")
+            self._apply_scale_changes()
+            self.update_display()
+            self._update_scale_button_leds()
+            return
+
+        if cc in ROOT_LOWER_BUTTONS:
+            idx = ROOT_LOWER_BUTTONS.index(cc)
+            self.root_note = ROOT_LOWER_NOTES[idx]
+            print(f"  Root: {ROOT_NAMES[self.root_note]}")
+            self._apply_scale_changes()
+            self.update_display()
+            self._update_scale_button_leds()
+            return
+
+    # -------------------------------------------------------------------------
+    # Mode Switching (matching Reason app pattern)
+    # -------------------------------------------------------------------------
+
+    def _set_mode(self, mode):
+        """Switch to a different mode and update display."""
+        # Track previous mode for returning from scale mode
+        if self.current_mode in ('track', 'device', 'mixer', 'note'):
+            self.previous_mode = self.current_mode
+
+        self.current_mode = mode
+        print(f"Mode: {mode}")
+
+        # Update button LEDs for mode buttons
+        self.set_button_led(BUTTONS['volume'], LED_ON if mode == 'mixer' else LED_DIM)
+        self.set_button_led(BUTTONS['device'], LED_ON if mode == 'device' else LED_DIM)
+        self.set_button_led(BUTTONS['note'], LED_ON if mode == 'note' else LED_DIM)
+        self.set_button_led(BUTTONS['scale'], LED_ON if mode == 'scale' else LED_DIM)
+        self.set_button_led(BUTTONS['track'], LED_ON if mode == 'track' else LED_DIM)
+
+        # Track mode: light up track nav buttons (CC 20 = prev, CC 102 = next)
+        if mode == 'track':
+            self.set_button_led(BUTTONS['upper_1'], LED_ON)  # CC 20 - prev track
+            self.set_button_led(BUTTONS['lower_1'], LED_ON)  # CC 102 - next track
+        else:
+            self.set_button_led(BUTTONS['upper_1'], LED_OFF)
+            self.set_button_led(BUTTONS['lower_1'], LED_OFF)
+
+        # Update display
+        self.update_display()
+
+        # Update grid
+        self.update_grid()
+
     # -------------------------------------------------------------------------
     # Input Handlers
     # -------------------------------------------------------------------------
 
     def handle_button(self, cc, value):
-        """Handle button press."""
-        if value == 0:  # Button released
+        """Handle button press/release."""
+        # Track shift state
+        if cc == BUTTONS['shift']:
+            self.shift_held = (value > 0)
             return
 
+        # Only process button presses, not releases
+        if value == 0:
+            return
+
+        # Scale mode buttons
+        if self.current_mode == 'scale':
+            scale_ccs = ROOT_UPPER_BUTTONS + ROOT_LOWER_BUTTONS + [SCALE_UP_CC, SCALE_DOWN_CC, IN_KEY_CC, CHROMAT_CC, 71]
+            if cc in scale_ccs:
+                self._handle_scale_mode_button(cc, value)
+                return
+
+        # Transport: Play/Stop toggle (matching Reason app pattern)
         if cc == BUTTONS['play']:
-            self.protocol.start()
-            self.is_playing = True
-            self.update_transport_leds()
-            self.update_display()
-            print("▶ PLAY")
+            if self.shift_held:
+                # Shift+Play = Stop (return to zero)
+                self.protocol.stop()
+                self.is_playing = False
+                self.update_transport_leds()
+                self.update_display()
+                print("  -> Sent Stop (Shift+Play = return to zero)")
+            elif self.is_playing:
+                # Already playing -> Stop
+                self.protocol.stop()
+                self.is_playing = False
+                self.update_transport_leds()
+                self.update_display()
+                print("■ STOP (toggle)")
+            else:
+                # Not playing -> Play
+                self.protocol.start()
+                self.is_playing = True
+                self.update_transport_leds()
+                self.update_display()
+                print("▶ PLAY")
 
         elif cc == BUTTONS['stop']:
             self.protocol.stop()
@@ -292,47 +707,104 @@ class SeqtrakBridge:
             self.update_display()
             print("■ STOP")
 
+        elif cc == BUTTONS['record']:
+            # Toggle record via SysEx
+            self.is_recording = not self.is_recording
+            self.protocol.record(self.is_recording)
+            self.set_button_led(BUTTONS['record'], LED_ON if self.is_recording else LED_DIM)
+            self.update_display()
+            print(f"● RECORD {'ON' if self.is_recording else 'OFF'}")
+
+        elif cc == BUTTONS['tap_tempo']:
+            # Tap tempo - send to protocol
+            self.protocol.tap_tempo()
+            print("  -> Tap Tempo")
+
+        # Octave
         elif cc == BUTTONS['octave_up']:
-            if self.octave < 4:
-                self.octave += 1
-                self.update_grid()
-                self.update_display()
-                print(f"Octave: {self.octave:+d}")
+            self.layout.shift_octave(1)
+            self.update_grid()
+            self.update_display()
+            print(f"Octave: {self.layout.get_octave()}")
 
         elif cc == BUTTONS['octave_down']:
-            if self.octave > -4:
-                self.octave -= 1
-                self.update_grid()
-                self.update_display()
-                print(f"Octave: {self.octave:+d}")
-
-        elif cc == BUTTONS['mute']:
-            self.current_mode = 'mute'
+            self.layout.shift_octave(-1)
             self.update_grid()
             self.update_display()
-            print("Mode: MUTE")
+            print(f"Octave: {self.layout.get_octave()}")
 
+        # Track mode: CC 20 = prev track, CC 102 = next track
+        elif self.current_mode == 'track' and cc == BUTTONS['upper_1']:  # CC 20
+            self._select_prev_track()
+        elif self.current_mode == 'track' and cc == BUTTONS['lower_1']:  # CC 102
+            self._select_next_track()
+
+        # Mode buttons (matching Reason app pattern)
+        elif cc == BUTTONS['track']:
+            self._set_mode('track')
+        elif cc == BUTTONS['volume']:
+            self._set_mode('mixer')
+        elif cc == BUTTONS['device']:
+            self._set_mode('device')
         elif cc == BUTTONS['note']:
-            self.current_mode = 'note'
-            self.update_grid()
-            self.update_display()
-            print("Mode: NOTE")
+            self._set_mode('note')
+        elif cc == BUTTONS['scale']:
+            if self.current_mode == 'scale':
+                self._exit_scale_mode()
+            else:
+                self._enter_scale_mode()
+
+    def handle_encoder(self, cc, value):
+        """Handle encoder turn."""
+        # Tempo encoder (CC 14)
+        if cc == 14:
+            # Relative encoder: 1-63 = clockwise, 65-127 = counter-clockwise
+            if value < 64:
+                delta = value
+            else:
+                delta = value - 128
+
+            new_tempo = max(20, min(300, self.tempo + delta))
+            if new_tempo != self.tempo:
+                self.tempo = new_tempo
+                self.protocol.set_tempo(self.tempo)
+                self.update_display()
+                print(f"Tempo: {self.tempo}")
+
+        # Scale mode encoder for scrolling
+        elif cc == 71 and self.current_mode == 'scale':
+            if value < 64:
+                self._scroll_scale(1)
+            else:
+                self._scroll_scale(-1)
 
     def handle_pad(self, note, velocity):
         """Handle pad press/release."""
+        if note < 36 or note > 99:
+            return
+
         row = (note - 36) // 8
         col = (note - 36) % 8
 
-        if velocity == 0:  # Pad released
-            # Send note-off if we have an active note for this pad
+        if velocity == 0:
+            # Note off
             if note in self.active_notes:
-                midi_note = self.active_notes[note]
+                midi_note = self.active_notes.pop(note)
                 self.protocol.release_note(self.keyboard_track, midi_note)
-                del self.active_notes[note]
+
+                # Restore pad color
+                info = self.layout.get_pad_info(row, col)
+                if info['is_root']:
+                    color = COLOR_BLUE
+                elif info['is_in_scale']:
+                    color = COLOR_WHITE
+                else:
+                    color = COLOR_OFF if self.in_key_mode else COLOR_DIM
+                self.set_pad_color(note, color)
             return
 
-        if self.current_mode == 'mute' or row == 0:
-            # Mute mode or bottom row = track control
+        # Mute mode: bottom rows control track mutes
+        if self.current_mode == 'mute':
             if row == 0:
                 track = col + 1
             elif row == 1 and col < 3:
@@ -342,22 +814,20 @@ class SeqtrakBridge:
 
             if track <= 11:
                 self._toggle_track_mute(track)
+            return
 
-        else:
-            # Note mode (upper rows)
-            # Calculate MIDI note and send to Seqtrak
-            midi_note = self.layout.get_note(row - 1, col) + (self.octave * 12)
+        # Note mode: play notes
+        midi_note = self.layout.get_midi_note(note)
 
-            # Clamp to valid MIDI range
-            midi_note = max(0, min(127, midi_note))
+        # Send to Seqtrak
+        self.protocol.trigger_note(self.keyboard_track, midi_note, velocity)
+        self.active_notes[note] = midi_note
 
-            # Send note to Seqtrak
-            self.protocol.trigger_note(self.keyboard_track, midi_note, velocity)
-            self.active_notes[note] = midi_note
+        # Flash pad green
+        self.set_pad_color(note, COLOR_GREEN)
 
-            # Show on LCD
-            track_name = Track.NAMES.get(self.keyboard_track, f"Track {self.keyboard_track}")
-            print(f"♪ {midi_note} → {track_name}")
+        track_name = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
+        print(f"♪ {midi_note} → {track_name}")
 
     def _toggle_track_mute(self, track):
         """Toggle track mute state: unmuted → muted → solo → unmuted."""
@@ -366,25 +836,64 @@ class SeqtrakBridge:
 
         if current == MuteState.UNMUTED:
             new_state = MuteState.MUTED
-            state_name = "MUTED"
-            # Use CC-based mute (official MIDI method)
             self.protocol.mute_track_cc(track, muted=True)
         elif current == MuteState.MUTED:
             new_state = MuteState.SOLO
-            state_name = "SOLO"
-            # Unmute first, then solo
             self.protocol.mute_track_cc(track, muted=False)
             self.protocol.solo_track_cc(track)
         else:
             new_state = MuteState.UNMUTED
-            state_name = "UNMUTED"
-            # Unsolo and unmute
-            self.protocol.solo_track_cc(0)  # 0 = unsolo
+            self.protocol.solo_track_cc(0)
             self.protocol.mute_track_cc(track, muted=False)
 
         self.track_states[track - 1] = new_state
         self.update_grid()
-        print(f"{track_name}: {state_name}")
+        print(f"{track_name}: {['UNMUTED', 'MUTED', 'SOLO'][new_state]}")
+
+    def _get_track_preset_display(self, track):
+        """Get preset display string for a track from stored bank/program."""
+        bank = self.track_bank_msb[track]
+        sub = self.track_bank_lsb[track]
+        prog = self.track_program[track]
+        if bank or sub or prog:
+            return f"B{bank}:{sub} P{prog}"
+        return ""
+
+    def _select_prev_track(self):
+        """Select previous track (wraps around)."""
+        if self.keyboard_track > 1:
+            self.keyboard_track -= 1
+        else:
+            self.keyboard_track = 11  # Wrap to last track
+
+        # Get stored preset info for this track
+        self.patch_name = self._get_track_preset_display(self.keyboard_track)
+
+        # Inform Seqtrak of track selection and request current preset
+        self.protocol.select_track(self.keyboard_track)
+        self.protocol.request_parameter(Address.PRESET_NAME)
+
+        track_name = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
+        print(f"<< Track: {track_name}")
+        self.update_display()
+
+    def _select_next_track(self):
+        """Select next track (wraps around)."""
+        if self.keyboard_track < 11:
+            self.keyboard_track += 1
+        else:
+            self.keyboard_track = 1  # Wrap to first track
+
+        # Get stored preset info for this track
+        self.patch_name = self._get_track_preset_display(self.keyboard_track)
+
+        # Inform Seqtrak of track selection and request current preset
+        self.protocol.select_track(self.keyboard_track)
+        self.protocol.request_parameter(Address.PRESET_NAME)
+
+        track_name = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
+        print(f"Track: {track_name} >>")
+        self.update_display()
 
     # -------------------------------------------------------------------------
     # Main Loop
@@ -416,9 +925,17 @@ class SeqtrakBridge:
                 print(f"  - {name}")
             return
 
+        # Find Seqtrak input port (for receiving SysEx feedback)
+        seqtrak_in_name = None
+        for name in mido.get_input_names():
+            if 'SEQTRAK' in name.upper():
+                seqtrak_in_name = name
+                break
+
         print(f"  Push Input:  {push_in_name}")
         print(f"  Push Output: {push_out_name}")
-        print(f"  Seqtrak:     {seqtrak_name}")
+        print(f"  Seqtrak Out: {seqtrak_name}")
+        print(f"  Seqtrak In:  {seqtrak_in_name or 'Not found'}")
         print()
 
         # Open ports
@@ -431,20 +948,30 @@ class SeqtrakBridge:
             self.seqtrak = seqtrak_out
             self.protocol = SeqtrakProtocol(seqtrak_out)
 
+            # Open Seqtrak input if available
+            seqtrak_in = None
+            if seqtrak_in_name:
+                seqtrak_in = mido.open_input(seqtrak_in_name)
+                self.seqtrak_in = seqtrak_in
+
             # Initialize Push
             print("Initializing Push...")
             self.send_sysex(USER_MODE)
             time.sleep(0.1)
 
-            # Set up display and grid
+            # Show welcome screen briefly
             self.clear_all_pads()
-            self.update_display()
+            self.update_display()  # Shows welcome screen (current_mode = 'welcome')
             self.update_grid()
             self.update_transport_leds()
 
-            # Light up mode buttons
-            self.set_button_led(BUTTONS['note'], LED_ON)
-            self.set_button_led(BUTTONS['mute'], LED_DIM)
+            # Light up all mode buttons as dim initially
+            self.set_button_led(BUTTONS['track'], LED_DIM)
+            self.set_button_led(BUTTONS['device'], LED_DIM)
+            self.set_button_led(BUTTONS['volume'], LED_DIM)
+            self.set_button_led(BUTTONS['note'], LED_DIM)
+            self.set_button_led(BUTTONS['scale'], LED_DIM)
+            self.set_button_led(BUTTONS['tap_tempo'], LED_ON)  # Tap tempo always available
             self.set_button_led(BUTTONS['octave_up'], LED_DIM)
             self.set_button_led(BUTTONS['octave_down'], LED_DIM)
 
@@ -454,25 +981,51 @@ class SeqtrakBridge:
             print("=" * 60)
             print()
             print("Controls:")
-            print("  Play/Stop    - Transport")
-            print("  Bottom row   - Track mutes (cycles: unmute→mute→solo)")
-            print("  Upper rows   - Isomorphic keyboard")
+            print("  Play         - Play/Stop toggle")
+            print("  Record       - Record arm")
+            print("  Track/Device/Volume - Switch modes")
+            print("  Pads         - Isomorphic keyboard")
+            print("  Scale button - Scale/root selection")
             print("  Oct Up/Down  - Shift octave")
-            print("  Note/Mute    - Switch modes")
+            print("  Tempo knob   - Adjust BPM")
+            print("  Tap Tempo    - Tap tempo")
             print()
             print("Press Ctrl+C to exit")
             print()
 
-            # Main loop
+            # Transition from welcome to track mode
+            time.sleep(0.5)
+            self._set_mode('track')
+
+            # Select initial track
+            self.protocol.select_track(self.keyboard_track)
+
+            # Main loop - poll both Push and Seqtrak inputs
             self.running = True
             try:
-                for msg in push_in:
-                    if msg.type == 'control_change':
-                        self.handle_button(msg.control, msg.value)
+                while self.running:
+                    # Poll Push input (non-blocking)
+                    for msg in push_in.iter_pending():
+                        if msg.type == 'control_change':
+                            # Encoders (CC 14-15 for tempo/swing, CC 71-79 for track encoders)
+                            if msg.control in (14, 15) or msg.control in range(71, 80):
+                                self.handle_encoder(msg.control, msg.value)
+                            else:
+                                self.handle_button(msg.control, msg.value)
+                        elif msg.type == 'note_on':
+                            if 36 <= msg.note <= 99:
+                                self.handle_pad(msg.note, msg.velocity)
+                        elif msg.type == 'note_off':
+                            if 36 <= msg.note <= 99:
+                                self.handle_pad(msg.note, 0)
 
-                    elif msg.type == 'note_on':
-                        if 36 <= msg.note <= 99:  # Pad range
-                            self.handle_pad(msg.note, msg.velocity)
+                    # Poll Seqtrak input for feedback (non-blocking)
+                    if seqtrak_in:
+                        for msg in seqtrak_in.iter_pending():
+                            self.handle_seqtrak_message(msg)
+
+                    # Small sleep to avoid busy-waiting
+                    time.sleep(0.001)
 
             except KeyboardInterrupt:
                 print("\n\nExiting...")
@@ -485,6 +1038,10 @@ class SeqtrakBridge:
                 self.set_lcd_segments(line)
             for cc in BUTTONS.values():
                 self.set_button_led(cc, LED_OFF)
+
+            # Close Seqtrak input port
+            if seqtrak_in:
+                seqtrak_in.close()
 
         print("Done!")
 
