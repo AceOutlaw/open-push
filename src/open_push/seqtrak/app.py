@@ -88,7 +88,7 @@ class SeqtrakBridge:
         self.current_mode = 'note'  # 'note', 'mute', 'session'
         self.octave = 0
         self.root = 0  # C
-        self.scale_index = 2  # Minor
+        self.scale_index = 1  # Minor (index 0=major, 1=minor)
 
         # Track states (1-11)
         self.track_states = [MuteState.UNMUTED] * 11
@@ -99,13 +99,14 @@ class SeqtrakBridge:
         # Track active notes for proper note-off
         self.active_notes = {}  # {pad_note: midi_note}
 
-        # Layout
+        # Layout (root_note=36 is C2, row_interval=5 is fourths, col_interval=1 is semitones)
         self.layout = IsomorphicLayout(
-            root_note=self.root,
-            scale=SCALES[SCALE_NAMES[self.scale_index]],
-            interval_right=1,
-            interval_up=5
+            root_note=36,
+            row_interval=5,
+            col_interval=1
         )
+        # Set the scale
+        self.layout.set_scale(self.root, SCALE_NAMES[self.scale_index])
 
         # Ports (set in run())
         self.push_in = None
@@ -230,7 +231,7 @@ class SeqtrakBridge:
                         color = COLOR_GREEN
                 else:
                     # Upper rows = isomorphic keyboard
-                    midi_note = self.layout.get_note(row - 1, col) + (self.octave * 12)
+                    midi_note = self.layout.get_note_at(row - 1, col) + (self.octave * 12)
                     semitone = midi_note % 12
 
                     if is_root_note(semitone, self.root):
