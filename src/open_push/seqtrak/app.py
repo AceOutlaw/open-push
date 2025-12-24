@@ -70,6 +70,52 @@ COLOR_CYAN = 33
 COLOR_BLUE = 45
 COLOR_PURPLE = 49
 
+# Track type preset ranges (preset numbers, 1-indexed)
+# Formula: preset_number = (bank_lsb * 128) + program + 1
+PRESET_RANGES = {
+    'drum': (1, 855),       # Tracks 1-7: all drum sounds
+    'synth': (856, 1932),   # Tracks 8-9: synth sounds only
+    'dx': (1933, 2032),     # Track 10: DX/FM sounds only
+    'sampler': (1, 392),    # Track 11: sampler sounds (separate bank MSB 62)
+}
+
+# Default starting presets for each track
+# SYNTH1 starts on "Rn Bass" (preset 856), SYNTH2 on "Slow Saw Lead" (preset 951)
+# DX starts on "FM Chorus Jazz EP" (preset 1970)
+TRACK_DEFAULTS = {
+    # Tracks 1-7 (drums): preset 1 = "Tight Punchy Kick 1"
+    1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1,
+    # Track 8 (SYNTH1): preset 856 = "Rn Bass"
+    8: 856,
+    # Track 9 (SYNTH2): preset 951 = "Slow Saw Lead"
+    9: 951,
+    # Track 10 (DX): preset 1970 = "FM Chorus Jazz EP"
+    10: 1970,
+    # Track 11 (Sampler): preset 1
+    11: 1,
+}
+
+def get_track_type(track):
+    """Get the track type for preset range limits."""
+    if 1 <= track <= 7:
+        return 'drum'
+    elif 8 <= track <= 9:
+        return 'synth'
+    elif track == 10:
+        return 'dx'
+    elif track == 11:
+        return 'sampler'
+    return None
+
+def preset_to_bank_program(preset_num):
+    """Convert preset number (1-indexed) to bank_lsb and program."""
+    idx = preset_num - 1
+    return idx // 128, idx % 128
+
+def bank_program_to_preset(bank_lsb, program):
+    """Convert bank_lsb and program to preset number (1-indexed)."""
+    return (bank_lsb * 128) + program + 1
+
 # Button LED values
 LED_OFF = 0
 LED_DIM = 1
@@ -161,6 +207,12 @@ class SeqtrakBridge:
         self.track_bank_msb = [0, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 62]
         self.track_bank_lsb = [0] * 12   # Bank LSB per track
         self.track_program = [0] * 12    # Program number per track
+
+        # Initialize each track with its default preset
+        for track, preset_num in TRACK_DEFAULTS.items():
+            bank_lsb, program = preset_to_bank_program(preset_num)
+            self.track_bank_lsb[track] = bank_lsb
+            self.track_program[track] = program
 
         # Encoder accumulators for slower response (require multiple ticks)
         self.patch_encoder_accum = 0
@@ -913,40 +965,43 @@ class SeqtrakBridge:
         return ""
 
     def _cycle_patch(self, delta):
-        """Cycle through patches for the current track."""
+        """Cycle through patches for the current track, respecting preset range limits."""
         track = self.keyboard_track
-        bank = self.track_bank_msb[track]
-        sub = self.track_bank_lsb[track]
-        prog = self.track_program[track]
+        bank_msb = self.track_bank_msb[track]
+        bank_lsb = self.track_bank_lsb[track]
+        program = self.track_program[track]
 
-        # Calculate new program/bank
-        new_prog = prog + delta
+        # Get current preset number and track type range
+        current_preset = bank_program_to_preset(bank_lsb, program)
+        track_type = get_track_type(track)
 
-        if new_prog > 127:
-            # Wrap to next bank
-            new_prog = 0
-            new_sub = sub + 1
-            if new_sub > 31:  # Max preset bank LSB
-                new_sub = 0
-        elif new_prog < 0:
-            # Wrap to previous bank
-            new_prog = 127
-            new_sub = sub - 1
-            if new_sub < 0:
-                new_sub = 31
+        if track_type and track_type in PRESET_RANGES:
+            min_preset, max_preset = PRESET_RANGES[track_type]
         else:
-            new_sub = sub
+            # Fallback: allow all presets
+            min_preset, max_preset = 1, 2032
+
+        # Calculate new preset, clamping to range (no wrap)
+        new_preset = current_preset + delta
+        new_preset = max(min_preset, min(max_preset, new_preset))
+
+        # If no change (at boundary), don't send anything
+        if new_preset == current_preset:
+            return
+
+        # Convert back to bank_lsb and program
+        new_lsb, new_prog = preset_to_bank_program(new_preset)
 
         # Send Bank Select + Program Change to Seqtrak
         channel = track - 1  # Convert to 0-indexed MIDI channel
-        self.seqtrak.send(mido.Message('control_change', channel=channel, control=0, value=bank))
-        self.seqtrak.send(mido.Message('control_change', channel=channel, control=32, value=new_sub))
+        self.seqtrak.send(mido.Message('control_change', channel=channel, control=0, value=bank_msb))
+        self.seqtrak.send(mido.Message('control_change', channel=channel, control=32, value=new_lsb))
         self.seqtrak.send(mido.Message('program_change', channel=channel, program=new_prog))
 
         # Update local state
-        self.track_bank_lsb[track] = new_sub
+        self.track_bank_lsb[track] = new_lsb
         self.track_program[track] = new_prog
-        self.patch_name = get_preset_name_short(track, bank, new_sub, new_prog)
+        self.patch_name = get_preset_name_short(track, bank_msb, new_lsb, new_prog)
         self.update_display()
         print(f"  Patch: {self.patch_name}")
 
