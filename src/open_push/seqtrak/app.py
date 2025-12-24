@@ -70,6 +70,38 @@ COLOR_CYAN = 33
 COLOR_BLUE = 45
 COLOR_PURPLE = 49
 
+# =============================================================================
+# PAD MODES - Different behavior based on track type
+# =============================================================================
+
+class PadMode:
+    """Pad mode determines grid colors and note behavior."""
+    DRUM = 'drum'       # Chromatic pads, no scale filtering
+    MELODIC = 'melodic' # Isomorphic keyboard with scales
+    SAMPLER = 'sampler' # 7 sample pads with per-pad presets
+
+# Map track types to pad modes
+TRACK_TYPE_TO_PAD_MODE = {
+    'drum': PadMode.DRUM,
+    'synth': PadMode.MELODIC,
+    'dx': PadMode.MELODIC,
+    'sampler': PadMode.SAMPLER,
+}
+
+# Sampler pad positions - bottom row, pads 0-6
+SAMPLER_PAD_POSITIONS = [(0, i) for i in range(7)]
+
+# Colors for each sampler pad (distinctive colors for visual identification)
+SAMPLER_PAD_COLORS = [
+    COLOR_RED, COLOR_ORANGE, COLOR_YELLOW, COLOR_GREEN,
+    COLOR_CYAN, COLOR_BLUE, COLOR_PURPLE
+]
+SAMPLER_SELECTED_COLOR = 3  # Bright white for selected pad
+
+# =============================================================================
+# PRESET RANGES
+# =============================================================================
+
 # Track type preset ranges (preset numbers, 1-indexed)
 # Formula: preset_number = (bank_lsb * 128) + program + 1
 PRESET_RANGES = {
@@ -168,6 +200,16 @@ class SeqtrakBridge:
         self.current_mode = 'welcome'  # welcome, note, track, device, mixer, scale
         self.previous_mode = 'track'   # Mode to return to after scale mode
         self.shift_held = False
+
+        # Pad mode (derived from keyboard_track type)
+        self.current_pad_mode = PadMode.MELODIC  # Default for SYNTH1
+
+        # Sampler-specific state
+        self.selected_sampler_pad = 0  # Which of 7 pads is selected for editing (0-6)
+        self.sampler_pad_presets = [
+            {'bank_msb': 62, 'bank_lsb': 0, 'program': i, 'preset_num': i + 1}
+            for i in range(7)  # Initialize 7 pads with presets 1-7
+        ]
 
         # Track states (1-11)
         self.track_states = [MuteState.UNMUTED] * 11
@@ -390,19 +432,42 @@ class SeqtrakBridge:
         self.set_lcd_segments(4, "Track", "Device", "Mixer", "to start")
 
     def _update_track_display(self):
-        """Update LCD for track mode."""
+        """Update LCD for track mode - mode-specific display."""
         kb_track = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
-        root_name = ROOT_NAMES[self.root_note]
-        scale_name = get_scale_display_name(SCALE_NAMES[self.scale_index])
         octave = self.layout.get_octave()
 
-        # Line 1: Track name, patch info, tempo
-        self.set_lcd_segments(1, kb_track, self.patch_name or "", "", f"{self.tempo} BPM")
-        # Line 2: Scale, octave info
-        self.set_lcd_segments(2, f"{root_name} {scale_name}", f"Oct {octave}", "", "")
-        # Line 3: Available for future use
+        # Mode-specific display
+        if self.current_pad_mode == PadMode.DRUM:
+            # Drum mode: show track, patch, chromatic info
+            mode_info = "DRUM"
+            scale_info = "Chromatic"
+            # Line 1: Track name, patch info, tempo
+            self.set_lcd_segments(1, kb_track, self.patch_name or "", mode_info, f"{self.tempo} BPM")
+            # Line 2: Chromatic mode info
+            self.set_lcd_segments(2, scale_info, f"Oct {octave}", "", "")
+
+        elif self.current_pad_mode == PadMode.SAMPLER:
+            # Sampler mode: show selected pad and its preset
+            mode_info = "SAMPLER"
+            pad_num = self.selected_sampler_pad + 1
+            pad_info = self.sampler_pad_presets[self.selected_sampler_pad]
+            pad_preset = get_preset_name_short(11, pad_info['bank_msb'], pad_info['bank_lsb'], pad_info['program'])
+            # Line 1: Track name, mode, tempo
+            self.set_lcd_segments(1, kb_track, mode_info, "", f"{self.tempo} BPM")
+            # Line 2: Selected pad and preset
+            self.set_lcd_segments(2, f"Pad {pad_num}", pad_preset or "---", "", "Shift+Pad=Sel")
+
+        else:
+            # Melodic mode: show scale info
+            root_name = ROOT_NAMES[self.root_note]
+            scale_name = get_scale_display_name(SCALE_NAMES[self.scale_index])
+            # Line 1: Track name, patch info, tempo
+            self.set_lcd_segments(1, kb_track, self.patch_name or "", "", f"{self.tempo} BPM")
+            # Line 2: Scale, octave info
+            self.set_lcd_segments(2, f"{root_name} {scale_name}", f"Oct {octave}", "", "")
+
+        # Lines 3-4: Available for future use
         self.set_lcd_segments(3, "", "", "", "")
-        # Line 4: Available for future use
         self.set_lcd_segments(4, "", "", "", "")
 
     def _update_device_display(self):
@@ -518,7 +583,16 @@ class SeqtrakBridge:
             self._update_note_grid()
 
     def _update_note_grid(self):
-        """Update grid for note mode (isomorphic keyboard)."""
+        """Update grid based on current pad mode."""
+        if self.current_pad_mode == PadMode.DRUM:
+            self._update_drum_grid()
+        elif self.current_pad_mode == PadMode.SAMPLER:
+            self._update_sampler_grid()
+        else:
+            self._update_melodic_grid()
+
+    def _update_melodic_grid(self):
+        """Update grid for melodic mode (isomorphic keyboard)."""
         for row in range(8):
             for col in range(8):
                 note = 36 + (row * 8) + col
@@ -532,6 +606,30 @@ class SeqtrakBridge:
                     color = COLOR_OFF if self.in_key_mode else COLOR_DIM
 
                 self.set_pad_color(note, color)
+
+    def _update_drum_grid(self):
+        """Update grid for drum mode - uniform dim white, chromatic."""
+        for row in range(8):
+            for col in range(8):
+                note = 36 + (row * 8) + col
+                self.set_pad_color(note, COLOR_DIM)
+
+    def _update_sampler_grid(self):
+        """Update grid for sampler mode - only 7 pads lit."""
+        # First, turn off all pads
+        for note in range(36, 100):
+            self.set_pad_color(note, COLOR_OFF)
+
+        # Light up the 7 sampler pads
+        for i, (row, col) in enumerate(SAMPLER_PAD_POSITIONS):
+            note = 36 + (row * 8) + col
+
+            if i == self.selected_sampler_pad:
+                color = SAMPLER_SELECTED_COLOR
+            else:
+                color = SAMPLER_PAD_COLORS[i]
+
+            self.set_pad_color(note, color)
 
     def _update_mute_grid(self):
         """Update grid for mute mode (track mutes on bottom rows)."""
@@ -591,7 +689,13 @@ class SeqtrakBridge:
     # -------------------------------------------------------------------------
 
     def _enter_scale_mode(self):
-        """Enter scale selection mode."""
+        """Enter scale selection mode (only for melodic tracks)."""
+        # Scale mode only available for melodic tracks (synths and DX)
+        if self.current_pad_mode != PadMode.MELODIC:
+            track_name = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
+            print(f"Scale mode not available for {track_name} (only Synth/DX tracks)")
+            return
+
         self.previous_mode = self.current_mode
         self.current_mode = 'scale'
         print("Entering Scale mode")
@@ -884,10 +988,74 @@ class SeqtrakBridge:
                 print(f"Master Volume: {self.master_volume}")
 
     def handle_pad(self, note, velocity):
-        """Handle pad press/release."""
+        """Handle pad press/release - routes to mode-specific handler."""
         if note < 36 or note > 99:
             return
 
+        # Mute mode always handles pads specially
+        if self.current_mode == 'mute':
+            self._handle_mute_pad(note, velocity)
+            return
+
+        # Route based on pad mode
+        if self.current_pad_mode == PadMode.DRUM:
+            self._handle_drum_pad(note, velocity)
+        elif self.current_pad_mode == PadMode.SAMPLER:
+            self._handle_sampler_pad(note, velocity)
+        else:
+            self._handle_melodic_pad(note, velocity)
+
+    def _handle_mute_pad(self, note, velocity):
+        """Handle pad press in mute mode."""
+        if velocity == 0:
+            return
+
+        row = (note - 36) // 8
+        col = (note - 36) % 8
+
+        if row == 0:
+            track = col + 1
+        elif row == 1 and col < 3:
+            track = col + 9
+        else:
+            return
+
+        if track <= 11:
+            self._toggle_track_mute(track)
+
+    def _handle_drum_pad(self, note, velocity):
+        """Handle pad press in drum mode - chromatic, no scale filtering."""
+        row = (note - 36) // 8
+        col = (note - 36) % 8
+
+        if velocity == 0:
+            # Note off
+            if note in self.active_notes:
+                midi_note = self.active_notes.pop(note)
+                self.protocol.release_note(self.keyboard_track, midi_note)
+                # Restore dim color
+                self.set_pad_color(note, COLOR_DIM)
+            return
+
+        # Note on - chromatic mapping with octave shift
+        octave = self.layout.get_octave()
+        midi_note = 36 + (row * 8) + col + (octave * 12)
+
+        # Clamp to valid MIDI range
+        midi_note = max(0, min(127, midi_note))
+
+        # Send to Seqtrak
+        self.protocol.trigger_note(self.keyboard_track, midi_note, velocity)
+        self.active_notes[note] = midi_note
+
+        # Flash pad green
+        self.set_pad_color(note, COLOR_GREEN)
+
+        track_name = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
+        print(f"[D] {midi_note} → {track_name}")
+
+    def _handle_melodic_pad(self, note, velocity):
+        """Handle pad press in melodic mode (isomorphic keyboard)."""
         row = (note - 36) // 8
         col = (note - 36) % 8
 
@@ -897,7 +1065,7 @@ class SeqtrakBridge:
                 midi_note = self.active_notes.pop(note)
                 self.protocol.release_note(self.keyboard_track, midi_note)
 
-                # Restore pad color
+                # Restore pad color based on scale
                 info = self.layout.get_pad_info(row, col)
                 if info['is_root']:
                     color = COLOR_BLUE
@@ -908,20 +1076,7 @@ class SeqtrakBridge:
                 self.set_pad_color(note, color)
             return
 
-        # Mute mode: bottom rows control track mutes
-        if self.current_mode == 'mute':
-            if row == 0:
-                track = col + 1
-            elif row == 1 and col < 3:
-                track = col + 9
-            else:
-                return
-
-            if track <= 11:
-                self._toggle_track_mute(track)
-            return
-
-        # Note mode: play notes
+        # Note on - use isomorphic layout
         midi_note = self.layout.get_midi_note(note)
 
         # Send to Seqtrak
@@ -932,7 +1087,76 @@ class SeqtrakBridge:
         self.set_pad_color(note, COLOR_GREEN)
 
         track_name = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
-        print(f"♪ {midi_note} → {track_name}")
+        print(f"[M] {midi_note} → {track_name}")
+
+    def _get_sampler_element_for_pad(self, pad_note):
+        """Get sampler element index (0-6) for a pad, or None if not a sampler pad."""
+        row = (pad_note - 36) // 8
+        col = (pad_note - 36) % 8
+        pos = (row, col)
+
+        try:
+            return SAMPLER_PAD_POSITIONS.index(pos)
+        except ValueError:
+            return None
+
+    def _handle_sampler_pad(self, note, velocity):
+        """Handle pad press in sampler mode - 7 pads with per-pad presets.
+
+        Sampler triggering on Seqtrak:
+        - All 7 samples trigger on MIDI channel 11 (0-indexed: 10)
+        - Notes: C4 (60) through F#4 (66) - one note per sample slot
+        """
+        element = self._get_sampler_element_for_pad(note)
+
+        if element is None:
+            # Not a sampler pad - ignore
+            return
+
+        # Sampler uses channel 11 (0-indexed: 10) for all sample triggering
+        sampler_channel = 10  # Channel 11 in MIDI terms
+
+        # Notes 60-66 (C4 through F#4) for samples 0-6
+        midi_note = 60 + element
+
+        if velocity == 0:
+            # Note off
+            if note in self.active_notes:
+                self.active_notes.pop(note)
+                self.seqtrak.send(mido.Message('note_off', channel=sampler_channel, note=midi_note, velocity=0))
+
+                # Restore pad color
+                if element == self.selected_sampler_pad:
+                    self.set_pad_color(note, SAMPLER_SELECTED_COLOR)
+                else:
+                    self.set_pad_color(note, SAMPLER_PAD_COLORS[element])
+            return
+
+        # Note on
+        if self.shift_held:
+            # Shift+Pad = select this pad for editing (don't trigger sound)
+            old_selected = self.selected_sampler_pad
+            self.selected_sampler_pad = element
+
+            # Update visual feedback
+            old_row, old_col = SAMPLER_PAD_POSITIONS[old_selected]
+            old_note = 36 + (old_row * 8) + old_col
+            self.set_pad_color(old_note, SAMPLER_PAD_COLORS[old_selected])
+            self.set_pad_color(note, SAMPLER_SELECTED_COLOR)
+
+            print(f"  Selected sampler pad {element + 1}")
+            self.update_display()
+        else:
+            # Normal press = trigger sample on channel 11
+            self.seqtrak.send(mido.Message('note_on', channel=sampler_channel, note=midi_note, velocity=velocity))
+            self.active_notes[note] = midi_note
+
+            # Flash green
+            self.set_pad_color(note, COLOR_GREEN)
+
+            pad_info = self.sampler_pad_presets[element]
+            preset_name = get_preset_name_short(11, pad_info['bank_msb'], pad_info['bank_lsb'], pad_info['program'])
+            print(f"[S] Pad{element + 1} (note {midi_note}): {preset_name}")
 
     def _toggle_track_mute(self, track):
         """Toggle track mute state: unmuted → muted → solo → unmuted."""
@@ -964,16 +1188,40 @@ class SeqtrakBridge:
             return get_preset_name_short(track, bank, sub, prog)
         return ""
 
+    def _update_pad_mode(self):
+        """Update pad mode based on current keyboard track type."""
+        track_type = get_track_type(self.keyboard_track)
+        new_mode = TRACK_TYPE_TO_PAD_MODE.get(track_type, PadMode.MELODIC)
+
+        if new_mode != self.current_pad_mode:
+            self.current_pad_mode = new_mode
+            print(f"  Pad Mode: {new_mode}")
+
+            # Reset sampler selection when entering sampler mode
+            if new_mode == PadMode.SAMPLER:
+                self.selected_sampler_pad = 0
+
+        # Always update grid and display for track changes
+        self.update_grid()
+        self.update_display()
+
     def _cycle_patch(self, delta):
         """Cycle through patches for the current track, respecting preset range limits."""
         track = self.keyboard_track
+        track_type = get_track_type(track)
+
+        # Sampler mode: cycle preset for selected pad only
+        if track_type == 'sampler':
+            self._cycle_sampler_pad_preset(delta)
+            return
+
+        # Non-sampler tracks: cycle preset for the whole track
         bank_msb = self.track_bank_msb[track]
         bank_lsb = self.track_bank_lsb[track]
         program = self.track_program[track]
 
         # Get current preset number and track type range
         current_preset = bank_program_to_preset(bank_lsb, program)
-        track_type = get_track_type(track)
 
         if track_type and track_type in PRESET_RANGES:
             min_preset, max_preset = PRESET_RANGES[track_type]
@@ -1005,6 +1253,47 @@ class SeqtrakBridge:
         self.update_display()
         print(f"  Patch: {self.patch_name}")
 
+    def _cycle_sampler_pad_preset(self, delta):
+        """Cycle preset for the currently selected sampler pad."""
+        pad_info = self.sampler_pad_presets[self.selected_sampler_pad]
+
+        # Calculate current preset number
+        current_preset = bank_program_to_preset(pad_info['bank_lsb'], pad_info['program'])
+
+        # Sampler preset range
+        min_preset, max_preset = PRESET_RANGES['sampler']
+
+        # Calculate new preset, clamping to range (no wrap)
+        new_preset = current_preset + delta
+        new_preset = max(min_preset, min(max_preset, new_preset))
+
+        # If no change (at boundary), don't send anything
+        if new_preset == current_preset:
+            return
+
+        # Convert back to bank_lsb and program
+        new_lsb, new_prog = preset_to_bank_program(new_preset)
+
+        # Send Bank Select + Program Change on element's channel
+        # Sampler elements use channels 0-6 for elements 0-6
+        channel = self.selected_sampler_pad
+        bank_msb = 62  # Sampler always uses bank MSB 62
+
+        self.seqtrak.send(mido.Message('control_change', channel=channel, control=0, value=bank_msb))
+        self.seqtrak.send(mido.Message('control_change', channel=channel, control=32, value=new_lsb))
+        self.seqtrak.send(mido.Message('program_change', channel=channel, program=new_prog))
+
+        # Update local state for this pad
+        pad_info['bank_lsb'] = new_lsb
+        pad_info['program'] = new_prog
+        pad_info['preset_num'] = new_preset
+
+        # Update display to show selected pad's preset
+        preset_name = get_preset_name_short(11, bank_msb, new_lsb, new_prog)
+        self.patch_name = f"P{self.selected_sampler_pad + 1}:{preset_name}"
+        self.update_display()
+        print(f"  Sampler Pad {self.selected_sampler_pad + 1}: {preset_name}")
+
     def _select_prev_track(self):
         """Select previous track (wraps around)."""
         if self.keyboard_track > 1:
@@ -1021,7 +1310,9 @@ class SeqtrakBridge:
 
         track_name = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
         print(f"<< Track: {track_name}")
-        self.update_display()
+
+        # Update pad mode (also updates grid and display)
+        self._update_pad_mode()
 
     def _select_next_track(self):
         """Select next track (wraps around)."""
@@ -1039,7 +1330,9 @@ class SeqtrakBridge:
 
         track_name = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
         print(f"Track: {track_name} >>")
-        self.update_display()
+
+        # Update pad mode (also updates grid and display)
+        self._update_pad_mode()
 
     # -------------------------------------------------------------------------
     # Main Loop
