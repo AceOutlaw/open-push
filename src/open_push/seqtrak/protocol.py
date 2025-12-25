@@ -279,10 +279,54 @@ class SeqtrakProtocol:
         self.port.send(mido.Message('continue'))
 
     def tap_tempo(self):
-        """Tap tempo - Seqtrak doesn't have external tap tempo, so this is a no-op for now.
-        Could potentially be implemented by tracking tap times and setting tempo."""
-        # TODO: Implement tap tempo by measuring intervals between calls
-        pass
+        """Tap tempo - calculates BPM from tap intervals and sets tempo.
+
+        Uses a rolling window of up to 4 taps. Resets if more than 2 seconds
+        between taps (assumes user started a new tap sequence).
+
+        Returns:
+            The calculated BPM if enough taps, or None if still collecting.
+        """
+        import time
+
+        current_time = time.time()
+
+        # Initialize tap history if needed
+        if not hasattr(self, '_tap_times'):
+            self._tap_times = []
+
+        # Reset if more than 2 seconds since last tap
+        if self._tap_times and (current_time - self._tap_times[-1]) > 2.0:
+            self._tap_times = []
+
+        # Add current tap
+        self._tap_times.append(current_time)
+
+        # Keep only last 4 taps
+        if len(self._tap_times) > 4:
+            self._tap_times = self._tap_times[-4:]
+
+        # Need at least 2 taps to calculate BPM
+        if len(self._tap_times) < 2:
+            return None
+
+        # Calculate average interval
+        intervals = []
+        for i in range(1, len(self._tap_times)):
+            intervals.append(self._tap_times[i] - self._tap_times[i - 1])
+
+        avg_interval = sum(intervals) / len(intervals)
+
+        # Convert to BPM (60 seconds / interval)
+        bpm = int(round(60.0 / avg_interval))
+
+        # Clamp to valid range
+        bpm = max(5, min(300, bpm))
+
+        # Set the tempo
+        self.set_tempo(bpm)
+
+        return bpm
 
     def record(self, enable=True):
         """
@@ -321,6 +365,16 @@ class SeqtrakProtocol:
         """
         sysex_data = SYSEX_HEADER + address + data
         self.port.send(mido.Message('sysex', data=sysex_data))
+
+    def send_parameter(self, address, data):
+        """
+        Public method to send a SysEx parameter change.
+
+        Args:
+            address: 3-byte address list [h, m, l]
+            data: data bytes list
+        """
+        self._send_sysex(address, data)
 
     # -------------------------------------------------------------------------
     # Global Parameters

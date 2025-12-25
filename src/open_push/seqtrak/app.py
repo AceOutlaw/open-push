@@ -88,8 +88,47 @@ TRACK_TYPE_TO_PAD_MODE = {
     'sampler': PadMode.SAMPLER,
 }
 
-# Sampler pad positions - bottom row, pads 0-6
-SAMPLER_PAD_POSITIONS = [(0, i) for i in range(7)]
+# =============================================================================
+# DRUM MODE LAYOUT - 2x4 grid in bottom 2 rows + step sequencer in top 4 rows
+# =============================================================================
+
+# Drum pad positions (8 pads in 2x4 layout, bottom 2 rows)
+DRUM_PAD_POSITIONS = [
+    (0, 0), (0, 1), (0, 2), (0, 3),  # Row 0: KICK, SNARE, CLAP, HAT1
+    (1, 0), (1, 1), (1, 2), (1, 3),  # Row 1: HAT2, PERC1, PERC2, PERC2+G
+]
+
+# MIDI notes for each drum pad (C4=60 for tracks 1-7, G4=67 for 8th pad)
+DRUM_PAD_NOTES = [60, 60, 60, 60, 60, 60, 60, 67]
+
+# Track assignment for each drum pad (8th pad = PERC2 at higher note)
+DRUM_PAD_TRACKS = [1, 2, 3, 4, 5, 6, 7, 7]
+
+# Colors for each drum track (1-7)
+DRUM_TRACK_COLORS = {
+    1: COLOR_RED,      # KICK
+    2: COLOR_ORANGE,   # SNARE
+    3: COLOR_YELLOW,   # CLAP
+    4: COLOR_GREEN,    # HAT1
+    5: COLOR_CYAN,     # HAT2
+    6: COLOR_BLUE,     # PERC1
+    7: COLOR_PURPLE,   # PERC2
+}
+
+# Step sequencer colors
+STEP_COLOR_ON = COLOR_GREEN
+STEP_COLOR_OFF = COLOR_DIM
+
+# =============================================================================
+# SAMPLER MODE LAYOUT - 2x4 grid in bottom 2 rows (7 pads + 1 empty)
+# =============================================================================
+
+# Sampler pad positions (7 pads in 2x4 layout, bottom 2 rows)
+SAMPLER_PAD_POSITIONS = [
+    (0, 0), (0, 1), (0, 2), (0, 3),  # Row 0: samples 1-4
+    (1, 0), (1, 1), (1, 2),          # Row 1: samples 5-7
+]
+# Position (1, 3) is empty/unused
 
 # Colors for each sampler pad (distinctive colors for visual identification)
 SAMPLER_PAD_COLORS = [
@@ -210,6 +249,14 @@ class SeqtrakBridge:
             {'bank_msb': 62, 'bank_lsb': 0, 'program': i, 'preset_num': i + 1}
             for i in range(7)  # Initialize 7 pads with presets 1-7
         ]
+
+        # Step sequencer state (for drum mode)
+        self.selected_drum_track = 1  # Which drum track's steps to display (1-7)
+        self.step_page = 0            # Current page (0 = steps 1-32, 1 = steps 33-64, etc.)
+        self.step_states = {}         # {track: [bool]*128} - step on/off states per track
+
+        # Bar length per track (defaults to 1 bar = 16 steps)
+        self.track_bar_length = {i: 1 for i in range(1, 12)}
 
         # Track states (1-11)
         self.track_states = [MuteState.UNMUTED] * 11
@@ -438,13 +485,16 @@ class SeqtrakBridge:
 
         # Mode-specific display
         if self.current_pad_mode == PadMode.DRUM:
-            # Drum mode: show track, patch, chromatic info
+            # Drum mode: show track, step sequencer info, bar length
             mode_info = "DRUM"
-            scale_info = "Chromatic"
+            selected_drum = Track.NAMES.get(self.selected_drum_track, f"T{self.selected_drum_track}")
+            bars = self.track_bar_length.get(self.keyboard_track, 1)
+            page_info = f"Pg {self.step_page + 1}/4"
+
             # Line 1: Track name, patch info, tempo
             self.set_lcd_segments(1, kb_track, self.patch_name or "", mode_info, f"{self.tempo} BPM")
-            # Line 2: Chromatic mode info
-            self.set_lcd_segments(2, scale_info, f"Oct {octave}", "", "")
+            # Line 2: Step sequencer info
+            self.set_lcd_segments(2, f"Steps:{selected_drum}", page_info, f"{bars} Bar(s)", "Shift+Pad=Sel")
 
         elif self.current_pad_mode == PadMode.SAMPLER:
             # Sampler mode: show selected pad and its preset
@@ -608,11 +658,48 @@ class SeqtrakBridge:
                 self.set_pad_color(note, color)
 
     def _update_drum_grid(self):
-        """Update grid for drum mode - uniform dim white, chromatic."""
-        for row in range(8):
+        """Update grid for drum mode with split layout.
+
+        Layout:
+        - Rows 0-1 (bottom 2): 8 drum sound pads in 2x4 layout
+        - Rows 2-3 (middle): Empty/off
+        - Rows 4-7 (top 4): Step sequencer for selected drum track
+        """
+        # First, clear all pads
+        for note in range(36, 100):
+            self.set_pad_color(note, COLOR_OFF)
+
+        # Bottom 2 rows: drum sound pads
+        for i, (row, col) in enumerate(DRUM_PAD_POSITIONS):
+            note = 36 + (row * 8) + col
+            track = DRUM_PAD_TRACKS[i]
+
+            if track == self.selected_drum_track:
+                color = SAMPLER_SELECTED_COLOR  # Bright white for selected
+            else:
+                color = DRUM_TRACK_COLORS.get(track, COLOR_DIM)
+
+            self.set_pad_color(note, color)
+
+        # Rows 2-3: Empty (already cleared above)
+
+        # Top 4 rows (rows 4-7): step sequencer
+        # Row 7 (top) = steps 0-7, Row 6 = steps 8-15, Row 5 = steps 16-23, Row 4 = steps 24-31
+        for row in range(4, 8):
             for col in range(8):
+                # Calculate step index: top row first (row 7 = steps 0-7)
+                step_index = ((7 - row) * 8) + col + (self.step_page * 32)
                 note = 36 + (row * 8) + col
-                self.set_pad_color(note, COLOR_DIM)
+
+                # Check if step is beyond 128 steps
+                if step_index >= 128:
+                    self.set_pad_color(note, COLOR_OFF)
+                else:
+                    # Get step state for selected drum track
+                    track_steps = self.step_states.get(self.selected_drum_track, [False] * 128)
+                    step_on = track_steps[step_index] if step_index < len(track_steps) else False
+                    color = STEP_COLOR_ON if step_on else STEP_COLOR_OFF
+                    self.set_pad_color(note, color)
 
     def _update_sampler_grid(self):
         """Update grid for sampler mode - only 7 pads lit."""
@@ -885,9 +972,14 @@ class SeqtrakBridge:
             print(f"● RECORD {'ON' if self.is_recording else 'OFF'}")
 
         elif cc == BUTTONS['tap_tempo']:
-            # Tap tempo - send to protocol
-            self.protocol.tap_tempo()
-            print("  -> Tap Tempo")
+            # Tap tempo - calculates BPM from tap intervals
+            new_bpm = self.protocol.tap_tempo()
+            if new_bpm:
+                self.tempo = new_bpm
+                self.update_display()
+                print(f"  Tap Tempo: {new_bpm} BPM")
+            else:
+                print("  Tap...")
 
         # Octave
         elif cc == BUTTONS['octave_up']:
@@ -928,6 +1020,29 @@ class SeqtrakBridge:
                 self._exit_scale_mode()
             else:
                 self._enter_scale_mode()
+
+        # Step sequencer page navigation (only in drum mode)
+        elif cc == BUTTONS['page_left']:  # CC 62
+            if self.current_pad_mode == PadMode.DRUM and self.step_page > 0:
+                self.step_page -= 1
+                self.update_grid()
+                self.update_display()
+                # Update page button LEDs
+                self.set_button_led(BUTTONS['page_left'], LED_DIM if self.step_page == 0 else LED_ON)
+                self.set_button_led(BUTTONS['page_right'], LED_ON)
+                print(f"  Step Page: {self.step_page + 1}")
+
+        elif cc == BUTTONS['page_right']:  # CC 63
+            if self.current_pad_mode == PadMode.DRUM:
+                # Allow up to 4 pages (128 steps / 32 steps per page)
+                if self.step_page < 3:
+                    self.step_page += 1
+                    self.update_grid()
+                    self.update_display()
+                    # Update page button LEDs
+                    self.set_button_led(BUTTONS['page_left'], LED_ON)
+                    self.set_button_led(BUTTONS['page_right'], LED_DIM if self.step_page >= 3 else LED_ON)
+                    print(f"  Step Page: {self.step_page + 1}")
 
     def handle_encoder(self, cc, value):
         """Handle encoder turn."""
@@ -987,6 +1102,53 @@ class SeqtrakBridge:
                 self.protocol.set_master_volume(self.master_volume)
                 print(f"Master Volume: {self.master_volume}")
 
+        # Bar length control (CC 75)
+        elif cc == 75:
+            self._adjust_bar_length(delta)
+
+    def _adjust_bar_length(self, delta):
+        """Adjust bar/loop length for current track.
+
+        Uses SysEx to set the bar length on Seqtrak:
+        - Drum tracks: Address 01 [0x0F + track] 39, data [bars] [bars]
+        - Synth/DX/Sampler tracks: TODO - need to capture SysEx format
+        """
+        track = self.keyboard_track
+        track_type = get_track_type(track)
+
+        # Get current bar length
+        current_bars = self.track_bar_length.get(track, 1)
+
+        # Calculate new bar length (1-8 bars)
+        new_bars = max(1, min(8, current_bars + delta))
+
+        # If no change (at boundary), don't send anything
+        if new_bars == current_bars:
+            return
+
+        # Update local state
+        self.track_bar_length[track] = new_bars
+        steps = new_bars * 16  # 16 steps per bar
+
+        # Determine SysEx address and data based on track type
+        if track_type == 'drum':
+            # Drum tracks 1-7: Address 01 [0x0F + track] 39
+            # Data: [bars] [bars] (value repeated)
+            addr = [0x01, 0x0F + track, 0x39]
+            data = [new_bars, new_bars]
+        else:
+            # Synth/DX/Sampler tracks: TODO - need to capture correct format
+            # Using placeholder that may not work correctly
+            addr = [0x30, 0x59, 0x16]
+            msb = (steps >> 7) & 0x7F
+            lsb = steps & 0x7F
+            data = [msb, lsb]
+
+        self.protocol.send_parameter(addr, data)
+
+        self.update_display()
+        print(f"  Bar Length: {new_bars} bar(s) ({steps} steps)")
+
     def handle_pad(self, note, velocity):
         """Handle pad press/release - routes to mode-specific handler."""
         if note < 36 or note > 99:
@@ -1024,35 +1186,124 @@ class SeqtrakBridge:
             self._toggle_track_mute(track)
 
     def _handle_drum_pad(self, note, velocity):
-        """Handle pad press in drum mode - chromatic, no scale filtering."""
+        """Handle pad press in drum mode with split layout.
+
+        Layout:
+        - Rows 0-1 (bottom 2): Drum sound pads - trigger sounds, Shift+Pad to select
+        - Rows 2-3 (middle): Empty
+        - Rows 4-7 (top 4): Step sequencer - toggle steps on/off
+        """
         row = (note - 36) // 8
         col = (note - 36) % 8
+        pos = (row, col)
 
-        if velocity == 0:
-            # Note off
-            if note in self.active_notes:
-                midi_note = self.active_notes.pop(note)
-                self.protocol.release_note(self.keyboard_track, midi_note)
-                # Restore dim color
-                self.set_pad_color(note, COLOR_DIM)
-            return
+        # Check if it's a drum sound pad (bottom 2 rows)
+        if row < 2:
+            try:
+                pad_index = DRUM_PAD_POSITIONS.index(pos)
+            except ValueError:
+                return  # Not a valid drum pad position
 
-        # Note on - chromatic mapping with octave shift
-        octave = self.layout.get_octave()
-        midi_note = 36 + (row * 8) + col + (octave * 12)
+            track = DRUM_PAD_TRACKS[pad_index]
+            midi_note = DRUM_PAD_NOTES[pad_index]
 
-        # Clamp to valid MIDI range
-        midi_note = max(0, min(127, midi_note))
+            if velocity == 0:
+                # Note off
+                if note in self.active_notes:
+                    self.active_notes.pop(note)
+                    self.protocol.release_note(track, midi_note)
 
-        # Send to Seqtrak
-        self.protocol.trigger_note(self.keyboard_track, midi_note, velocity)
-        self.active_notes[note] = midi_note
+                    # Restore color based on selection
+                    if track == self.selected_drum_track:
+                        self.set_pad_color(note, SAMPLER_SELECTED_COLOR)
+                    else:
+                        self.set_pad_color(note, DRUM_TRACK_COLORS.get(track, COLOR_DIM))
+                return
 
-        # Flash pad green
-        self.set_pad_color(note, COLOR_GREEN)
+            # Note on
+            if self.shift_held:
+                # Shift+Pad = select this drum track for step sequencer
+                old_selected = self.selected_drum_track
+                self.selected_drum_track = track
 
-        track_name = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
-        print(f"[D] {midi_note} → {track_name}")
+                # Update visual feedback for old and new selection
+                self.update_grid()
+                self.update_display()
+
+                track_name = Track.NAMES.get(track, f"T{track}")
+                print(f"  Selected drum track: {track_name}")
+            else:
+                # Normal press = trigger drum sound
+                self.protocol.trigger_note(track, midi_note, velocity)
+                self.active_notes[note] = midi_note
+
+                # Flash pad green
+                self.set_pad_color(note, COLOR_GREEN)
+
+                track_name = Track.NAMES.get(track, f"T{track}")
+                print(f"[D] {track_name} note {midi_note}")
+
+        # Check if it's a step sequencer pad (top 4 rows)
+        elif row >= 4:
+            if velocity > 0:  # Only on press, not release
+                # Calculate step index: top row first (row 7 = steps 0-7)
+                step_index = ((7 - row) * 8) + col + (self.step_page * 32)
+
+                if step_index < 128:
+                    self._toggle_step(self.selected_drum_track, step_index)
+
+        # Middle rows (2-3) are empty - ignore
+
+    def _toggle_step(self, track, step_index):
+        """Toggle a step in the drum sequencer.
+
+        Args:
+            track: Drum track number (1-7)
+            step_index: Step index (0-127)
+
+        SysEx formats (from MIDI capture):
+            Add step:    F0 43 10 7F 1C 0C 70 [track-1] 00 [step] [note] [vel] [gate] [prob] F7
+            Delete step: F0 43 10 7F 1C 0C 70 [0x20+track-1] 00 [step] F7
+
+        Where:
+            - Add address: 70 [track-1] 00
+            - Delete address: 70 [0x20 + track-1] 00
+            - step: Step index (0-127)
+            - note: MIDI note (0x3C = C4 for drums)
+            - vel: Velocity (0x64 = 100)
+            - gate: Gate/length (0x00)
+            - prob: Probability (0x78 = 120)
+        """
+        # Initialize step states for this track if not present
+        if track not in self.step_states:
+            self.step_states[track] = [False] * 128
+
+        # Toggle local state
+        self.step_states[track][step_index] = not self.step_states[track][step_index]
+        new_state = self.step_states[track][step_index]
+
+        # Track index (0-indexed for SysEx)
+        track_idx = track - 1
+
+        if new_state:
+            # Add step: address 70 [track-1] 00
+            addr = [0x70, track_idx, 0x00]
+            note = 0x3C  # C4 = 60 for all drum tracks
+            data = [step_index, note, 0x64, 0x00, 0x78]  # step, note, vel, gate, prob
+        else:
+            # Delete step: address 70 [0x20 + track-1] 00
+            addr = [0x70, 0x20 + track_idx, 0x00]
+            data = [step_index]
+
+        self.protocol.send_parameter(addr, data)
+
+        # Update grid to show new state
+        self.update_grid()
+
+        track_name = Track.NAMES.get(track, f"T{track}")
+        step_num = step_index + 1
+        state_str = "ON" if new_state else "OFF"
+        print(f"  Step {step_num} for {track_name}: {state_str}")
 
     def _handle_melodic_pad(self, note, velocity):
         """Handle pad press in melodic mode (isomorphic keyboard)."""
@@ -1200,6 +1451,23 @@ class SeqtrakBridge:
             # Reset sampler selection when entering sampler mode
             if new_mode == PadMode.SAMPLER:
                 self.selected_sampler_pad = 0
+
+            # Reset step page and selected drum track when entering drum mode
+            if new_mode == PadMode.DRUM:
+                self.step_page = 0
+                # Select the current keyboard track if it's a drum track (1-7)
+                if 1 <= self.keyboard_track <= 7:
+                    self.selected_drum_track = self.keyboard_track
+
+        # Update page button LEDs based on mode
+        if self.current_pad_mode == PadMode.DRUM:
+            # Light up page buttons for step sequencer navigation
+            self.set_button_led(BUTTONS['page_left'], LED_DIM if self.step_page == 0 else LED_ON)
+            self.set_button_led(BUTTONS['page_right'], LED_DIM if self.step_page >= 3 else LED_ON)
+        else:
+            # Turn off page buttons for non-drum modes
+            self.set_button_led(BUTTONS['page_left'], LED_OFF)
+            self.set_button_led(BUTTONS['page_right'], LED_OFF)
 
         # Always update grid and display for track changes
         self.update_grid()
