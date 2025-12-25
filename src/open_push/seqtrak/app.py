@@ -108,6 +108,15 @@ MIXER_TRACK_ABBREV = {
 }
 
 # =============================================================================
+# ARPEGGIATOR PATTERNS - Software-based arpeggiator (runs in Python, not Seqtrak)
+# =============================================================================
+
+ARP_PATTERNS = ['up', 'down', 'up_down', 'down_up', 'random',
+                'converge', 'diverge', 'chord', 'as_played', 'custom']
+ARP_PATTERN_NAMES = ['Up', 'Down', 'Up/Dn', 'Dn/Up', 'Rnd',
+                     'Conv', 'Div', 'Chord', 'Played', 'Custom']
+
+# =============================================================================
 # DRUM MODE LAYOUT - 2x4 grid in bottom 2 rows + step sequencer in top 4 rows
 # =============================================================================
 
@@ -137,6 +146,192 @@ DRUM_TRACK_COLORS = {
 # Step sequencer colors
 STEP_COLOR_ON = COLOR_GREEN
 STEP_COLOR_OFF = COLOR_DIM
+
+# =============================================================================
+# NOTE REPEAT RATES (CC 36-43 → subdivision rate in beats)
+# =============================================================================
+# Maps CC number to (name, beats) where beats is fraction of a beat
+# At 120 BPM, 1 beat = 500ms. These are used to calculate repeat interval.
+NOTE_REPEAT_SUBDIVISIONS = {
+    36: ('1/4', 1.0),       # Quarter note = 1 beat
+    37: ('1/4t', 2/3),      # Quarter triplet
+    38: ('1/8', 0.5),       # Eighth note
+    39: ('1/8t', 1/3),      # Eighth triplet
+    40: ('1/16', 0.25),     # Sixteenth note
+    41: ('1/16t', 1/6),     # Sixteenth triplet
+    42: ('1/32', 0.125),    # 32nd note
+    43: ('1/32t', 1/12),    # 32nd triplet
+}
+
+# =============================================================================
+# DEVICE MODE PARAMETERS
+# =============================================================================
+# Each parameter: (name, cc, default, min, max, display_func)
+# display_func is optional for custom formatting (e.g., pan shows L/R)
+
+def _format_pan(val):
+    """Format pan value: 1-63=L, 64=C, 65-127=R"""
+    if val < 64:
+        return f"L{64 - val}"
+    elif val > 64:
+        return f"R{val - 64}"
+    return "C"
+
+def _format_mono_poly(val):
+    """Format mono/poly/chord value."""
+    return ['MONO', 'POLY', 'CHORD'][min(val, 2)]
+
+def _format_on_off(val):
+    """Format on/off value."""
+    return 'ON' if val >= 64 else 'OFF'
+
+def _format_arp_type(val):
+    """Format arpeggiator type (0=Off, 1-16=preset)."""
+    if val == 0:
+        return "OFF"
+    ARP_NAMES = ['Up', 'Up2', 'Dn', 'Dn2', 'Rnd', 'Rnd2',
+                 'U/DA', 'U/DA2', 'U/DB', 'U/DB2', 'Thm',
+                 'Uni', 'Chd1', 'Chd2', 'Play', 'Play']
+    if 1 <= val <= 16:
+        return ARP_NAMES[val - 1]
+    return str(val)
+
+def _format_arp_speed(val):
+    """Format arp speed (0-9)."""
+    SPEEDS = ['1/1', '1/2', '1/2T', '1/4', '1/4T',
+              '1/8', '1/8T', '1/16', '1/16T', '1/32']
+    if 0 <= val <= 9:
+        return SPEEDS[val]
+    return str(val)
+
+def _format_fm_algo(val):
+    """Format FM algorithm (1-12)."""
+    # Map 0-127 to algo 1-12
+    algo = min(12, max(1, (val // 11) + 1))
+    return f"Alg{algo}"
+
+# =============================================================================
+# DEVICE MODE PARAMETERS - Track-type-aware pages
+# =============================================================================
+# Each parameter: (label, cc_number, default, format_func or None)
+
+# Drum tracks (channels 1-7): 2 pages
+DEVICE_PARAMS_DRUM = [
+    # Page 0: Core Sound
+    [
+        ('Volume', 7, 100, None),
+        ('Pan', 10, 64, _format_pan),
+        ('Pitch', 25, 64, None),
+        ('Attack', 73, 64, None),
+        ('Decay', 75, 64, None),
+        ('Cutoff', 74, 127, None),
+        ('Reso', 71, 0, None),
+        ('', 0, 0, None),
+    ],
+    # Page 1: FX/EQ
+    [
+        ('Reverb', 91, 0, None),
+        ('Delay', 94, 0, None),
+        ('EQ Hi', 20, 64, None),
+        ('EQ Lo', 21, 64, None),
+        ('', 0, 0, None),
+        ('', 0, 0, None),
+        ('', 0, 0, None),
+        ('', 0, 0, None),
+    ],
+]
+
+# Synth tracks (channels 8-9): 3 pages
+DEVICE_PARAMS_SYNTH = [
+    # Page 0: Core Sound
+    [
+        ('Volume', 7, 100, None),
+        ('Pan', 10, 64, _format_pan),
+        ('Mode', 26, 1, _format_mono_poly),
+        ('Attack', 73, 64, None),
+        ('Decay', 75, 64, None),
+        ('Cutoff', 74, 127, None),
+        ('Reso', 71, 0, None),
+        ('', 0, 0, None),
+    ],
+    # Page 1: FX/EQ
+    [
+        ('Reverb', 91, 0, None),
+        ('Delay', 94, 0, None),
+        ('EQ Hi', 20, 64, None),
+        ('EQ Lo', 21, 64, None),
+        ('', 0, 0, None),
+        ('', 0, 0, None),
+        ('', 0, 0, None),
+        ('', 0, 0, None),
+    ],
+    # Page 2: Arp/Porta
+    [
+        ('Porta', 5, 0, None),
+        ('PortaSw', 65, 0, _format_on_off),
+        ('ArpType', 27, 0, _format_arp_type),
+        ('ArpGate', 28, 64, None),
+        ('ArpSpd', 29, 4, _format_arp_speed),
+        ('', 0, 0, None),
+        ('', 0, 0, None),
+        ('', 0, 0, None),
+    ],
+]
+
+# DX track (channel 10): 4 pages (synth params + FM)
+DEVICE_PARAMS_DX = [
+    # Page 0: Core Sound (same as synth)
+    DEVICE_PARAMS_SYNTH[0],
+    # Page 1: FX/EQ (same as synth)
+    DEVICE_PARAMS_SYNTH[1],
+    # Page 2: Arp/Porta (same as synth)
+    DEVICE_PARAMS_SYNTH[2],
+    # Page 3: FM Synthesis
+    [
+        ('FMAlgo', 116, 0, _format_fm_algo),
+        ('ModAmt', 117, 64, None),
+        ('ModFreq', 118, 64, None),
+        ('ModFB', 119, 64, None),
+        ('', 0, 0, None),
+        ('', 0, 0, None),
+        ('', 0, 0, None),
+        ('', 0, 0, None),
+    ],
+]
+
+# Sampler track (channel 11): 2 pages (CC params only, SysEx params later)
+DEVICE_PARAMS_SAMPLER = [
+    # Page 0: Core Sound
+    [
+        ('Volume', 7, 100, None),
+        ('Pan', 10, 64, _format_pan),
+        ('Attack', 73, 64, None),
+        ('Decay', 75, 64, None),
+        ('Cutoff', 74, 127, None),
+        ('Reso', 71, 0, None),
+        ('', 0, 0, None),
+        ('', 0, 0, None),
+    ],
+    # Page 1: FX/EQ
+    [
+        ('Reverb', 91, 0, None),
+        ('Delay', 94, 0, None),
+        ('EQ Hi', 20, 64, None),
+        ('EQ Lo', 21, 64, None),
+        ('', 0, 0, None),
+        ('', 0, 0, None),
+        ('', 0, 0, None),
+        ('', 0, 0, None),
+    ],
+]
+
+# Track type to parameter pages mapping
+DEVICE_PARAMS = {
+    'drum': DEVICE_PARAMS_DRUM,
+    'synth': DEVICE_PARAMS_SYNTH,
+    'dx': DEVICE_PARAMS_DX,
+    'sampler': DEVICE_PARAMS_SAMPLER,
+}
 
 # =============================================================================
 # SAMPLER MODE LAYOUT - 2x4 grid in bottom 2 rows (7 pads + 1 empty)
@@ -226,7 +421,8 @@ BUTTONS = {
 
     # Performance
     'octave_up': 55, 'octave_down': 54,
-    'mute': 60, 'solo': 61, 'accent': 57,
+    'mute': 60, 'solo': 61,
+    'repeat': 56, 'accent': 57,
 
     # Navigation
     'up': 46, 'down': 47, 'left': 44, 'right': 45,
@@ -255,6 +451,7 @@ class SeqtrakBridge:
         # State (matching Reason app patterns)
         self.is_playing = False
         self.is_recording = False
+        self.is_sample_recording = False  # Sample recording (Shift+Record)
         self.current_mode = 'welcome'  # welcome, note, track, device, mixer, scale
         self.previous_mode = 'track'   # Mode to return to after scale mode
         self.shift_held = False
@@ -296,8 +493,9 @@ class SeqtrakBridge:
         self.root_note = 0  # C
         self.in_key_mode = True
 
-        # Tempo (for display, updated from Seqtrak feedback)
-        self.tempo = 120
+        # Tempo (for display, synced from Seqtrak on startup)
+        # None = unknown, will be queried from Seqtrak
+        self.tempo = None
 
         # Master volume (0-127)
         self.master_volume = 100
@@ -310,6 +508,53 @@ class SeqtrakBridge:
         self.drum_bus_volume = 100       # 0-127, scales all drum track volumes
         self.drum_bus_muted = False
         self.drum_bus_soloed = False
+
+        # Swing (0-28, even numbers only)
+        self.swing = 0
+
+        # Accent mode (fixed velocity)
+        self.accent_mode = False
+        self.accent_velocity = 127
+
+        # Note repeat state
+        self.note_repeat_active = False
+        self.note_repeat_rate = None  # Current subdivision rate in ms
+        self.note_repeat_notes = {}   # {pad_note: (midi_note, track, last_trigger_time)}
+
+        # Arpeggiator state (software-based, runs in Python)
+        self.arp_mode_active = False           # True = Arp mode, False = Note Repeat
+        self.arp_enabled = False               # Is arpeggiator currently running
+        self.arp_rate = None                   # Subdivision rate (in beats, like note_repeat)
+        self.arp_pattern = 'up'                # Current pattern name
+        self.arp_pattern_index = 0             # Index for cycling through ARP_PATTERNS
+        self.arp_octave_range = 1              # 1-4 octaves to span
+        self.arp_gate = 0.5                    # Gate percentage (0.1-0.9)
+        self.arp_latch = False                 # Latch mode: notes sustain after release
+
+        # Arpeggiator note tracking
+        self.arp_held_notes = []               # Notes currently held (in press order for As Played)
+        self.arp_latched_notes = []            # Notes preserved by latch mode
+        self.arp_sequence = []                 # Computed arp sequence with octave extension
+        self.arp_position = 0                  # Current position in sequence
+        self.arp_last_trigger_time = 0         # Timestamp of last note trigger
+        self.arp_last_note_played = None       # For note-off before next note
+
+        # LCD popup state
+        self.lcd_popup_active = False
+        self.lcd_popup_end_time = 0
+
+        # Device mode state
+        self.device_page = 0  # 0-1 for different parameter pages
+        self.device_params = {}  # Cache: {(track, param_name): value}
+
+        # Session view state (clip-launcher style)
+        self.session_mode = False
+        self.session_page = 0  # 0 or 1 (like mixer_page)
+        self.session_selected_col = 0  # Currently selected column (0-7)
+        self.session_selected_row = 0  # Currently selected row (0-5)
+        # Pattern assignments: session_patterns[mixer_pos][row] = pattern (1-6)
+        # 12 mixer positions × 6 rows
+        self.session_patterns = [[1] * 6 for _ in range(12)]
 
         # Isomorphic layout (same as Reason app)
         self.layout = IsomorphicLayout()
@@ -426,6 +671,13 @@ class SeqtrakBridge:
             self.update_display()
             print(f"Seqtrak: RECORD {'ON' if self.is_recording else 'OFF'}")
 
+        # Sample Record State
+        elif addr == Address.SAMPLE_RECORD and sysex_data:
+            self.is_sample_recording = (sysex_data[0] == 0x01)
+            self.set_button_led(BUTTONS['record'], LED_ON if self.is_sample_recording else LED_DIM)
+            self.update_display()
+            print(f"Seqtrak: SAMPLE RECORD {'ON' if self.is_sample_recording else 'OFF'}")
+
         # Preset Name
         elif addr == Address.PRESET_NAME and sysex_data:
             # Extract ASCII name from data
@@ -438,6 +690,15 @@ class SeqtrakBridge:
             self.patch_name = bytes(name_bytes).decode('ascii', errors='ignore').strip()
             self.update_display()
             print(f"Seqtrak: Preset '{self.patch_name}'")
+
+        # Tempo
+        elif addr == Address.TEMPO and len(sysex_data) >= 2:
+            # 2-byte format: MSB, LSB
+            msb = sysex_data[0] & 0x7F
+            lsb = sysex_data[1] & 0x7F
+            self.tempo = (msb << 7) | lsb
+            self.update_display()
+            print(f"Seqtrak: Tempo {self.tempo} BPM")
 
     # -------------------------------------------------------------------------
     # Push Communication
@@ -532,7 +793,8 @@ class SeqtrakBridge:
             page_info = f"Pg {self.step_page + 1}/4"
 
             # Line 1: Track name, patch info, tempo
-            self.set_lcd_segments(1, kb_track, self.patch_name or "", mode_info, f"{self.tempo} BPM")
+            tempo_str = f"{self.tempo} BPM" if self.tempo else "--- BPM"
+            self.set_lcd_segments(1, kb_track, self.patch_name or "", mode_info, tempo_str)
             # Line 2: Step sequencer info
             self.set_lcd_segments(2, f"Steps:{selected_drum}", page_info, f"{bars} Bar(s)", "Shift+Pad=Sel")
 
@@ -544,7 +806,8 @@ class SeqtrakBridge:
             bars = self.track_bar_length.get(self.keyboard_track, 1)
             page_info = f"Pg {self.step_page + 1}/4"
             # Line 1: Track name, mode labels, tempo
-            self.set_lcd_segments(1, kb_track, "SAMPLER", "STEP", f"{self.tempo} BPM")
+            tempo_str = f"{self.tempo} BPM" if self.tempo else "--- BPM"
+            self.set_lcd_segments(1, kb_track, "SAMPLER", "STEP", tempo_str)
             # Line 2: Selected pad, step info, bar length
             self.set_lcd_segments(2, f"Pad {pad_num}", page_info, f"{bars} Bar(s)", pad_preset or "---")
 
@@ -554,7 +817,8 @@ class SeqtrakBridge:
             scale_name = get_scale_display_name(SCALE_NAMES[self.scale_index])
             bars = self.track_bar_length.get(self.keyboard_track, 1)
             # Line 1: Track name, patch info, mode label, tempo
-            self.set_lcd_segments(1, kb_track, self.patch_name or "", "MELODIC", f"{self.tempo} BPM")
+            tempo_str = f"{self.tempo} BPM" if self.tempo else "--- BPM"
+            self.set_lcd_segments(1, kb_track, self.patch_name or "", "MELODIC", tempo_str)
             # Line 2: Scale, octave, and bar length
             self.set_lcd_segments(2, f"{root_name} {scale_name}", f"Oct {octave}", f"{bars} Bar(s)", "")
 
@@ -563,14 +827,58 @@ class SeqtrakBridge:
         self.set_lcd_segments(4, "", "", "", "")
 
     def _update_device_display(self):
-        """Update LCD for device mode."""
-        transport = "PLAYING" if self.is_playing else "STOPPED"
+        """Update LCD for device mode with parameter names and values."""
         kb_track = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
+        page = self.device_page + 1
+        total_pages = self._get_device_max_pages()
 
-        self.set_lcd_segments(1, "DEVICE", kb_track, "", transport)
-        self.set_lcd_segments(2, "", "", "", "")
-        self.set_lcd_segments(3, "", "", "", "")
-        self.set_lcd_segments(4, "", "", "", "open-push")
+        # Line 1: Track, DEVICE label, page info, preset
+        self.set_lcd_segments(1, kb_track, "DEVICE", f"Pg {page}/{total_pages}", self.patch_name or "")
+
+        # Get current page parameters (track-type-aware)
+        all_params = self._get_device_params()
+        params = all_params[self.device_page]
+
+        # Build parameter labels (2 per segment) for line 2
+        # Build parameter values (2 per segment) for line 3
+        labels = []
+        values = []
+        for i in range(8):
+            label, cc, default, fmt_func = params[i]
+            if not label:
+                labels.append("")
+                values.append("")
+                continue
+
+            # Get current value from cache, or use default
+            val = self.device_params.get((self.keyboard_track, cc), default)
+
+            # Format value
+            if fmt_func:
+                val_str = fmt_func(val)
+            else:
+                val_str = str(val)
+
+            labels.append(label)
+            values.append(val_str)
+
+        # Format into segments (2 params per segment)
+        def format_pair(items, idx):
+            """Format 2 items for a segment."""
+            a = items[idx] if idx < len(items) else ""
+            b = items[idx + 1] if idx + 1 < len(items) else ""
+            return f"{a:^8s}{b:^9s}"
+
+        self.set_lcd_segments(2,
+            format_pair(labels, 0), format_pair(labels, 2),
+            format_pair(labels, 4), format_pair(labels, 6))
+
+        self.set_lcd_segments(3,
+            format_pair(values, 0), format_pair(values, 2),
+            format_pair(values, 4), format_pair(values, 6))
+
+        # Line 4: Empty (page navigation via CC 62/63 buttons)
+        self.set_lcd_segments(4, "", "", "", "")
 
     def _update_mixer_display(self):
         """Update LCD for mixer mode with track volumes.
@@ -995,11 +1303,220 @@ class SeqtrakBridge:
             return
 
     # -------------------------------------------------------------------------
+    # Session Mode - Clip-Launcher Style Variation Selector
+    # -------------------------------------------------------------------------
+
+    def _enter_session_mode(self):
+        """Enter session view - clip-launcher style.
+
+        Layout matches mixer exactly:
+        - Columns = Tracks (using MIXER_TRACK_ORDER)
+        - Rows 0-5 = Variation slots
+        - Rows 6-7 = unused (off)
+
+        Behavior:
+        - Press pad to SELECT slot
+        - Turn encoder to SET pattern for selected slot
+        - Press CC 36-43 buttons to LAUNCH that row's patterns
+        """
+        self.session_mode = True
+        self.session_page = 0  # Start on page 0
+        self.session_selected_col = 0  # Default selection
+        self.session_selected_row = 0
+        print("Entering Session mode")
+
+        # Light session button
+        self.set_button_led(BUTTONS['session'], LED_ON)
+
+        # Enable page buttons (like mixer mode)
+        self.set_button_led(BUTTONS['page_left'], LED_DIM)  # On page 0
+        self.set_button_led(BUTTONS['page_right'], LED_ON)  # Can go to page 1
+
+        self._update_session_grid()
+        self._update_session_display()
+
+    def _exit_session_mode(self):
+        """Exit session view."""
+        self.session_mode = False
+        print("Exiting Session mode")
+
+        # Dim session button
+        self.set_button_led(BUTTONS['session'], LED_DIM)
+
+        # Restore normal grid and display
+        self.update_grid()
+        self.update_display()
+
+    def _update_session_grid(self):
+        """Update pad grid for session view - matches mixer layout exactly.
+
+        Layout (matches MIXER_TRACK_ORDER):
+           Col0    Col1    Col2    Col3    Col4    Col5    Col6    Col7
+           SYN1    SYN2    DX      KICK    SNAR    CLAP    HAT1    HAT2
+        Row 5:    [slot]  [slot]  [slot]  [slot]  [slot]  [slot]  [slot]  [slot]
+        Row 4:    [slot]  [slot]  [slot]  [slot]  [slot]  [slot]  [slot]  [slot]
+        ...
+        Row 0:    [slot]  [slot]  [slot]  [slot]  [slot]  [slot]  [slot]  [slot]
+        Rows 6-7: unused (off)
+
+        Colors:
+        - Green (21): Currently selected slot
+        - White (3): Available slot (brighter)
+        - Yellow (13): DRUM bus column
+        - Off (0): Invalid or unused
+        """
+        base_pos = self.session_page * 8  # Page 0: positions 0-7, Page 1: positions 8-11
+
+        for col in range(8):
+            mixer_pos = base_pos + col
+
+            for row in range(8):
+                note = 36 + (row * 8) + col
+
+                if row < 6 and mixer_pos < len(MIXER_TRACK_ORDER):
+                    track = MIXER_TRACK_ORDER[mixer_pos]
+
+                    # Determine color
+                    if col == self.session_selected_col and row == self.session_selected_row:
+                        color = COLOR_GREEN  # Selected slot
+                    elif track is None:
+                        color = COLOR_YELLOW  # DRUM bus - distinctive color
+                    else:
+                        color = COLOR_WHITE  # Available slot (brighter)
+                else:
+                    color = COLOR_OFF  # Rows 6-7 or invalid position
+
+                self.push_out.send(mido.Message('note_on', note=note, velocity=color, channel=0))
+
+    def _update_session_display(self):
+        """Update LCD for session mode - match mixer format exactly."""
+        base_pos = self.session_page * 8
+
+        # Line 1: Track names (EXACT same format as mixer)
+        def format_segment_names(idx):
+            pos1 = base_pos + idx
+            pos2 = base_pos + idx + 1
+            name1 = MIXER_DISPLAY_NAMES[pos1] if pos1 < len(MIXER_DISPLAY_NAMES) else ""
+            name2 = MIXER_DISPLAY_NAMES[pos2] if pos2 < len(MIXER_DISPLAY_NAMES) else ""
+            return f"{name1:^8s}{name2:^9s}"
+
+        self.set_lcd_segments(1,
+            format_segment_names(0), format_segment_names(2),
+            format_segment_names(4), format_segment_names(6))
+
+        # Line 2: Pattern number for each track in the selected row
+        def format_segment_patterns(idx):
+            pos1 = base_pos + idx
+            pos2 = base_pos + idx + 1
+            pat1 = str(self.session_patterns[pos1][self.session_selected_row]) if pos1 < len(MIXER_TRACK_ORDER) else ""
+            pat2 = str(self.session_patterns[pos2][self.session_selected_row]) if pos2 < len(MIXER_TRACK_ORDER) else ""
+            return f"{pat1:^8s}{pat2:^9s}"
+
+        self.set_lcd_segments(2,
+            format_segment_patterns(0), format_segment_patterns(2),
+            format_segment_patterns(4), format_segment_patterns(6))
+
+        # Line 3: Selection indicator
+        selected_mixer_pos = base_pos + self.session_selected_col
+        if selected_mixer_pos < len(MIXER_DISPLAY_NAMES):
+            sel_name = MIXER_DISPLAY_NAMES[selected_mixer_pos]
+            sel_pattern = self.session_patterns[selected_mixer_pos][self.session_selected_row]
+            self.set_lcd_segments(3, f"{sel_name} Row{self.session_selected_row + 1}", f"Pattern {sel_pattern}", "", "")
+        else:
+            self.set_lcd_segments(3, "", "", "", "")
+
+        # Line 4: Empty (clean interface)
+        self.set_lcd_segments(4, "", "", "", "")
+
+    def _handle_session_pad(self, row, col):
+        """Handle pad press in session mode - SELECT the slot only.
+
+        Does NOT change patterns. Just selects which slot is active.
+        Use encoder or buttons to change the pattern for the selected slot.
+        """
+        if row >= 6:  # Rows 6-7 unused
+            return
+
+        base_pos = self.session_page * 8
+        mixer_pos = base_pos + col
+
+        if mixer_pos >= len(MIXER_TRACK_ORDER):
+            return  # Invalid position
+
+        # Update selection
+        self.session_selected_col = col
+        self.session_selected_row = row
+
+        name = MIXER_DISPLAY_NAMES[mixer_pos]
+        pattern = self.session_patterns[mixer_pos][row]
+        print(f"  Selected: {name} Row {row + 1} (Pattern {pattern})")
+
+        self._update_session_grid()
+        self._update_session_display()
+
+    def _handle_session_encoder(self, encoder_index, delta):
+        """Handle encoder turn in session mode - set pattern for selected slot.
+
+        Only responds if encoder matches selected column.
+        """
+        if encoder_index != self.session_selected_col:
+            return  # Only respond to encoder for selected column
+
+        base_pos = self.session_page * 8
+        mixer_pos = base_pos + encoder_index
+
+        if mixer_pos >= len(MIXER_TRACK_ORDER):
+            return
+
+        row = self.session_selected_row
+        current_pattern = self.session_patterns[mixer_pos][row]
+
+        # Adjust pattern (1-6)
+        if delta > 0:
+            new_pattern = min(6, current_pattern + 1)
+        else:
+            new_pattern = max(1, current_pattern - 1)
+
+        if new_pattern != current_pattern:
+            self.session_patterns[mixer_pos][row] = new_pattern
+            name = MIXER_DISPLAY_NAMES[mixer_pos]
+            print(f"  {name} Row {row + 1}: Pattern {new_pattern}")
+            self._update_session_display()
+
+    def _handle_session_row_launch(self, row):
+        """Handle CC 36-43 button press in session mode - LAUNCH this row.
+
+        Sends per-track variation for each track based on session_patterns.
+        Each track can have a different variation assigned in the session grid.
+        """
+        if row >= 6:
+            return
+
+        base_pos = self.session_page * 8
+
+        # Send variation to each track based on pattern assignments
+        launched_tracks = []
+        for col in range(8):
+            mixer_pos = base_pos + col
+            if mixer_pos < len(MIXER_TRACK_ORDER):
+                track = MIXER_TRACK_ORDER[mixer_pos]
+                if track is not None:  # Skip DRUM bus
+                    pattern = self.session_patterns[mixer_pos][row]
+                    self.protocol.select_track_variation(track, pattern)
+                    launched_tracks.append(f"{MIXER_DISPLAY_NAMES[mixer_pos]}:{pattern}")
+
+        print(f"  Launched Row {row + 1}: {', '.join(launched_tracks)}")
+
+    # -------------------------------------------------------------------------
     # Mode Switching (matching Reason app pattern)
     # -------------------------------------------------------------------------
 
     def _set_mode(self, mode):
         """Switch to a different mode and update display."""
+        # Exit session mode when switching to another mode
+        if self.session_mode:
+            self._exit_session_mode()
+
         # Track previous mode for returning from scale mode
         if self.current_mode in ('track', 'device', 'mixer', 'note'):
             self.previous_mode = self.current_mode
@@ -1025,12 +1542,18 @@ class SeqtrakBridge:
             # Page buttons for mixer navigation
             self.set_button_led(BUTTONS['page_left'], LED_DIM)  # On page 0, can't go back
             self.set_button_led(BUTTONS['page_right'], LED_ON)  # Can go to page 1
+        elif mode == 'device':
+            # Device mode: initialize device page and enable page buttons
+            self.device_page = 0
+            max_page = self._get_device_max_pages() - 1
+            self.set_button_led(BUTTONS['page_left'], LED_DIM)  # On page 0, can't go back
+            self.set_button_led(BUTTONS['page_right'], LED_ON if max_page > 0 else LED_DIM)
         else:
             self.set_button_led(BUTTONS['upper_1'], LED_OFF)
             self.set_button_led(BUTTONS['lower_1'], LED_OFF)
 
-        # Turn off page buttons when not in mixer or step sequencer mode
-        if mode not in ('mixer',) and self.current_pad_mode not in (PadMode.DRUM, PadMode.SAMPLER):
+        # Turn off page buttons when not in mixer, device, or step sequencer mode
+        if mode not in ('mixer', 'device') and self.current_pad_mode not in (PadMode.DRUM, PadMode.SAMPLER):
             self.set_button_led(BUTTONS['page_left'], LED_OFF)
             self.set_button_led(BUTTONS['page_right'], LED_OFF)
 
@@ -1099,12 +1622,25 @@ class SeqtrakBridge:
             print("■ STOP")
 
         elif cc == BUTTONS['record']:
-            # Toggle record via SysEx
-            self.is_recording = not self.is_recording
-            self.protocol.record(self.is_recording)
-            self.set_button_led(BUTTONS['record'], LED_ON if self.is_recording else LED_DIM)
-            self.update_display()
-            print(f"● RECORD {'ON' if self.is_recording else 'OFF'}")
+            if self.shift_held:
+                # Shift+Record = Sample recording
+                self.is_sample_recording = not self.is_sample_recording
+                if self.is_sample_recording:
+                    # Send active sampler element before starting recording
+                    self.protocol.select_sampler_element(self.selected_sampler_pad)
+                self.protocol.sample_record(self.is_sample_recording)
+                # Blink record LED when sample recording
+                self.set_button_led(BUTTONS['record'], LED_ON if self.is_sample_recording else LED_DIM)
+                self.update_display()
+                pad_num = self.selected_sampler_pad + 1
+                print(f"🎤 SAMPLE RECORD {'ON (Pad ' + str(pad_num) + ')' if self.is_sample_recording else 'OFF'}")
+            else:
+                # Normal record toggle via SysEx
+                self.is_recording = not self.is_recording
+                self.protocol.record(self.is_recording)
+                self.set_button_led(BUTTONS['record'], LED_ON if self.is_recording else LED_DIM)
+                self.update_display()
+                print(f"● RECORD {'ON' if self.is_recording else 'OFF'}")
 
         elif cc == BUTTONS['tap_tempo']:
             # Tap tempo - calculates BPM from tap intervals
@@ -1129,6 +1665,68 @@ class SeqtrakBridge:
             self.update_display()
             print(f"Octave: {self.layout.get_octave()}")
 
+        # Repeat button (CC 56) - toggles note repeat/arp mode
+        # Shift+Repeat = toggle latch (in arp mode)
+        elif cc == BUTTONS['repeat']:
+            if self.shift_held and self.arp_mode_active:
+                # Shift + Repeat = toggle latch mode
+                self.arp_latch = not self.arp_latch
+                self._show_lcd_popup("LATCH", "ON" if self.arp_latch else "OFF")
+                print(f"Arp Latch: {'ON' if self.arp_latch else 'OFF'}")
+                if not self.arp_latch:
+                    # Clear latched notes when disabling latch
+                    self._release_all_arp_notes()
+                    self.arp_latched_notes = []
+                    self._rebuild_arp_sequence()
+            elif self.arp_mode_active:
+                # Exit arp mode
+                self._exit_arp_mode()
+            elif self.note_repeat_active:
+                # Exit note repeat mode
+                self._exit_note_repeat_mode()
+            else:
+                # Enter note repeat mode (regular, not arp)
+                self._enter_note_repeat_mode()
+
+        # Accent button (CC 57) - toggles fixed velocity mode
+        elif cc == BUTTONS['accent']:
+            self.accent_mode = not self.accent_mode
+            self.set_button_led(BUTTONS['accent'], LED_ON if self.accent_mode else LED_DIM)
+            print(f"Accent: {'ON (vel={self.accent_velocity})' if self.accent_mode else 'OFF'}")
+
+        # Shift + Subdivision buttons (CC 36-43) = Enter/set Arp mode
+        # (Must come BEFORE session mode check)
+        elif 36 <= cc <= 43 and self.shift_held and not self.session_mode:
+            if not self.arp_mode_active:
+                self._enter_arp_mode()
+            name, beats = NOTE_REPEAT_SUBDIVISIONS[cc]
+            self.arp_rate = beats
+            self._light_arp_leds(selected_cc=cc)
+            self._show_lcd_popup("ARP", f"{name}")
+            print(f"Arp Rate: {name}")
+
+        # Session mode: CC 36-43 buttons launch rows (CC 43=row 0, CC 38=row 5)
+        elif self.session_mode and 36 <= cc <= 43:
+            row = 43 - cc  # CC 43 = row 0, CC 42 = row 1, ... CC 38 = row 5
+            self._handle_session_row_launch(row)
+
+        # Subdivision buttons (CC 36-43) - select note repeat rate when in note repeat mode
+        # (Not in arp mode - arp mode uses Shift+CC 36-43)
+        elif 36 <= cc <= 43 and self.note_repeat_active and not self.arp_mode_active:
+            name, beats = NOTE_REPEAT_SUBDIVISIONS[cc]
+            self.note_repeat_rate = beats
+            self._light_subdivision_leds(selected_cc=cc)
+            self._show_lcd_popup("REPEAT", f"{name}")
+            print(f"Note Repeat Rate: {name}")
+
+        # Subdivision buttons in arp mode (without shift) - also set rate
+        elif 36 <= cc <= 43 and self.arp_mode_active:
+            name, beats = NOTE_REPEAT_SUBDIVISIONS[cc]
+            self.arp_rate = beats
+            self._light_arp_leds(selected_cc=cc)
+            self._show_lcd_popup("ARP", f"{name}")
+            print(f"Arp Rate: {name}")
+
         # Track mode: CC 20 = prev track, CC 102 = next track
         elif self.current_mode == 'track' and cc == BUTTONS['upper_1']:  # CC 20
             self._select_prev_track()
@@ -1150,11 +1748,50 @@ class SeqtrakBridge:
             self._set_mode('device')
         elif cc == BUTTONS['note']:
             self._set_mode('note')
+        elif cc == BUTTONS['session']:
+            # Toggle session view
+            if self.session_mode:
+                self._exit_session_mode()
+            else:
+                self._enter_session_mode()
         elif cc == BUTTONS['scale']:
             if self.current_mode == 'scale':
                 self._exit_scale_mode()
             else:
                 self._enter_scale_mode()
+
+        # Session mode: Upper buttons (CC 20-27) increment pattern, Lower (CC 102-109) decrement
+        elif self.session_mode and 20 <= cc <= 27:
+            button_index = cc - 20
+            if button_index == self.session_selected_col:
+                # Increment pattern for selected slot
+                base_pos = self.session_page * 8
+                mixer_pos = base_pos + self.session_selected_col
+                if mixer_pos < len(MIXER_TRACK_ORDER):
+                    row = self.session_selected_row
+                    current = self.session_patterns[mixer_pos][row]
+                    new_pattern = min(6, current + 1)
+                    if new_pattern != current:
+                        self.session_patterns[mixer_pos][row] = new_pattern
+                        name = MIXER_DISPLAY_NAMES[mixer_pos]
+                        print(f"  {name} Row {row + 1}: Pattern {new_pattern}")
+                        self._update_session_display()
+
+        elif self.session_mode and 102 <= cc <= 109:
+            button_index = cc - 102
+            if button_index == self.session_selected_col:
+                # Decrement pattern for selected slot
+                base_pos = self.session_page * 8
+                mixer_pos = base_pos + self.session_selected_col
+                if mixer_pos < len(MIXER_TRACK_ORDER):
+                    row = self.session_selected_row
+                    current = self.session_patterns[mixer_pos][row]
+                    new_pattern = max(1, current - 1)
+                    if new_pattern != current:
+                        self.session_patterns[mixer_pos][row] = new_pattern
+                        name = MIXER_DISPLAY_NAMES[mixer_pos]
+                        print(f"  {name} Row {row + 1}: Pattern {new_pattern}")
+                        self._update_session_display()
 
         # Mixer mode: Upper buttons (CC 20-27) = Solo, Lower buttons (CC 102-109) = Mute
         # Uses MIXER_TRACK_ORDER for display order
@@ -1180,9 +1817,18 @@ class SeqtrakBridge:
                 else:
                     self._toggle_track_mute_simple(track)
 
-        # Page navigation (mixer mode and step sequencer modes)
+        # Page navigation (session mode, mixer mode, device mode, and step sequencer modes)
         elif cc == BUTTONS['page_left']:  # CC 62
-            if self.current_mode == 'mixer':
+            if self.session_mode:
+                # Session mode: page through tracks (like mixer)
+                if self.session_page > 0:
+                    self.session_page -= 1
+                    self._update_session_grid()
+                    self._update_session_display()
+                    self.set_button_led(BUTTONS['page_left'], LED_DIM if self.session_page == 0 else LED_ON)
+                    self.set_button_led(BUTTONS['page_right'], LED_ON)
+                    print(f"  Session Page: {self.session_page + 1}")
+            elif self.current_mode == 'mixer':
                 # Mixer mode: page through tracks
                 if self.mixer_page > 0:
                     self.mixer_page -= 1
@@ -1191,6 +1837,15 @@ class SeqtrakBridge:
                     self.set_button_led(BUTTONS['page_left'], LED_DIM if self.mixer_page == 0 else LED_ON)
                     self.set_button_led(BUTTONS['page_right'], LED_ON)
                     print(f"  Mixer Page: {self.mixer_page + 1}")
+            elif self.current_mode == 'device':
+                # Device mode: page through parameter pages (track-type-aware)
+                if self.device_page > 0:
+                    self.device_page -= 1
+                    self.update_display()
+                    max_page = self._get_device_max_pages() - 1
+                    self.set_button_led(BUTTONS['page_left'], LED_DIM if self.device_page == 0 else LED_ON)
+                    self.set_button_led(BUTTONS['page_right'], LED_ON)
+                    print(f"  Device Page: {self.device_page + 1}/{max_page + 1}")
             elif self.current_pad_mode in (PadMode.DRUM, PadMode.SAMPLER) and self.step_page > 0:
                 self.step_page -= 1
                 self.update_grid()
@@ -1201,7 +1856,16 @@ class SeqtrakBridge:
                 print(f"  Step Page: {self.step_page + 1}")
 
         elif cc == BUTTONS['page_right']:  # CC 63
-            if self.current_mode == 'mixer':
+            if self.session_mode:
+                # Session mode: page through tracks (like mixer)
+                if self.session_page < 1:
+                    self.session_page += 1
+                    self._update_session_grid()
+                    self._update_session_display()
+                    self.set_button_led(BUTTONS['page_left'], LED_ON)
+                    self.set_button_led(BUTTONS['page_right'], LED_DIM if self.session_page >= 1 else LED_ON)
+                    print(f"  Session Page: {self.session_page + 1}")
+            elif self.current_mode == 'mixer':
                 # Mixer mode: page through tracks (2 pages: 1-8, 9-11)
                 if self.mixer_page < 1:
                     self.mixer_page += 1
@@ -1210,6 +1874,15 @@ class SeqtrakBridge:
                     self.set_button_led(BUTTONS['page_left'], LED_ON)
                     self.set_button_led(BUTTONS['page_right'], LED_DIM if self.mixer_page >= 1 else LED_ON)
                     print(f"  Mixer Page: {self.mixer_page + 1}")
+            elif self.current_mode == 'device':
+                # Device mode: page through parameter pages (track-type-aware)
+                max_page = self._get_device_max_pages() - 1
+                if self.device_page < max_page:
+                    self.device_page += 1
+                    self.update_display()
+                    self.set_button_led(BUTTONS['page_left'], LED_ON)
+                    self.set_button_led(BUTTONS['page_right'], LED_DIM if self.device_page >= max_page else LED_ON)
+                    print(f"  Device Page: {self.device_page + 1}/{max_page + 1}")
             elif self.current_pad_mode in (PadMode.DRUM, PadMode.SAMPLER):
                 # Allow up to 4 pages (128 steps / 32 steps per page)
                 if self.step_page < 3:
@@ -1244,12 +1917,100 @@ class SeqtrakBridge:
             else:
                 tempo_delta = value - 128
 
+            # If tempo is unknown, request it from Seqtrak first
+            if self.tempo is None:
+                print("Tempo unknown - requesting from Seqtrak...")
+                self.protocol.request_parameter(Address.TEMPO)
+                return
+
             new_tempo = max(20, min(300, self.tempo + tempo_delta))
             if new_tempo != self.tempo:
                 self.tempo = new_tempo
                 self.protocol.set_tempo(self.tempo)
                 self.update_display()
                 print(f"Tempo: {self.tempo}")
+
+        # Swing encoder (CC 15)
+        elif cc == 15:
+            # Swing range: 0-28, even numbers only
+            new_swing = max(0, min(28, self.swing + (delta * 2)))
+            if new_swing != self.swing:
+                self.swing = new_swing
+                self.protocol.set_swing(self.swing)
+                self.update_display()
+                print(f"Swing: {self.swing}")
+
+        # Session mode: CC 71-78 encoders set pattern for selected slot
+        # Must be checked BEFORE device/mixer modes to block other encoder behavior
+        elif self.session_mode and 71 <= cc <= 78:
+            encoder_index = cc - 71  # 0-7
+            self._handle_session_encoder(encoder_index, delta)
+
+        # Arp mode: CC 77 = pattern, CC 78 = octave range
+        # Must be checked BEFORE device mode
+        elif self.arp_mode_active and cc == 77:
+            # Encoder 7: Cycle through arp patterns
+            new_index = (self.arp_pattern_index + delta) % len(ARP_PATTERNS)
+            if new_index != self.arp_pattern_index:
+                self.arp_pattern_index = new_index
+                self.arp_pattern = ARP_PATTERNS[new_index]
+                self._rebuild_arp_sequence()
+                pattern_name = ARP_PATTERN_NAMES[new_index]
+                self._show_lcd_popup("PATTERN", pattern_name)
+                print(f"Arp Pattern: {pattern_name}")
+
+        elif self.arp_mode_active and cc == 78:
+            # Encoder 8: Adjust octave range (1-4)
+            new_range = max(1, min(4, self.arp_octave_range + delta))
+            if new_range != self.arp_octave_range:
+                self.arp_octave_range = new_range
+                self._rebuild_arp_sequence()
+                self._show_lcd_popup("OCTAVES", str(self.arp_octave_range))
+                print(f"Arp Octaves: {self.arp_octave_range}")
+
+        elif self.arp_mode_active and cc == 79:
+            # Master encoder: Adjust gate (10%-90%)
+            new_gate = max(0.1, min(0.9, self.arp_gate + (delta * 0.05)))
+            if new_gate != self.arp_gate:
+                self.arp_gate = new_gate
+                gate_pct = int(self.arp_gate * 100)
+                self._show_lcd_popup("GATE", f"{gate_pct}%")
+                print(f"Arp Gate: {gate_pct}%")
+
+        # Device mode: CC 71-78 control device parameters (track-type-aware)
+        elif self.current_mode == 'device' and 71 <= cc <= 78:
+            encoder_index = cc - 71  # 0-7
+            all_params = self._get_device_params()
+            params = all_params[self.device_page]
+            label, param_cc, default, fmt_func = params[encoder_index]
+
+            if label and param_cc:  # Skip empty slots
+                # Get current value from cache or default
+                cache_key = (self.keyboard_track, param_cc)
+                current_val = self.device_params.get(cache_key, default)
+
+                # Use scaled delta for smoother control
+                if value < 64:
+                    val_delta = value
+                else:
+                    val_delta = value - 128
+
+                # Calculate new value with limits
+                new_val = max(0, min(127, current_val + val_delta))
+
+                if new_val != current_val:
+                    self.device_params[cache_key] = new_val
+
+                    # Send CC to Seqtrak for current track
+                    self.protocol.send_track_cc(self.keyboard_track, param_cc, new_val)
+                    self.update_display()
+
+                    # Format value for display
+                    if fmt_func:
+                        val_str = fmt_func(new_val)
+                    else:
+                        val_str = str(new_val)
+                    print(f"{label}: {val_str}")
 
         # Mixer mode: CC 71-78 control track volumes (using MIXER_TRACK_ORDER)
         elif self.current_mode == 'mixer' and 71 <= cc <= 78:
@@ -1292,13 +2053,22 @@ class SeqtrakBridge:
                     self._select_prev_track()
 
         # Patch encoder (CC 73) - cycle through patches (with accumulator for slower response)
+        # Shift+Encoder = jump by bank (128 presets) for faster navigation
         elif cc == 73:
-            self.patch_encoder_accum += delta
-            if abs(self.patch_encoder_accum) >= self.patch_encoder_threshold:
-                # Trigger patch change
-                patch_delta = 1 if self.patch_encoder_accum > 0 else -1
-                self._cycle_patch(patch_delta)
-                self.patch_encoder_accum = 0  # Reset accumulator
+            if self.shift_held:
+                # Bank jumping: lower threshold, jump by 128
+                self.patch_encoder_accum += delta
+                if abs(self.patch_encoder_accum) >= 2:  # Lower threshold for bank jumps
+                    bank_delta = 128 if self.patch_encoder_accum > 0 else -128
+                    self._cycle_patch(bank_delta)
+                    self.patch_encoder_accum = 0
+            else:
+                # Normal patch cycling
+                self.patch_encoder_accum += delta
+                if abs(self.patch_encoder_accum) >= self.patch_encoder_threshold:
+                    patch_delta = 1 if self.patch_encoder_accum > 0 else -1
+                    self._cycle_patch(patch_delta)
+                    self.patch_encoder_accum = 0
 
         # Master volume encoder (CC 79)
         elif cc == 79:
@@ -1366,6 +2136,290 @@ class SeqtrakBridge:
         # CC 106 (increment) - dim if at maximum (8 bars)
         self.set_button_led(106, LED_DIM if current_bars >= 8 else LED_ON)
 
+    def _clear_subdivision_leds(self):
+        """Turn off all subdivision button LEDs (CC 36-43)."""
+        for cc in range(36, 44):
+            self.set_button_led(cc, LED_OFF)
+
+    def _light_subdivision_leds(self, selected_cc=None):
+        """Light up subdivision button LEDs for note repeat mode."""
+        for cc in range(36, 44):
+            if cc == selected_cc:
+                self.set_button_led(cc, LED_ON)
+            else:
+                self.set_button_led(cc, LED_DIM)
+
+    def _process_note_repeat(self):
+        """Process note repeats for held pads. Called from main loop."""
+        if not self.note_repeat_active or self.note_repeat_rate is None:
+            return
+
+        if not self.note_repeat_notes:
+            return
+
+        current_time = time.time()
+
+        # Calculate repeat interval based on tempo
+        # beats_per_minute = self.tempo or 120
+        # seconds_per_beat = 60.0 / beats_per_minute
+        # interval = seconds_per_beat * self.note_repeat_rate
+        bpm = self.tempo if self.tempo else 120
+        seconds_per_beat = 60.0 / bpm
+        interval = seconds_per_beat * self.note_repeat_rate
+
+        # Check each held note
+        for pad_note, (midi_note, track, last_trigger) in list(self.note_repeat_notes.items()):
+            elapsed = current_time - last_trigger
+            if elapsed >= interval:
+                # Retrigger the note
+                out_velocity = self.accent_velocity if self.accent_mode else 100
+                self.protocol.trigger_note(track, midi_note, out_velocity)
+                self.note_repeat_notes[pad_note] = (midi_note, track, current_time)
+
+    # =========================================================================
+    # ARPEGGIATOR - Software-based arpeggiator running in Python
+    # =========================================================================
+
+    def _get_arp_sequence(self, pattern, notes, octave_range):
+        """
+        Generate the note sequence for the current arpeggiator pattern.
+
+        Args:
+            pattern: Pattern name from ARP_PATTERNS
+            notes: List of held MIDI notes (in press order for 'as_played')
+            octave_range: 1-4 octaves to span
+
+        Returns:
+            List of MIDI notes in arp order, extended across octaves
+        """
+        import random
+
+        if not notes:
+            return []
+
+        sorted_notes = sorted(notes)
+
+        if pattern == 'up':
+            base = sorted_notes
+        elif pattern == 'down':
+            base = sorted_notes[::-1]
+        elif pattern == 'up_down':
+            # Up then down, no repeat at ends
+            if len(sorted_notes) > 1:
+                base = sorted_notes + sorted_notes[-2:0:-1]
+            else:
+                base = sorted_notes
+        elif pattern == 'down_up':
+            # Down then up, no repeat at ends
+            if len(sorted_notes) > 1:
+                base = sorted_notes[::-1] + sorted_notes[1:-1]
+            else:
+                base = sorted_notes
+        elif pattern == 'random':
+            base = sorted_notes[:]
+            random.shuffle(base)
+        elif pattern == 'converge':
+            # Outside notes move inward (low, high, low+1, high-1, ...)
+            result = []
+            left, right = 0, len(sorted_notes) - 1
+            while left <= right:
+                if left == right:
+                    result.append(sorted_notes[left])
+                else:
+                    result.extend([sorted_notes[left], sorted_notes[right]])
+                left += 1
+                right -= 1
+            base = result
+        elif pattern == 'diverge':
+            # Center notes move outward
+            mid = len(sorted_notes) // 2
+            result = []
+            for i in range(mid + 1):
+                if mid - i >= 0 and mid - i < len(sorted_notes):
+                    result.append(sorted_notes[mid - i])
+                if i > 0 and mid + i < len(sorted_notes):
+                    result.append(sorted_notes[mid + i])
+            base = result
+        elif pattern == 'chord':
+            # All notes at once - handled specially in _process_arpeggiator
+            base = sorted_notes
+        elif pattern == 'as_played':
+            # Original press order preserved
+            base = notes
+        elif pattern == 'custom':
+            # Future: user-defined order, for now same as 'up'
+            base = sorted_notes
+        else:
+            base = sorted_notes
+
+        # Extend across octaves
+        full_sequence = []
+        for octave in range(octave_range):
+            for note in base:
+                full_sequence.append(note + (12 * octave))
+
+        return full_sequence
+
+    def _rebuild_arp_sequence(self):
+        """Rebuild the arp sequence when notes, pattern, or octaves change."""
+        # Use latched notes if in latch mode and we have them, otherwise held notes
+        if self.arp_latch and self.arp_latched_notes:
+            notes = self.arp_latched_notes
+        else:
+            notes = self.arp_held_notes
+
+        if not notes:
+            self.arp_sequence = []
+            self.arp_position = 0
+            return
+
+        self.arp_sequence = self._get_arp_sequence(
+            self.arp_pattern,
+            notes,
+            self.arp_octave_range
+        )
+
+        # Reset position if sequence changed significantly
+        if self.arp_position >= len(self.arp_sequence):
+            self.arp_position = 0
+
+    def _enter_arp_mode(self):
+        """Enter arpeggiator mode, exiting note repeat if active."""
+        if self.note_repeat_active:
+            self._exit_note_repeat_mode()
+
+        self.arp_mode_active = True
+        self.arp_enabled = True
+        self._light_arp_leds()
+        self.set_button_led(BUTTONS['repeat'], LED_ON)
+        self._show_lcd_popup("ARP", "Select rate")
+        print("Arpeggiator: ON")
+
+    def _exit_arp_mode(self):
+        """Exit arpeggiator mode, release all notes."""
+        self.arp_mode_active = False
+        self.arp_enabled = False
+        self.arp_rate = None
+        self._release_all_arp_notes()
+        self.arp_held_notes = []
+        self.arp_latched_notes = []
+        self.arp_sequence = []
+        self.arp_position = 0
+        self._clear_subdivision_leds()
+        self.set_button_led(BUTTONS['repeat'], LED_DIM)
+        print("Arpeggiator: OFF")
+
+    def _enter_note_repeat_mode(self):
+        """Enter note repeat mode (keep existing, but add popup)."""
+        self.note_repeat_active = True
+        self._light_subdivision_leds()
+        self.set_button_led(BUTTONS['repeat'], LED_ON)
+        self._show_lcd_popup("REPEAT", "Select rate")
+        print("Note Repeat: ON")
+
+    def _exit_note_repeat_mode(self):
+        """Exit note repeat mode."""
+        self.note_repeat_active = False
+        self.note_repeat_rate = None
+        self._clear_subdivision_leds()
+        self.set_button_led(BUTTONS['repeat'], LED_DIM)
+        print("Note Repeat: OFF")
+
+    def _process_arpeggiator(self):
+        """Process arpeggiator playback. Called from main loop."""
+        if not self.arp_enabled or self.arp_rate is None:
+            return
+
+        if not self.arp_sequence:
+            return
+
+        current_time = time.time()
+
+        # Calculate interval based on tempo and rate
+        bpm = self.tempo if self.tempo else 120
+        seconds_per_beat = 60.0 / bpm
+        interval = seconds_per_beat * self.arp_rate
+        gate_duration = interval * self.arp_gate
+
+        # Check if it's time for the next note
+        elapsed = current_time - self.arp_last_trigger_time
+        if elapsed >= interval:
+            # Release previous note (if any)
+            if self.arp_last_note_played is not None:
+                self.protocol.release_note(self.keyboard_track, self.arp_last_note_played)
+                self.arp_last_note_played = None
+
+            # Handle Chord pattern (all notes at once)
+            if self.arp_pattern == 'chord':
+                out_velocity = self.accent_velocity if self.accent_mode else 100
+                # Get unique notes from sequence (remove octave duplicates for chord)
+                unique_notes = list(set(self.arp_sequence))
+                for note in unique_notes:
+                    self.protocol.trigger_note(self.keyboard_track, note, out_velocity)
+                # For chord, track all notes for release (use the first as marker)
+                self.arp_last_note_played = unique_notes[0] if unique_notes else None
+            else:
+                # Single note patterns
+                if self.arp_position < len(self.arp_sequence):
+                    midi_note = self.arp_sequence[self.arp_position]
+                    out_velocity = self.accent_velocity if self.accent_mode else 100
+                    self.protocol.trigger_note(self.keyboard_track, midi_note, out_velocity)
+                    self.arp_last_note_played = midi_note
+
+                    # Advance position (with wrap)
+                    self.arp_position = (self.arp_position + 1) % len(self.arp_sequence)
+
+                    # For Random pattern, reshuffle when we complete a cycle
+                    if self.arp_pattern == 'random' and self.arp_position == 0:
+                        self._rebuild_arp_sequence()
+
+            self.arp_last_trigger_time = current_time
+
+    def _release_all_arp_notes(self):
+        """Release any currently playing arp note."""
+        if self.arp_last_note_played is not None:
+            self.protocol.release_note(self.keyboard_track, self.arp_last_note_played)
+            self.arp_last_note_played = None
+
+        # For chord mode, release all notes in sequence
+        if self.arp_pattern == 'chord' and self.arp_sequence:
+            for note in set(self.arp_sequence):
+                self.protocol.release_note(self.keyboard_track, note)
+
+    def _light_arp_leds(self, selected_cc=None):
+        """Light up subdivision buttons for arp mode (different brightness than repeat)."""
+        ARP_LED_DIM = 2  # Different from note repeat's LED_DIM (1)
+        for cc in range(36, 44):
+            if cc == selected_cc:
+                self.set_button_led(cc, LED_ON)
+            else:
+                self.set_button_led(cc, ARP_LED_DIM)
+
+    def _clear_subdivision_leds(self):
+        """Turn off all subdivision button LEDs."""
+        for cc in range(36, 44):
+            self.set_button_led(cc, LED_OFF)
+
+    def _light_subdivision_leds(self, selected_cc=None):
+        """Light up subdivision buttons for note repeat mode."""
+        for cc in range(36, 44):
+            if cc == selected_cc:
+                self.set_button_led(cc, LED_ON)
+            else:
+                self.set_button_led(cc, LED_DIM)
+
+    def _show_lcd_popup(self, title, value, duration=2.0):
+        """Show a momentary LCD popup on line 4."""
+        self.lcd_popup_active = True
+        self.lcd_popup_end_time = time.time() + duration
+        self.set_lcd_segments(4, "", f"{title}: {value}", "", "")
+
+    def _check_lcd_popup(self):
+        """Check if popup should be cleared. Called from main loop."""
+        if self.lcd_popup_active and time.time() >= self.lcd_popup_end_time:
+            self.lcd_popup_active = False
+            self.update_display()  # Restore normal display
+
     def handle_pad(self, note, velocity):
         """Handle pad press/release - routes to mode-specific handler."""
         if note < 36 or note > 99:
@@ -1374,6 +2428,14 @@ class SeqtrakBridge:
         # Mute mode always handles pads specially
         if self.current_mode == 'mute':
             self._handle_mute_pad(note, velocity)
+            return
+
+        # Session mode: handle variation selection
+        if self.session_mode:
+            if velocity > 0:  # Only on press
+                row = (note - 36) // 8
+                col = (note - 36) % 8
+                self._handle_session_pad(row, col)
             return
 
         # Route based on pad mode
@@ -1430,6 +2492,10 @@ class SeqtrakBridge:
                     self.active_notes.pop(note)
                     self.protocol.release_note(track, midi_note)
 
+                    # Remove from note repeat tracking
+                    if note in self.note_repeat_notes:
+                        del self.note_repeat_notes[note]
+
                     # Restore color based on selection
                     if track == self.selected_drum_track:
                         self.set_pad_color(note, SAMPLER_SELECTED_COLOR)
@@ -1451,8 +2517,14 @@ class SeqtrakBridge:
                 print(f"  Selected drum track: {track_name}")
             else:
                 # Normal press = trigger drum sound
-                self.protocol.trigger_note(track, midi_note, velocity)
+                # Apply accent velocity if accent mode is active
+                out_velocity = self.accent_velocity if self.accent_mode else velocity
+                self.protocol.trigger_note(track, midi_note, out_velocity)
                 self.active_notes[note] = midi_note
+
+                # Register for note repeat if active
+                if self.note_repeat_active and self.note_repeat_rate is not None:
+                    self.note_repeat_notes[note] = (midi_note, track, time.time())
 
                 # Flash pad green
                 self.set_pad_color(note, COLOR_GREEN)
@@ -1589,7 +2661,36 @@ class SeqtrakBridge:
             # Note off
             if note in self.active_notes:
                 midi_note = self.active_notes.pop(note)
-                self.protocol.release_note(self.keyboard_track, midi_note)
+
+                # Handle arpeggiator note release
+                if self.arp_enabled:
+                    if midi_note in self.arp_held_notes:
+                        self.arp_held_notes.remove(midi_note)
+
+                        # Latch mode: when all pads released, latch the current notes
+                        if self.arp_latch and not self.arp_held_notes and self.arp_sequence:
+                            # Preserve the base notes (without octave extension)
+                            base_notes = [n for n in self.arp_sequence if n < 128]
+                            # Remove duplicates while preserving order
+                            seen = set()
+                            unique_notes = []
+                            for n in base_notes:
+                                base_n = n % 12 + (n // 12) * 12  # normalize
+                                if base_n not in seen:
+                                    seen.add(base_n)
+                                    unique_notes.append(n)
+                            if unique_notes:
+                                self.arp_latched_notes = unique_notes[:len(set(self.arp_sequence))]
+
+                        if not self.arp_latch:
+                            self._rebuild_arp_sequence()
+                else:
+                    # Normal release (no arp)
+                    self.protocol.release_note(self.keyboard_track, midi_note)
+
+                # Remove from note repeat tracking
+                if note in self.note_repeat_notes:
+                    del self.note_repeat_notes[note]
 
                 # Restore pad color based on scale
                 info = self.layout.get_pad_info(row, col)
@@ -1605,9 +2706,34 @@ class SeqtrakBridge:
         # Note on - use isomorphic layout
         midi_note = self.layout.get_midi_note(note)
 
+        # Handle arpeggiator note input
+        if self.arp_enabled:
+            if midi_note not in self.arp_held_notes:
+                self.arp_held_notes.append(midi_note)  # Preserve order for 'as_played'
+                self._rebuild_arp_sequence()
+
+                # If latch mode and we're adding new notes, clear latched notes
+                if self.arp_latch and self.arp_latched_notes:
+                    self.arp_latched_notes = []
+
+            self.active_notes[note] = midi_note
+            # Flash pad green
+            self.set_pad_color(note, COLOR_GREEN)
+            track_name = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
+            print(f"[ARP] +{midi_note} → {track_name}")
+            return
+
+        # Normal note trigger (no arp)
+        # Apply accent velocity if accent mode is active
+        out_velocity = self.accent_velocity if self.accent_mode else velocity
+
         # Send to Seqtrak
-        self.protocol.trigger_note(self.keyboard_track, midi_note, velocity)
+        self.protocol.trigger_note(self.keyboard_track, midi_note, out_velocity)
         self.active_notes[note] = midi_note
+
+        # Register for note repeat if active
+        if self.note_repeat_active and self.note_repeat_rate is not None:
+            self.note_repeat_notes[note] = (midi_note, self.keyboard_track, time.time())
 
         # Flash pad green
         self.set_pad_color(note, COLOR_GREEN)
@@ -1670,6 +2796,10 @@ class SeqtrakBridge:
                 self.active_notes.pop(note)
                 self.seqtrak.send(mido.Message('note_off', channel=sampler_channel, note=midi_note, velocity=0))
 
+                # Remove from note repeat tracking
+                if note in self.note_repeat_notes:
+                    del self.note_repeat_notes[note]
+
                 # Restore pad color
                 if element == self.selected_sampler_pad:
                     self.set_pad_color(note, SAMPLER_SELECTED_COLOR)
@@ -1693,8 +2823,14 @@ class SeqtrakBridge:
             self.update_display()
         else:
             # Normal press = trigger sample on channel 11
-            self.seqtrak.send(mido.Message('note_on', channel=sampler_channel, note=midi_note, velocity=velocity))
+            # Apply accent velocity if accent mode is active
+            out_velocity = self.accent_velocity if self.accent_mode else velocity
+            self.seqtrak.send(mido.Message('note_on', channel=sampler_channel, note=midi_note, velocity=out_velocity))
             self.active_notes[note] = midi_note
+
+            # Register for note repeat if active (use track 11 for sampler)
+            if self.note_repeat_active and self.note_repeat_rate is not None:
+                self.note_repeat_notes[note] = (midi_note, 11, time.time())
 
             # Flash green
             self.set_pad_color(note, COLOR_GREEN)
@@ -1864,6 +3000,15 @@ class SeqtrakBridge:
             return get_preset_name_short(track, bank, sub, prog)
         return ""
 
+    def _get_device_params(self):
+        """Get parameter pages for current keyboard track type."""
+        track_type = get_track_type(self.keyboard_track)
+        return DEVICE_PARAMS.get(track_type, DEVICE_PARAMS['drum'])
+
+    def _get_device_max_pages(self):
+        """Get max page count for current track type."""
+        return len(self._get_device_params())
+
     def _update_pad_mode(self):
         """Update pad mode based on current keyboard track type."""
         track_type = get_track_type(self.keyboard_track)
@@ -1884,6 +3029,11 @@ class SeqtrakBridge:
                 # Select the current keyboard track if it's a drum track (1-7)
                 if 1 <= self.keyboard_track <= 7:
                     self.selected_drum_track = self.keyboard_track
+
+        # Reset device page if it exceeds max for new track type
+        max_device_pages = self._get_device_max_pages()
+        if self.device_page >= max_device_pages:
+            self.device_page = max_device_pages - 1
 
         # Update page button LEDs based on mode
         if self.current_pad_mode in (PadMode.DRUM, PadMode.SAMPLER):
@@ -2124,6 +3274,7 @@ class SeqtrakBridge:
             print("  Scale button - Scale/root selection")
             print("  Oct Up/Down  - Shift octave")
             print("  Tempo knob   - Adjust BPM")
+            print("  Patch knob   - Cycle patches (Shift+Knob = jump bank)")
             print("  Tap Tempo    - Tap tempo")
             print()
             print("Press Ctrl+C to exit")
@@ -2138,8 +3289,9 @@ class SeqtrakBridge:
             self.patch_name = self._get_track_preset_display(self.keyboard_track)
             self.update_display()
 
-            # Request current preset info from Seqtrak
+            # Request current state from Seqtrak
             self.protocol.request_parameter(Address.PRESET_NAME)
+            self.protocol.request_parameter(Address.TEMPO)
 
             # Main loop - poll both Push and Seqtrak inputs
             self.running = True
@@ -2164,6 +3316,15 @@ class SeqtrakBridge:
                     if seqtrak_in:
                         for msg in seqtrak_in.iter_pending():
                             self.handle_seqtrak_message(msg)
+
+                    # Process note repeat for held pads
+                    self._process_note_repeat()
+
+                    # Process arpeggiator
+                    self._process_arpeggiator()
+
+                    # Check LCD popup timeout
+                    self._check_lcd_popup()
 
                     # Small sleep to avoid busy-waiting
                     time.sleep(0.001)

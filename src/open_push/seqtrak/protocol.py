@@ -150,6 +150,7 @@ class Address:
     # Transport State (for SysEx control/feedback)
     PLAY_STATE = [0x01, 0x10, 0x20]     # 01=Playing, 00=Stopped
     RECORD_STATE = [0x01, 0x10, 0x21]   # 01=Recording, 00=Stopped
+    SAMPLE_RECORD = [0x01, 0x10, 0x22]  # 01=Sample recording, 00=Stopped
     PRESET_NAME = [0x01, 0x10, 0x35]    # ASCII preset name (up to 16 chars)
 
     # Scale/Key
@@ -157,15 +158,17 @@ class Address:
     KEY = [0x30, 0x40, 0x7F]            # 0x40-0x4B (C-B)
 
     # Track Base (add track number 0-10 to middle byte)
-    # Example: Track 1 mute = [0x30, 0x50, 0x0F]
-    #          Track 5 mute = [0x30, 0x54, 0x0F]
+    # Example: Track 1 variation = [0x30, 0x50, 0x0F]
+    #          Track 5 variation = [0x30, 0x54, 0x0F]
     TRACK_BASE = 0x50
-    TRACK_MUTE_OFFSET = 0x0F            # [0x30, 0x5x, 0x0F] where x = track
+    TRACK_VARIATION_OFFSET = 0x0F       # [0x30, 0x5x, 0x0F] - per-track variation (0-5)
     TRACK_OCTAVE_OFFSET = 0x0C          # [0x30, 0x5x, 0x0C]
 
     # Pattern/Variation
     TRACK_SELECT = [0x01, 0x10, 0x27]   # 0x00-0x0A (tracks 1-11)
-    PATTERN_VAR_A = [0x01, 0x10, 0x28]  # 0x01-0x06
+    GLOBAL_VARIATION = [0x01, 0x10, 0x2A]  # Global variation indicator (feedback)
+    SAMPLER_ELEMENT = [0x01, 0x10, 0x28]  # 0x00-0x06 (sampler pads 1-7)
+    PATTERN_VAR_A = [0x01, 0x10, 0x28]  # 0x01-0x06 (alias for SAMPLER_ELEMENT)
     PATTERN_VAR_B = [0x01, 0x10, 0x2C]  # 0x01-0x06
     PATTERN_BANK = [0x01, 0x18, 0x30]   # 0x00-0x03 (banks 1-4)
     DISPLAY_MODE = [0x01, 0x10, 0x2E]   # UI state
@@ -336,6 +339,29 @@ class SeqtrakProtocol:
         """
         self._send_sysex(Address.RECORD_STATE, [0x01 if enable else 0x00])
 
+    def sample_record(self, enable=True):
+        """
+        Start/stop sample recording via SysEx.
+
+        Sends: F0 43 10 7F 1C 0C 01 10 22 [01/00] F7
+
+        Note: Sample recording only works when on the Sampler track,
+        but this command can be sent from any track.
+        """
+        self._send_sysex(Address.SAMPLE_RECORD, [0x01 if enable else 0x00])
+
+    def select_sampler_element(self, element):
+        """
+        Select which sampler element (pad) is active for recording.
+
+        Sends: F0 43 10 7F 1C 0C 01 10 28 [element] F7
+
+        Args:
+            element: 0-6 for sampler pads 1-7
+        """
+        element = max(0, min(6, element))
+        self._send_sysex(Address.SAMPLER_ELEMENT, [element])
+
     def request_parameter(self, address):
         """
         Request a parameter value from Seqtrak.
@@ -427,30 +453,33 @@ class SeqtrakProtocol:
         track_byte = Address.TRACK_BASE + (track - 1)
         return [0x30, track_byte, offset]
 
-    def set_track_mute(self, track, state):
+    def select_track_variation(self, track, variation):
         """
-        Set track mute state.
+        Select variation for a specific track.
 
         Args:
             track: Track number (1-11)
-            state: MuteState.UNMUTED, MUTED, or SOLO
+            variation: Variation number (1-6)
+
+        SysEx: F0 43 10 7F 1C 0C 30 5[track-1] 0F [variation-1] F7
         """
         if not 1 <= track <= 11:
             return
-        address = self._track_address(track, Address.TRACK_MUTE_OFFSET)
-        self._send_sysex(address, [state])
+        if not 1 <= variation <= 6:
+            return
+        # Variation is 0-indexed on wire (0-5 for variations 1-6)
+        address = self._track_address(track, Address.TRACK_VARIATION_OFFSET)
+        self._send_sysex(address, [variation - 1])
 
-    def mute_track(self, track):
-        """Mute a track."""
-        self.set_track_mute(track, MuteState.MUTED)
+    def select_all_variations(self, variation):
+        """
+        Select same variation for all 11 tracks.
 
-    def unmute_track(self, track):
-        """Unmute a track."""
-        self.set_track_mute(track, MuteState.UNMUTED)
-
-    def solo_track(self, track):
-        """Solo a track."""
-        self.set_track_mute(track, MuteState.SOLO)
+        Args:
+            variation: Variation number (1-6)
+        """
+        for track in range(1, 12):
+            self.select_track_variation(track, variation)
 
     def set_track_octave(self, track, octave):
         """
@@ -579,6 +608,19 @@ class SeqtrakProtocol:
             return
         arp_type = max(0, min(16, arp_type))
         self._send_cc(track, CC.ARP_TYPE, arp_type)
+
+    def send_track_cc(self, track, cc_number, value):
+        """Send a generic CC message to a track.
+
+        Args:
+            track: Track number (1-11)
+            cc_number: CC number (0-127)
+            value: CC value (0-127)
+        """
+        if not 1 <= track <= 11:
+            return
+        value = max(0, min(127, value))
+        self._send_cc(track, cc_number, value)
 
     def trigger_note(self, track, note, velocity=100, channel=None):
         """
