@@ -88,6 +88,25 @@ TRACK_TYPE_TO_PAD_MODE = {
     'sampler': PadMode.SAMPLER,
 }
 
+# Mixer display order: Melodic first, then drums, drum bus, sampler last
+# Maps display position (0-11) to MIDI track number (1-11), None = DRUM bus
+MIXER_TRACK_ORDER = [8, 9, 10, 1, 2, 3, 4, 5, 6, 7, None, 11]
+
+# Display names for mixer (matches MIXER_TRACK_ORDER positions)
+MIXER_DISPLAY_NAMES = [
+    'SYN1', 'SYN2', 'DX', 'KICK', 'SNAR', 'CLAP', 'HAT1', 'HAT2',
+    'PRC1', 'PRC2', 'DRUM', 'SMPL'
+]
+
+# Drum tracks that are controlled by the DRUM bus (tracks 1-7)
+DRUM_BUS_TRACKS = [1, 2, 3, 4, 5, 6, 7]
+
+# Track abbreviations for mixer display (short names to fit in segments)
+MIXER_TRACK_ABBREV = {
+    1: 'KICK', 2: 'SNAR', 3: 'CLAP', 4: 'HAT1', 5: 'HAT2',
+    6: 'PRC1', 7: 'PRC2', 8: 'SYN1', 9: 'SYN2', 10: 'DX', 11: 'SMPL'
+}
+
 # =============================================================================
 # DRUM MODE LAYOUT - 2x4 grid in bottom 2 rows + step sequencer in top 4 rows
 # =============================================================================
@@ -211,7 +230,7 @@ BUTTONS = {
 
     # Navigation
     'up': 46, 'down': 47, 'left': 44, 'right': 45,
-    'page_left': 62, 'page_right': 63,
+    'page_left': 63, 'page_right': 62,
     'shift': 49, 'select': 48,
 
     # 16 Buttons Below LCD
@@ -255,6 +274,9 @@ class SeqtrakBridge:
         self.step_page = 0            # Current page (0 = steps 1-32, 1 = steps 33-64, etc.)
         self.step_states = {}         # {track: [bool]*128} - step on/off states per track
 
+        # Sampler step sequencer state (7 sample pads, each with 128 steps)
+        self.sampler_step_states = {}  # {pad_index: [bool]*128} - step states per sample pad
+
         # Bar length per track (defaults to 1 bar = 16 steps)
         self.track_bar_length = {i: 1 for i in range(1, 12)}
 
@@ -279,6 +301,15 @@ class SeqtrakBridge:
 
         # Master volume (0-127)
         self.master_volume = 100
+
+        # Mixer mode state
+        self.mixer_page = 0              # 0 or 1 (12 items across 2 pages)
+        self.track_volumes = [100] * 11  # Volume per track (0-127)
+
+        # DRUM bus state (virtual channel controlling all drum tracks)
+        self.drum_bus_volume = 100       # 0-127, scales all drum track volumes
+        self.drum_bus_muted = False
+        self.drum_bus_soloed = False
 
         # Isomorphic layout (same as Reason app)
         self.layout = IsomorphicLayout()
@@ -456,6 +487,9 @@ class SeqtrakBridge:
 
     def update_display(self):
         """Update LCD based on current mode."""
+        # Clear all 4 lines first to prevent stale content
+        self._clear_display()
+
         if self.current_mode == 'welcome':
             self._update_welcome_display()
         elif self.current_mode == 'scale':
@@ -470,6 +504,12 @@ class SeqtrakBridge:
             self._update_note_display()
         else:
             self._update_note_display()
+
+    def _clear_display(self):
+        """Clear all 4 LCD lines with spaces."""
+        blank = " " * 17  # Full segment of spaces
+        for line in range(1, 5):
+            self.set_lcd_segments(line, blank, blank, blank, blank)
 
     def _update_welcome_display(self):
         """Show welcome/loading screen."""
@@ -497,24 +537,26 @@ class SeqtrakBridge:
             self.set_lcd_segments(2, f"Steps:{selected_drum}", page_info, f"{bars} Bar(s)", "Shift+Pad=Sel")
 
         elif self.current_pad_mode == PadMode.SAMPLER:
-            # Sampler mode: show selected pad and its preset
-            mode_info = "SAMPLER"
+            # Sampler mode: split view with sample pads + step sequencer
             pad_num = self.selected_sampler_pad + 1
             pad_info = self.sampler_pad_presets[self.selected_sampler_pad]
             pad_preset = get_preset_name_short(11, pad_info['bank_msb'], pad_info['bank_lsb'], pad_info['program'])
-            # Line 1: Track name, mode, tempo
-            self.set_lcd_segments(1, kb_track, mode_info, "", f"{self.tempo} BPM")
-            # Line 2: Selected pad and preset
-            self.set_lcd_segments(2, f"Pad {pad_num}", pad_preset or "---", "", "Shift+Pad=Sel")
+            bars = self.track_bar_length.get(self.keyboard_track, 1)
+            page_info = f"Pg {self.step_page + 1}/4"
+            # Line 1: Track name, mode labels, tempo
+            self.set_lcd_segments(1, kb_track, "SAMPLER", "STEP", f"{self.tempo} BPM")
+            # Line 2: Selected pad, step info, bar length
+            self.set_lcd_segments(2, f"Pad {pad_num}", page_info, f"{bars} Bar(s)", pad_preset or "---")
 
         else:
             # Melodic mode: show scale info
             root_name = ROOT_NAMES[self.root_note]
             scale_name = get_scale_display_name(SCALE_NAMES[self.scale_index])
-            # Line 1: Track name, patch info, tempo
-            self.set_lcd_segments(1, kb_track, self.patch_name or "", "", f"{self.tempo} BPM")
-            # Line 2: Scale, octave info
-            self.set_lcd_segments(2, f"{root_name} {scale_name}", f"Oct {octave}", "", "")
+            bars = self.track_bar_length.get(self.keyboard_track, 1)
+            # Line 1: Track name, patch info, mode label, tempo
+            self.set_lcd_segments(1, kb_track, self.patch_name or "", "MELODIC", f"{self.tempo} BPM")
+            # Line 2: Scale, octave, and bar length
+            self.set_lcd_segments(2, f"{root_name} {scale_name}", f"Oct {octave}", f"{bars} Bar(s)", "")
 
         # Lines 3-4: Available for future use
         self.set_lcd_segments(3, "", "", "", "")
@@ -531,13 +573,70 @@ class SeqtrakBridge:
         self.set_lcd_segments(4, "", "", "", "open-push")
 
     def _update_mixer_display(self):
-        """Update LCD for mixer mode."""
-        transport = "PLAYING" if self.is_playing else "STOPPED"
+        """Update LCD for mixer mode with track volumes.
 
-        self.set_lcd_segments(1, "MIXER", "", "", transport)
-        self.set_lcd_segments(2, "Mute/Solo", "", "", "")
+        Names on line 1, volumes on line 2, 2 tracks per segment.
+        Uses MIXER_TRACK_ORDER for display order (melodic, drums, bus, sampler).
+
+        Page 0: Positions 0-7 (SYN1, SYN2, DX, KICK, SNAR, CLAP, HAT1, HAT2)
+        Page 1: Positions 8-11 (PRC1, PRC2, DRUM, SMPL) - encoders 5-8 inactive
+
+        Display layout:
+        Line 1: [SYN1 SYN2]  [DX   KICK]  [SNAR CLAP]  [HAT1 HAT2]
+        Line 2: [ 79   85 ]  [ 90  100 ]  [ 75   80 ]  [ 65   70 ]
+        Line 3: (empty)
+        Line 4: (empty)
+        """
+        base_pos = self.mixer_page * 8  # 0 or 8
+
+        def get_name(pos):
+            """Get track name for position, or empty if out of range."""
+            if pos >= len(MIXER_TRACK_ORDER):
+                return ""
+            return MIXER_DISPLAY_NAMES[pos]
+
+        def get_volume(pos):
+            """Get volume as 0-100 string for position, or empty if out of range."""
+            if pos >= len(MIXER_TRACK_ORDER):
+                return ""
+            track = MIXER_TRACK_ORDER[pos]
+            if track is None:  # DRUM bus
+                vol = round(self.drum_bus_volume * 100 / 127)
+            else:
+                vol = round(self.track_volumes[track - 1] * 100 / 127)
+            return str(vol)
+
+        def format_segment_names(pos1, pos2):
+            """Format 2 track names for a segment (17 chars)."""
+            name1 = get_name(pos1)
+            name2 = get_name(pos2)
+            # Always return 17 chars - spaces if empty
+            return f"{name1:^8s}{name2:^9s}"
+
+        def format_segment_vols(pos1, pos2):
+            """Format 2 volumes for a segment (17 chars), aligned under names."""
+            vol1 = get_volume(pos1)
+            vol2 = get_volume(pos2)
+            # Always return 17 chars - spaces if empty
+            return f"{vol1:^8s}{vol2:^9s}"
+
+        # Line 1: Names (2 per segment)
+        self.set_lcd_segments(1,
+            format_segment_names(base_pos, base_pos + 1),
+            format_segment_names(base_pos + 2, base_pos + 3),
+            format_segment_names(base_pos + 4, base_pos + 5),
+            format_segment_names(base_pos + 6, base_pos + 7))
+
+        # Line 2: Volumes (2 per segment)
+        self.set_lcd_segments(2,
+            format_segment_vols(base_pos, base_pos + 1),
+            format_segment_vols(base_pos + 2, base_pos + 3),
+            format_segment_vols(base_pos + 4, base_pos + 5),
+            format_segment_vols(base_pos + 6, base_pos + 7))
+
+        # Lines 3-4: Empty
         self.set_lcd_segments(3, "", "", "", "")
-        self.set_lcd_segments(4, "", "", "", "open-push")
+        self.set_lcd_segments(4, "", "", "", "")
 
     def _update_note_display(self):
         """Update LCD for note/play mode."""
@@ -702,21 +801,44 @@ class SeqtrakBridge:
                     self.set_pad_color(note, color)
 
     def _update_sampler_grid(self):
-        """Update grid for sampler mode - only 7 pads lit."""
-        # First, turn off all pads
-        for note in range(36, 100):
-            self.set_pad_color(note, COLOR_OFF)
+        """Update grid for sampler mode - split view like drums.
 
-        # Light up the 7 sampler pads
-        for i, (row, col) in enumerate(SAMPLER_PAD_POSITIONS):
-            note = 36 + (row * 8) + col
+        Layout:
+        - Rows 0-1 (bottom 2): Sample pads (7 pads)
+        - Rows 2-3 (middle): Empty
+        - Rows 4-7 (top 4): Step sequencer for selected sample pad
+        """
+        for row in range(8):
+            for col in range(8):
+                note = 36 + (row * 8) + col
+                pos = (row, col)
 
-            if i == self.selected_sampler_pad:
-                color = SAMPLER_SELECTED_COLOR
-            else:
-                color = SAMPLER_PAD_COLORS[i]
+                # Check if it's a sampler pad position (bottom 2 rows)
+                if pos in SAMPLER_PAD_POSITIONS:
+                    pad_index = SAMPLER_PAD_POSITIONS.index(pos)
+                    if pad_index == self.selected_sampler_pad:
+                        color = SAMPLER_SELECTED_COLOR
+                    else:
+                        color = SAMPLER_PAD_COLORS[pad_index]
+                    self.set_pad_color(note, color)
 
-            self.set_pad_color(note, color)
+                # Step sequencer rows (top 4 rows)
+                elif row >= 4:
+                    # Calculate step index: row 7 = steps 0-7, row 6 = steps 8-15, etc.
+                    step_index = ((7 - row) * 8) + col + (self.step_page * 32)
+
+                    if step_index < 128:
+                        # Get step state for selected sampler pad
+                        pad_steps = self.sampler_step_states.get(self.selected_sampler_pad, [False] * 128)
+                        step_on = pad_steps[step_index] if step_index < len(pad_steps) else False
+                        color = STEP_COLOR_ON if step_on else STEP_COLOR_OFF
+                        self.set_pad_color(note, color)
+                    else:
+                        self.set_pad_color(note, COLOR_OFF)
+
+                # Middle rows (2-3) are empty
+                else:
+                    self.set_pad_color(note, COLOR_OFF)
 
     def _update_mute_grid(self):
         """Update grid for mute mode (track mutes on bottom rows)."""
@@ -896,13 +1018,26 @@ class SeqtrakBridge:
         if mode == 'track':
             self.set_button_led(BUTTONS['upper_1'], LED_ON)  # CC 20 - prev track
             self.set_button_led(BUTTONS['lower_1'], LED_ON)  # CC 102 - next track
+        elif mode == 'mixer':
+            # Mixer mode: initialize mixer page and update button LEDs
+            self.mixer_page = 0
+            self._update_mixer_button_leds()
+            # Page buttons for mixer navigation
+            self.set_button_led(BUTTONS['page_left'], LED_DIM)  # On page 0, can't go back
+            self.set_button_led(BUTTONS['page_right'], LED_ON)  # Can go to page 1
         else:
             self.set_button_led(BUTTONS['upper_1'], LED_OFF)
             self.set_button_led(BUTTONS['lower_1'], LED_OFF)
 
-        # Patch cycling buttons always available (CC 22, CC 104)
-        self.set_button_led(BUTTONS['upper_3'], LED_ON)  # CC 22 - prev patch
-        self.set_button_led(BUTTONS['lower_3'], LED_ON)  # CC 104 - next patch
+        # Turn off page buttons when not in mixer or step sequencer mode
+        if mode not in ('mixer',) and self.current_pad_mode not in (PadMode.DRUM, PadMode.SAMPLER):
+            self.set_button_led(BUTTONS['page_left'], LED_OFF)
+            self.set_button_led(BUTTONS['page_right'], LED_OFF)
+
+        # Patch cycling buttons always available (CC 22, CC 104) - but not in mixer mode
+        if mode != 'mixer':
+            self.set_button_led(BUTTONS['upper_3'], LED_ON)  # CC 22 - prev patch
+            self.set_button_led(BUTTONS['lower_3'], LED_ON)  # CC 104 - next patch
 
         # Update display
         self.update_display()
@@ -1000,10 +1135,10 @@ class SeqtrakBridge:
         elif self.current_mode == 'track' and cc == BUTTONS['lower_1']:  # CC 102
             self._select_next_track()
 
-        # Patch cycling: CC 22 = prev patch, CC 104 = next patch
-        elif cc == BUTTONS['upper_3']:  # CC 22
+        # Patch cycling: CC 22 = prev patch, CC 104 = next patch (not in mixer mode)
+        elif cc == BUTTONS['upper_3'] and self.current_mode != 'mixer':  # CC 22
             self._cycle_patch(-1)
-        elif cc == BUTTONS['lower_3']:  # CC 104
+        elif cc == BUTTONS['lower_3'] and self.current_mode != 'mixer':  # CC 104
             self._cycle_patch(1)
 
         # Mode buttons (matching Reason app pattern)
@@ -1021,9 +1156,42 @@ class SeqtrakBridge:
             else:
                 self._enter_scale_mode()
 
-        # Step sequencer page navigation (only in drum mode)
+        # Mixer mode: Upper buttons (CC 20-27) = Solo, Lower buttons (CC 102-109) = Mute
+        # Uses MIXER_TRACK_ORDER for display order
+        elif self.current_mode == 'mixer' and 20 <= cc <= 27:
+            # Upper row: Solo
+            button_index = cc - 20
+            mixer_pos = self.mixer_page * 8 + button_index
+            if mixer_pos < len(MIXER_TRACK_ORDER):
+                track = MIXER_TRACK_ORDER[mixer_pos]
+                if track is None:
+                    self._toggle_drum_bus_solo()
+                else:
+                    self._toggle_track_solo(track)
+
+        elif self.current_mode == 'mixer' and 102 <= cc <= 109:
+            # Lower row: Mute
+            button_index = cc - 102
+            mixer_pos = self.mixer_page * 8 + button_index
+            if mixer_pos < len(MIXER_TRACK_ORDER):
+                track = MIXER_TRACK_ORDER[mixer_pos]
+                if track is None:
+                    self._toggle_drum_bus_mute()
+                else:
+                    self._toggle_track_mute_simple(track)
+
+        # Page navigation (mixer mode and step sequencer modes)
         elif cc == BUTTONS['page_left']:  # CC 62
-            if self.current_pad_mode == PadMode.DRUM and self.step_page > 0:
+            if self.current_mode == 'mixer':
+                # Mixer mode: page through tracks
+                if self.mixer_page > 0:
+                    self.mixer_page -= 1
+                    self.update_display()
+                    self._update_mixer_button_leds()
+                    self.set_button_led(BUTTONS['page_left'], LED_DIM if self.mixer_page == 0 else LED_ON)
+                    self.set_button_led(BUTTONS['page_right'], LED_ON)
+                    print(f"  Mixer Page: {self.mixer_page + 1}")
+            elif self.current_pad_mode in (PadMode.DRUM, PadMode.SAMPLER) and self.step_page > 0:
                 self.step_page -= 1
                 self.update_grid()
                 self.update_display()
@@ -1033,7 +1201,16 @@ class SeqtrakBridge:
                 print(f"  Step Page: {self.step_page + 1}")
 
         elif cc == BUTTONS['page_right']:  # CC 63
-            if self.current_pad_mode == PadMode.DRUM:
+            if self.current_mode == 'mixer':
+                # Mixer mode: page through tracks (2 pages: 1-8, 9-11)
+                if self.mixer_page < 1:
+                    self.mixer_page += 1
+                    self.update_display()
+                    self._update_mixer_button_leds()
+                    self.set_button_led(BUTTONS['page_left'], LED_ON)
+                    self.set_button_led(BUTTONS['page_right'], LED_DIM if self.mixer_page >= 1 else LED_ON)
+                    print(f"  Mixer Page: {self.mixer_page + 1}")
+            elif self.current_pad_mode in (PadMode.DRUM, PadMode.SAMPLER):
                 # Allow up to 4 pages (128 steps / 32 steps per page)
                 if self.step_page < 3:
                     self.step_page += 1
@@ -1043,6 +1220,13 @@ class SeqtrakBridge:
                     self.set_button_led(BUTTONS['page_left'], LED_ON)
                     self.set_button_led(BUTTONS['page_right'], LED_DIM if self.step_page >= 3 else LED_ON)
                     print(f"  Step Page: {self.step_page + 1}")
+
+        # Bar length buttons: CC 24 (decrement), CC 106 (increment) - not in mixer mode
+        elif cc == BUTTONS['upper_5'] and self.current_mode != 'mixer':  # CC 24 - bar length down
+            self._adjust_bar_length(-1)
+
+        elif cc == BUTTONS['lower_5'] and self.current_mode != 'mixer':  # CC 106 - bar length up
+            self._adjust_bar_length(1)
 
     def handle_encoder(self, cc, value):
         """Handle encoder turn."""
@@ -1067,7 +1251,35 @@ class SeqtrakBridge:
                 self.update_display()
                 print(f"Tempo: {self.tempo}")
 
-        # Track encoder (CC 71) - cycle through tracks
+        # Mixer mode: CC 71-78 control track volumes (using MIXER_TRACK_ORDER)
+        elif self.current_mode == 'mixer' and 71 <= cc <= 78:
+            encoder_index = cc - 71  # 0-7
+            mixer_pos = self.mixer_page * 8 + encoder_index  # 0-11
+
+            if mixer_pos < len(MIXER_TRACK_ORDER):
+                track = MIXER_TRACK_ORDER[mixer_pos]
+                name = MIXER_DISPLAY_NAMES[mixer_pos]
+
+                # Use actual encoder value for smoother volume control
+                if value < 64:
+                    vol_delta = value * 2
+                else:
+                    vol_delta = (value - 128) * 2
+
+                if track is None:
+                    # DRUM bus - adjust master drum level
+                    self._adjust_drum_bus_volume(vol_delta)
+                else:
+                    # Regular track volume
+                    new_vol = max(0, min(127, self.track_volumes[track - 1] + vol_delta))
+                    if new_vol != self.track_volumes[track - 1]:
+                        self.track_volumes[track - 1] = new_vol
+                        self.protocol.set_track_volume(track, new_vol)
+                        self.update_display()
+                        vol_pct = round(new_vol * 100 / 127)
+                        print(f"{name} Volume: {vol_pct}")
+
+        # Track encoder (CC 71) - cycle through tracks (not in mixer mode)
         elif cc == 71:
             if self.current_mode == 'scale':
                 # In scale mode, scroll scales
@@ -1109,12 +1321,11 @@ class SeqtrakBridge:
     def _adjust_bar_length(self, delta):
         """Adjust bar/loop length for current track.
 
-        Uses SysEx to set the bar length on Seqtrak:
-        - Drum tracks: Address 01 [0x0F + track] 39, data [bars] [bars]
-        - Synth/DX/Sampler tracks: TODO - need to capture SysEx format
+        Uses SysEx to set the pattern step count on Seqtrak.
+        Address: 30 5[part] 16 where part = track - 1 (0-10)
+        Data: 2 bytes MSB/LSB, value = steps (16 per bar)
         """
         track = self.keyboard_track
-        track_type = get_track_type(track)
 
         # Get current bar length
         current_bars = self.track_bar_length.get(track, 1)
@@ -1128,26 +1339,32 @@ class SeqtrakBridge:
 
         # Update local state
         self.track_bar_length[track] = new_bars
-        steps = new_bars * 16  # 16 steps per bar
 
-        # Determine SysEx address and data based on track type
-        if track_type == 'drum':
-            # Drum tracks 1-7: Address 01 [0x0F + track] 39
-            # Data: [bars] [bars] (value repeated)
-            addr = [0x01, 0x0F + track, 0x39]
-            data = [new_bars, new_bars]
-        else:
-            # Synth/DX/Sampler tracks: TODO - need to capture correct format
-            # Using placeholder that may not work correctly
-            addr = [0x30, 0x59, 0x16]
-            msb = (steps >> 7) & 0x7F
-            lsb = steps & 0x7F
-            data = [msb, lsb]
+        # Address: 30 5[part] 18 where part = track - 1 (0-indexed)
+        # Pattern 1 step count is at offset 0x18 (confirmed via MIDI capture)
+        part = track - 1  # Convert 1-11 to 0-10
+        addr = [0x30, 0x50 + part, 0x18]
+
+        # Data: 2 bytes MSB/LSB, 16 steps per bar
+        steps = new_bars * 16
+        data = [steps >> 7, steps & 0x7F]
 
         self.protocol.send_parameter(addr, data)
 
         self.update_display()
+        self._update_bar_length_buttons()
         print(f"  Bar Length: {new_bars} bar(s) ({steps} steps)")
+
+    def _update_bar_length_buttons(self):
+        """Update bar length button LEDs based on current bar count."""
+        track = self.keyboard_track
+        current_bars = self.track_bar_length.get(track, 1)
+
+        # CC 24 (decrement) - dim if at minimum (1 bar)
+        self.set_button_led(24, LED_DIM if current_bars <= 1 else LED_ON)
+
+        # CC 106 (increment) - dim if at maximum (8 bars)
+        self.set_button_led(106, LED_DIM if current_bars >= 8 else LED_ON)
 
     def handle_pad(self, note, velocity):
         """Handle pad press/release - routes to mode-specific handler."""
@@ -1305,6 +1522,64 @@ class SeqtrakBridge:
         state_str = "ON" if new_state else "OFF"
         print(f"  Step {step_num} for {track_name}: {state_str}")
 
+    def _toggle_sampler_step(self, pad_index, step_index):
+        """Toggle a step in the sampler sequencer.
+
+        Args:
+            pad_index: Sample pad index (0-6)
+            step_index: Step index (0-127)
+
+        SysEx format (from MIDI capture):
+            Add step:    F0 43 10 7F 1C 0C 72 30 00 [tick_hi] [tick_lo] 00 3C 64 00 00 78 F7
+            Delete step: F0 43 10 7F 1C 0C 74 73 00 [tick_hi] [tick_lo] 00 3C 64 00 00 78 F7
+
+        Where:
+            - Add address: 72 30 00
+            - Delete address: 74 73 00
+            - tick_hi/tick_lo: Step position in ticks (120 ticks per step, 14-bit encoded)
+            - 00: Unknown padding
+            - 3C: Note (C4 = 60, constant for sampler)
+            - 64: Velocity (100)
+            - 00 00: Gate and unknown
+            - 78: Probability (120)
+        """
+        # Initialize step states for this pad if not present
+        if pad_index not in self.sampler_step_states:
+            self.sampler_step_states[pad_index] = [False] * 128
+
+        # Toggle local state
+        self.sampler_step_states[pad_index][step_index] = not self.sampler_step_states[pad_index][step_index]
+        new_state = self.sampler_step_states[pad_index][step_index]
+
+        # Convert step index to ticks (120 ticks per step)
+        ticks = step_index * 120
+
+        # Encode ticks as 14-bit (hi/lo)
+        tick_hi = (ticks >> 7) & 0x7F
+        tick_lo = ticks & 0x7F
+
+        # Sample note - always 0x3C (C4) based on captures
+        # The selected pad determines which sample plays
+        sample_note = 0x3C
+
+        if new_state:
+            # Add step: address 72 30 00
+            addr = [0x72, 0x30, 0x00]
+            data = [tick_hi, tick_lo, 0x00, sample_note, 0x64, 0x00, 0x00, 0x78]
+        else:
+            # Delete step: address 74 73 00
+            addr = [0x74, 0x73, 0x00]
+            data = [tick_hi, tick_lo, 0x00, sample_note, 0x64, 0x00, 0x00, 0x78]
+
+        self.protocol.send_parameter(addr, data)
+
+        # Update grid to show new state
+        self.update_grid()
+
+        step_num = step_index + 1
+        state_str = "ON" if new_state else "OFF"
+        print(f"  Sampler Step {step_num} for Pad {pad_index + 1}: {state_str}")
+
     def _handle_melodic_pad(self, note, velocity):
         """Handle pad press in melodic mode (isomorphic keyboard)."""
         row = (note - 36) // 8
@@ -1352,16 +1627,35 @@ class SeqtrakBridge:
             return None
 
     def _handle_sampler_pad(self, note, velocity):
-        """Handle pad press in sampler mode - 7 pads with per-pad presets.
+        """Handle pad press in sampler mode with split layout.
+
+        Layout:
+        - Rows 0-1 (bottom 2): Sample pads - trigger sounds, Shift+Pad to select
+        - Rows 2-3 (middle): Empty
+        - Rows 4-7 (top 4): Step sequencer - toggle steps on/off
 
         Sampler triggering on Seqtrak:
         - All 7 samples trigger on MIDI channel 11 (0-indexed: 10)
         - Notes: C4 (60) through F#4 (66) - one note per sample slot
         """
+        row = (note - 36) // 8
+        col = (note - 36) % 8
+
+        # Check if it's a step sequencer pad (top 4 rows)
+        if row >= 4:
+            if velocity > 0:  # Only on press, not release
+                # Calculate step index: top row first (row 7 = steps 0-7)
+                step_index = ((7 - row) * 8) + col + (self.step_page * 32)
+
+                if step_index < 128:
+                    self._toggle_sampler_step(self.selected_sampler_pad, step_index)
+            return
+
+        # Check if it's a sample pad (bottom 2 rows)
         element = self._get_sampler_element_for_pad(note)
 
         if element is None:
-            # Not a sampler pad - ignore
+            # Not a sampler pad (middle rows) - ignore
             return
 
         # Sampler uses channel 11 (0-indexed: 10) for all sample triggering
@@ -1430,6 +1724,137 @@ class SeqtrakBridge:
         self.update_grid()
         print(f"{track_name}: {['UNMUTED', 'MUTED', 'SOLO'][new_state]}")
 
+    def _toggle_track_mute_simple(self, track):
+        """Toggle track mute state (simple: unmuted ↔ muted, clears solo)."""
+        current = self.track_states[track - 1]
+        track_name = MIXER_TRACK_ABBREV.get(track, f"T{track}")
+
+        if current == MuteState.MUTED:
+            # Unmute
+            new_state = MuteState.UNMUTED
+            self.protocol.mute_track_cc(track, muted=False)
+        else:
+            # Mute (also clears solo)
+            new_state = MuteState.MUTED
+            if current == MuteState.SOLO:
+                self.protocol.solo_track_cc(0)  # Clear solo first
+            self.protocol.mute_track_cc(track, muted=True)
+
+        self.track_states[track - 1] = new_state
+        self._update_mixer_button_leds()
+        print(f"{track_name}: {'MUTED' if new_state == MuteState.MUTED else 'UNMUTED'}")
+
+    def _toggle_track_solo(self, track):
+        """Toggle track solo state (clears mute if setting solo)."""
+        current = self.track_states[track - 1]
+        track_name = MIXER_TRACK_ABBREV.get(track, f"T{track}")
+
+        if current == MuteState.SOLO:
+            # Unsolo
+            new_state = MuteState.UNMUTED
+            self.protocol.solo_track_cc(0)
+        else:
+            # Solo (clears mute)
+            new_state = MuteState.SOLO
+            if current == MuteState.MUTED:
+                self.protocol.mute_track_cc(track, muted=False)
+            self.protocol.solo_track_cc(track)
+
+        self.track_states[track - 1] = new_state
+        self._update_mixer_button_leds()
+        print(f"{track_name}: {'SOLO' if new_state == MuteState.SOLO else 'UNMUTED'}")
+
+    def _adjust_drum_bus_volume(self, delta):
+        """Adjust master drum level, scaling all drum track volumes.
+
+        The DRUM bus acts as a master fader for all drum tracks (1-7).
+        When adjusted, it updates the drum_bus_volume and sends volume
+        commands to all drum tracks scaled proportionally.
+        """
+        new_vol = max(0, min(127, self.drum_bus_volume + delta))
+        if new_vol == self.drum_bus_volume:
+            return
+
+        self.drum_bus_volume = new_vol
+
+        # Scale all drum track volumes based on bus level
+        scale = self.drum_bus_volume / 127.0
+        for track in DRUM_BUS_TRACKS:
+            scaled_vol = int(self.track_volumes[track - 1] * scale)
+            self.protocol.set_track_volume(track, scaled_vol)
+
+        self.update_display()
+        vol_pct = round(new_vol * 100 / 127)
+        print(f"DRUM Bus Volume: {vol_pct}")
+
+    def _toggle_drum_bus_mute(self):
+        """Mute/unmute all drum tracks together."""
+        self.drum_bus_muted = not self.drum_bus_muted
+
+        for track in DRUM_BUS_TRACKS:
+            if self.drum_bus_muted:
+                self.protocol.mute_track_cc(track, muted=True)
+                self.track_states[track - 1] = MuteState.MUTED
+            else:
+                self.protocol.mute_track_cc(track, muted=False)
+                self.track_states[track - 1] = MuteState.UNMUTED
+
+        # Clear solo if we're unmuting
+        if not self.drum_bus_muted:
+            self.drum_bus_soloed = False
+
+        self._update_mixer_button_leds()
+        print(f"DRUM Bus: {'MUTED' if self.drum_bus_muted else 'UNMUTED'}")
+
+    def _toggle_drum_bus_solo(self):
+        """Solo/unsolo all drum tracks together."""
+        self.drum_bus_soloed = not self.drum_bus_soloed
+
+        if self.drum_bus_soloed:
+            # Solo all drum tracks (clear mute first)
+            self.drum_bus_muted = False
+            for track in DRUM_BUS_TRACKS:
+                self.protocol.mute_track_cc(track, muted=False)
+                self.protocol.solo_track_cc(track)
+                self.track_states[track - 1] = MuteState.SOLO
+        else:
+            # Unsolo all drum tracks
+            for track in DRUM_BUS_TRACKS:
+                self.protocol.solo_track_cc(0)
+                self.track_states[track - 1] = MuteState.UNMUTED
+
+        self._update_mixer_button_leds()
+        print(f"DRUM Bus: {'SOLO' if self.drum_bus_soloed else 'UNMUTED'}")
+
+    def _update_mixer_button_leds(self):
+        """Update button LEDs for mixer mode mute/solo states.
+
+        Uses MIXER_TRACK_ORDER for display order. Handles DRUM bus specially.
+        """
+        base_pos = self.mixer_page * 8  # 0 or 8
+
+        for i in range(8):
+            mixer_pos = base_pos + i
+            upper_cc = 20 + i   # Solo buttons
+            lower_cc = 102 + i  # Mute buttons
+
+            if mixer_pos < len(MIXER_TRACK_ORDER):
+                track = MIXER_TRACK_ORDER[mixer_pos]
+
+                if track is None:
+                    # DRUM bus - use bus state
+                    self.set_button_led(upper_cc, LED_ON if self.drum_bus_soloed else LED_DIM)
+                    self.set_button_led(lower_cc, LED_ON if self.drum_bus_muted else LED_DIM)
+                else:
+                    # Regular track
+                    state = self.track_states[track - 1]
+                    self.set_button_led(upper_cc, LED_ON if state == MuteState.SOLO else LED_DIM)
+                    self.set_button_led(lower_cc, LED_ON if state == MuteState.MUTED else LED_DIM)
+            else:
+                # No track for this button position (page 2, buttons 5-8)
+                self.set_button_led(upper_cc, LED_OFF)
+                self.set_button_led(lower_cc, LED_OFF)
+
     def _get_track_preset_display(self, track):
         """Get preset display string for a track from stored bank/program."""
         bank = self.track_bank_msb[track]
@@ -1448,9 +1873,10 @@ class SeqtrakBridge:
             self.current_pad_mode = new_mode
             print(f"  Pad Mode: {new_mode}")
 
-            # Reset sampler selection when entering sampler mode
+            # Reset sampler selection and step page when entering sampler mode
             if new_mode == PadMode.SAMPLER:
                 self.selected_sampler_pad = 0
+                self.step_page = 0
 
             # Reset step page and selected drum track when entering drum mode
             if new_mode == PadMode.DRUM:
@@ -1460,14 +1886,17 @@ class SeqtrakBridge:
                     self.selected_drum_track = self.keyboard_track
 
         # Update page button LEDs based on mode
-        if self.current_pad_mode == PadMode.DRUM:
+        if self.current_pad_mode in (PadMode.DRUM, PadMode.SAMPLER):
             # Light up page buttons for step sequencer navigation
             self.set_button_led(BUTTONS['page_left'], LED_DIM if self.step_page == 0 else LED_ON)
             self.set_button_led(BUTTONS['page_right'], LED_DIM if self.step_page >= 3 else LED_ON)
         else:
-            # Turn off page buttons for non-drum modes
+            # Turn off page buttons for non-step-sequencer modes
             self.set_button_led(BUTTONS['page_left'], LED_OFF)
             self.set_button_led(BUTTONS['page_right'], LED_OFF)
+
+        # Update bar length button LEDs for new track
+        self._update_bar_length_buttons()
 
         # Always update grid and display for track changes
         self.update_grid()
