@@ -2,7 +2,7 @@
 
 **Status**: Active tracking document for standalone Pi bridge testing
 **Last Updated**: 2025-12-26
-**Hardware**: Raspberry Pi headless deployment (`pibridge@raspberrypi.local`)
+**Hardware**: Raspberry Pi headless deployment
 
 **Important**: These are **app issues**, not Raspberry Pi hardware issues. The Pi bridge hardware is working correctly. These bugs and enhancements apply to the Seqtrak bridge app itself and would exist whether running on Mac or Pi.
 

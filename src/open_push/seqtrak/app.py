@@ -480,6 +480,9 @@ class SeqtrakBridge:
         # Variation per track (defaults to variation 1)
         self.track_variation = {i: 1 for i in range(1, 12)}
 
+        # Variation mode: 3 or 6 variations available (global setting)
+        self.variation_mode = 3  # Default: 3 variations
+
         # Track states (1-11)
         self.track_states = [MuteState.UNMUTED] * 11
 
@@ -788,6 +791,7 @@ class SeqtrakBridge:
         octave = self.layout.get_octave()
         variation = self.track_variation.get(self.keyboard_track, 1)
         tempo_str = f"{self.tempo} BPM" if self.tempo else "--- BPM"
+        var_mode_str = f"{self.variation_mode} Var"  # "3 Var" or "6 Var"
 
         # Mode-specific display
         if self.current_pad_mode == PadMode.DRUM:
@@ -801,8 +805,8 @@ class SeqtrakBridge:
             self.set_lcd_segments(1, kb_track, self.patch_name or "", mode_info, "Variation")
             # Line 2: Step sequencer info, variation value
             self.set_lcd_segments(2, f"Steps:{selected_drum}", page_info, f"{bars} Bar(s)", f"Var {variation}")
-            # Line 3: Blank
-            self.set_lcd_segments(3, "", "", "", "")
+            # Line 3: Variation mode display
+            self.set_lcd_segments(3, "", "", "", var_mode_str)
             # Line 4: BPM
             self.set_lcd_segments(4, "", "", "", tempo_str)
 
@@ -818,8 +822,8 @@ class SeqtrakBridge:
             self.set_lcd_segments(1, kb_track, "SAMPLER", "STEP", "Variation")
             # Line 2: Selected pad, step info, bar length, variation value
             self.set_lcd_segments(2, f"Pad {pad_num}", page_info, f"{bars} Bar(s)", f"Var {variation}")
-            # Line 3: Blank
-            self.set_lcd_segments(3, "", "", "", "")
+            # Line 3: Variation mode display
+            self.set_lcd_segments(3, "", "", "", var_mode_str)
             # Line 4: BPM
             self.set_lcd_segments(4, "", "", "", tempo_str)
 
@@ -833,8 +837,8 @@ class SeqtrakBridge:
             self.set_lcd_segments(1, kb_track, self.patch_name or "", "MELODIC", "Variation")
             # Line 2: Scale, octave, bar length, variation value
             self.set_lcd_segments(2, f"{root_name} {scale_name}", f"Oct {octave}", f"{bars} Bar(s)", f"Var {variation}")
-            # Line 3: Blank
-            self.set_lcd_segments(3, "", "", "", "")
+            # Line 3: Variation mode display
+            self.set_lcd_segments(3, "", "", "", var_mode_str)
             # Line 4: BPM
             self.set_lcd_segments(4, "", "", "", tempo_str)
 
@@ -1921,6 +1925,10 @@ class SeqtrakBridge:
         else:
             delta = -1  # Counter-clockwise
 
+        # Debug for CC 78
+        if cc == 78:
+            print(f"[DEBUG] CC 78 received, mode={self.current_mode}, shift={self.shift_held}, value={value}")
+
         # Tempo encoder (CC 14)
         if cc == 14:
             # Use actual delta for tempo (faster turns = bigger change)
@@ -1959,9 +1967,14 @@ class SeqtrakBridge:
             self._handle_session_encoder(encoder_index, delta)
 
         # Track mode: CC 78 = variation selection (1-6)
+        # Shift+CC 78 = toggle between 3 and 6 variation modes
         # Must be checked BEFORE arp mode
         elif self.current_mode == 'track' and cc == 78:
-            self._adjust_variation(delta)
+            if self.shift_held:
+                print(f"[DEBUG] Shift held, toggling variation mode (current: {self.variation_mode})")
+                self._toggle_variation_mode()
+            else:
+                self._adjust_variation(delta)
 
         # Arp mode: CC 77 = pattern, CC 78 = octave range
         # Must be checked BEFORE device mode
@@ -2178,15 +2191,16 @@ class SeqtrakBridge:
         Address: 30 5[part] 0F where part = track - 1 (0-10)
         Data: 1 byte, variation (0-5 for variations 1-6)
 
-        Variations 1-6 cycle with wraparound.
+        Respects current variation_mode (3 or 6 variations available).
         """
         track = self.keyboard_track
 
         # Get current variation
         current_var = self.track_variation.get(track, 1)
 
-        # Calculate new variation (1-6 with wraparound)
-        new_var = ((current_var - 1 + delta) % 6) + 1
+        # Calculate new variation with wraparound based on mode (3 or 6 variations)
+        max_var = self.variation_mode
+        new_var = ((current_var - 1 + delta) % max_var) + 1
 
         # Update local state
         self.track_variation[track] = new_var
@@ -2195,7 +2209,33 @@ class SeqtrakBridge:
         self.protocol.select_track_variation(track, new_var)
 
         self.update_display()
-        print(f"  Variation: {new_var} for {Track.NAMES.get(track, f'Track {track}')}")
+        print(f"  Variation: {new_var}/{max_var} for {Track.NAMES.get(track, f'Track {track}')}")
+
+    def _toggle_variation_mode(self):
+        """Toggle between 3 and 6 variation modes.
+
+        Sends SysEx to Seqtrak to enable/disable 6 variation mode.
+        Address: 01 10 18
+        Data: 02 = enable 6 variations, 00 = 3 variations (default)
+        """
+        # Toggle between 3 and 6
+        if self.variation_mode == 3:
+            self.variation_mode = 6
+            # Send SysEx to enable 6 variations
+            self.protocol.send_parameter([0x01, 0x10, 0x18], [0x02])
+            print("  Variation Mode: 6 variations enabled")
+        else:
+            self.variation_mode = 3
+            # Send SysEx to disable 6 variations (back to 3)
+            self.protocol.send_parameter([0x01, 0x10, 0x18], [0x00])
+            print("  Variation Mode: 3 variations (default)")
+
+        # Clamp current variations to new max
+        for track in range(1, 12):
+            if self.track_variation.get(track, 1) > self.variation_mode:
+                self.track_variation[track] = self.variation_mode
+
+        self.update_display()
 
     def _clear_subdivision_leds(self):
         """Turn off all subdivision button LEDs (CC 36-43)."""
