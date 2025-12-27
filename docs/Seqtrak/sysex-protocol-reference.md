@@ -1025,6 +1025,38 @@ Example from capture (SYNTH 1, channel 8):
    └── Track 1 (SNARE)
 ```
 
+**DELETE Step Format:**
+```
+70 [0x20+track] 00 [step]
+│    │              └── Step index (0-127)
+│    └── Track with 0x20 offset (delete flag)
+└── Drum step command
+```
+
+The delete command uses the **same command byte (0x70)** but adds **0x20 offset to the track byte** to indicate deletion, and sends **minimal data** (just the step index).
+
+**Example - Delete KICK step 5:**
+```
+F0 43 10 7F 1C 0C 70 20 00 05 F7
+                  │  │      └─ Step 5
+                  │  └─ Track 0 + 0x20 = 0x20 (delete flag)
+                  └─ Command 0x70 (drum step)
+```
+
+**Example - Delete SNARE step 10:**
+```
+F0 43 10 7F 1C 0C 70 21 00 0A F7
+                     │      └─ Step 10 (0x0A)
+                     └─ Track 1 + 0x20 = 0x21
+```
+
+**ADD vs DELETE Comparison:**
+
+| Operation | Track Byte | Data Bytes | Example (KICK step 5) |
+|-----------|------------|------------|----------------------|
+| ADD | `[track]` (0x00-0x06) | `[step] [note] [vel] [gate] [prob]` | `70 00 00 05 3C 64 00 78` |
+| DELETE | `[0x20+track]` (0x20-0x26) | `[step]` only | `70 20 00 05` |
+
 ### SAMPLER Track (Channel 11) - Command `72`
 
 **Format (18 bytes total) - DIFFERENT from drums!**
@@ -1052,6 +1084,58 @@ Example from capture (SYNTH 1, channel 8):
 
 **Note**: The tick position byte needs more analysis - may relate to swing or micro-timing.
 
+**DELETE Step Format (NEWLY DISCOVERED):**
+```
+72 50 00 [tick_hi] [tick_lo]
+│     │      └───────────────── Tick position (14-bit encoded)
+│     └── 0x50 = 0x30 + 0x20 (delete flag)
+└── Sampler step command
+```
+
+The sampler delete follows the **same 0x20 offset pattern** as drums:
+- ADD uses `72 30 00` → DELETE uses `72 50 00` (0x30 + 0x20)
+- DELETE sends **minimal data** (just tick position, no note/velocity/duration)
+
+**Tick Calculation:**
+- Ticks = step_index × 120
+- Encoded as 14-bit: `tick_hi = (ticks >> 7) & 0x7F`, `tick_lo = ticks & 0x7F`
+
+**Example - Delete sampler step 0:**
+```
+Step 0 = 0 × 120 = 0 ticks
+Tick encoding: tick_hi = 0x00, tick_lo = 0x00
+
+F0 43 10 7F 1C 0C 72 50 00 00 00 F7
+                  │  │      └──┴─ Tick position (0)
+                  │  └─ 0x50 (0x30 + 0x20 = delete flag)
+                  └─ Command 0x72 (sampler)
+```
+
+**Example - Delete sampler step 10:**
+```
+Step 10 = 10 × 120 = 1200 ticks = 0x4B0
+14-bit split: tick_hi = 0x09, tick_lo = 0x30
+
+F0 43 10 7F 1C 0C 72 50 00 09 30 F7
+                           └──┴─ Tick position (1200)
+```
+
+**Example - Delete sampler step 127:**
+```
+Step 127 = 127 × 120 = 15240 ticks = 0x3B88
+14-bit split: tick_hi = 0x77, tick_lo = 0x08
+
+F0 43 10 7F 1C 0C 72 50 00 77 08 F7
+                           └──┴─ Tick position (15240)
+```
+
+**ADD vs DELETE Comparison:**
+
+| Operation | Address | Data Bytes | Example (step 0) |
+|-----------|---------|------------|------------------|
+| ADD | `72 30 00` | `[tick_hi] [tick_lo] 00 [note] [vel] 00 00 [dur]` | `72 30 00 00 00 00 3C 64 00 00 78` |
+| DELETE | `72 50 00` | `[tick_hi] [tick_lo]` only | `72 50 00 00 00` |
+
 ### SYNTH/DX Tracks - Command `74`
 
 **Format (18 bytes total) - Same as sampler:**
@@ -1078,6 +1162,35 @@ Example from capture (SYNTH 1, channel 8):
 74 73 00 0E 08 00 3C 64 00 00 78  Step 14
 74 73 00 0F 00 00 3C 64 00 00 78  Step 15
 ```
+
+### Step Delete Pattern Summary
+
+All step sequencer DELETE commands follow a consistent pattern:
+
+**Common Pattern:**
+1. **Same command byte** as ADD (0x70 for drums, 0x72 for sampler)
+2. **Add 0x20 offset** to the middle byte of the ADD address
+3. **Minimal data** - only the step identifier (not full step data)
+
+**Why This Pattern:**
+- Uses address offset (0x20) as a "delete flag" instead of a separate command
+- Minimal data reduces MIDI bandwidth
+- Consistent across all track types
+
+**Summary Table:**
+
+| Track Type | ADD Address | DELETE Address | Step Identifier | Notes |
+|------------|-------------|----------------|-----------------|-------|
+| Drum (KICK) | `70 00 00` | `70 20 00` | `[step]` (0-127) | Direct step index |
+| Drum (SNARE) | `70 01 00` | `70 21 00` | `[step]` (0-127) | Direct step index |
+| ... | ... | ... | ... | All drums use +0x20 |
+| Sampler | `72 30 00` | `72 50 00` | `[tick_hi] [tick_lo]` | Ticks (step × 120) |
+
+**Pattern Recognition:**
+- Drum: `70 [track] 00` → `70 [track+0x20] 00`
+- Sampler: `72 30 00` → `72 50 00` (0x30 + 0x20)
+
+This pattern was discovered through code implementation and hardware verification after the official Yamaha documentation did not include DELETE command specifications.
 
 ---
 
@@ -1303,6 +1416,8 @@ These parameters are NOT in the official MIDI CC spec and require SysEx:
 
 ### Completed
 - [x] Synth track step data - Uses command `74 73` (same format as sampler)
+- [x] Drum step delete - Command `70 [0x20+track] 00 [step]` (0x20 offset pattern)
+- [x] Sampler step delete - Command `72 50 00 [tick_hi] [tick_lo]` (0x30 + 0x20 = 0x50)
 - [x] Sound engine parameter structure (31 xx xx) - Identified 1x, 2x, 3x sub-ranges
 - [x] Effect parameter structure (41 xx xx) - Identified drum and synth track addressing
 - [x] Arpeggiator/motion parameters (50 xx xx) - Identified base addresses

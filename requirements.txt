@@ -1,0 +1,6 @@
+# OpenPush Dependencies
+# For Raspberry Pi and other platforms
+
+# MIDI library and backend
+mido>=1.2.10
+python-rtmidi>=1.4.9

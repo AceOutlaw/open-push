@@ -2601,19 +2601,17 @@ class SeqtrakBridge:
             pad_index: Sample pad index (0-6)
             step_index: Step index (0-127)
 
-        SysEx format (from MIDI capture):
-            Add step:    F0 43 10 7F 1C 0C 72 30 00 [tick_hi] [tick_lo] 00 3C 64 00 00 78 F7
-            Delete step: F0 43 10 7F 1C 0C 74 73 00 [tick_hi] [tick_lo] 00 3C 64 00 00 78 F7
+        SysEx format (verified from capture):
+            Both ADD and DELETE use the full 8-byte payload with 14-bit tick position.
+            
+            Payload: [tick_hi] [tick_lo] 00 [note] [vel] 00 00 [prob]
+            - tick: 14-bit value, 120 ticks per step (480 PPQN)
+            - note: 0x3C (60) + pad_index
+            - vel: 0x64 (100)
+            - prob: 0x78 (120)
 
-        Where:
-            - Add address: 72 30 00
-            - Delete address: 74 73 00
-            - tick_hi/tick_lo: Step position in ticks (120 ticks per step, 14-bit encoded)
-            - 00: Unknown padding
-            - 3C: Note (C4 = 60, constant for sampler)
-            - 64: Velocity (100)
-            - 00 00: Gate and unknown
-            - 78: Probability (120)
+            Add Address:    72 30 00
+            Delete Address: 74 73 00
         """
         # Initialize step states for this pad if not present
         if pad_index not in self.sampler_step_states:
@@ -2623,25 +2621,28 @@ class SeqtrakBridge:
         self.sampler_step_states[pad_index][step_index] = not self.sampler_step_states[pad_index][step_index]
         new_state = self.sampler_step_states[pad_index][step_index]
 
-        # Convert step index to ticks (120 ticks per step)
-        ticks = step_index * 120
+        # Note: Do NOT send _sync_sampler_element here. 
+        # The logs show that sending the select command (01 10 28) is not required 
+        # and likely interferes with the step command flow.
 
-        # Encode ticks as 14-bit (hi/lo)
+        # Calculate 14-bit tick position (16th notes @ 480 PPQN = 120 ticks)
+        ticks = step_index * 120
         tick_hi = (ticks >> 7) & 0x7F
         tick_lo = ticks & 0x7F
 
-        # Sample note - always 0x3C (C4) based on captures
-        # The selected pad determines which sample plays
-        sample_note = 0x3C
+        # Sample note is pad-specific (C4 + pad index).
+        sample_note = 0x3C + pad_index
+
+        # Construct full data payload (used for BOTH add and delete)
+        # [tick_hi, tick_lo, 00, note, vel, 00, 00, prob]
+        data = [tick_hi, tick_lo, 0x00, sample_note, 0x64, 0x00, 0x00, 0x78]
 
         if new_state:
-            # Add step: address 72 30 00
+            # Add step: 72 30 00
             addr = [0x72, 0x30, 0x00]
-            data = [tick_hi, tick_lo, 0x00, sample_note, 0x64, 0x00, 0x00, 0x78]
         else:
-            # Delete step: address 74 73 00
+            # Delete step: 74 73 00
             addr = [0x74, 0x73, 0x00]
-            data = [tick_hi, tick_lo, 0x00, sample_note, 0x64, 0x00, 0x00, 0x78]
 
         self.protocol.send_parameter(addr, data)
 
@@ -2651,6 +2652,11 @@ class SeqtrakBridge:
         step_num = step_index + 1
         state_str = "ON" if new_state else "OFF"
         print(f"  Sampler Step {step_num} for Pad {pad_index + 1}: {state_str}")
+
+    def _sync_sampler_element(self, element):
+        """Tell Seqtrak which sampler element (pad) is active for edits/recording."""
+        if self.protocol:
+            self.protocol.select_sampler_element(element)
 
     def _handle_melodic_pad(self, note, velocity):
         """Handle pad press in melodic mode (isomorphic keyboard)."""
@@ -2819,6 +2825,7 @@ class SeqtrakBridge:
             self.set_pad_color(old_note, SAMPLER_PAD_COLORS[old_selected])
             self.set_pad_color(note, SAMPLER_SELECTED_COLOR)
 
+            self._sync_sampler_element(self.selected_sampler_pad)
             print(f"  Selected sampler pad {element + 1}")
             self.update_display()
         else:
@@ -3022,6 +3029,7 @@ class SeqtrakBridge:
             if new_mode == PadMode.SAMPLER:
                 self.selected_sampler_pad = 0
                 self.step_page = 0
+                self._sync_sampler_element(self.selected_sampler_pad)
 
             # Reset step page and selected drum track when entering drum mode
             if new_mode == PadMode.DRUM:

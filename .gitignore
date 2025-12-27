@@ -43,3 +43,6 @@ GEMINI.md
 
 # Reference files (SDK docs, third-party codecs)
 reference files/
+
+# Development & debugging notes (hardware-specific, local only)
+raspberry-pi-setup/
