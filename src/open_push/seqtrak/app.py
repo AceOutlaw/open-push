@@ -2094,26 +2094,45 @@ class SeqtrakBridge:
         Uses SysEx to set the pattern step count on Seqtrak.
         Address: 30 5[part] 16 where part = track - 1 (0-10)
         Data: 2 bytes MSB/LSB, value = steps (16 per bar)
+
+        Hardware limitation: Only supports powers of 2 (1, 2, 4, 8 bars).
+        No support for 3, 5, 6, or 7 bars.
         """
         track = self.keyboard_track
 
         # Get current bar length
         current_bars = self.track_bar_length.get(track, 1)
 
-        # Calculate new bar length (1-8 bars)
-        new_bars = max(1, min(8, current_bars + delta))
+        # Valid bar lengths (powers of 2 only)
+        valid_bars = [1, 2, 4, 8]
 
-        # If no change (at boundary), don't send anything
+        # Find current index in valid_bars
+        try:
+            current_index = valid_bars.index(current_bars)
+        except ValueError:
+            # If somehow we have an invalid value, reset to 1 bar
+            current_index = 0
+            current_bars = 1
+
+        # Calculate new index
+        new_index = current_index + delta
+
+        # Wrap around (8 bars -> 1 bar, 1 bar -> 8 bars)
+        new_index = new_index % len(valid_bars)
+
+        new_bars = valid_bars[new_index]
+
+        # If no change, don't send anything
         if new_bars == current_bars:
             return
 
         # Update local state
         self.track_bar_length[track] = new_bars
 
-        # Address: 30 5[part] 18 where part = track - 1 (0-indexed)
-        # Pattern 1 step count is at offset 0x18 (confirmed via MIDI capture)
+        # Address: 30 5[part] 16 where part = track - 1 (0-indexed)
+        # Offset is 0x16 for melodic bar length (confirmed via MIDI capture)
         part = track - 1  # Convert 1-11 to 0-10
-        addr = [0x30, 0x50 + part, 0x18]
+        addr = [0x30, 0x50 + part, 0x16]
 
         # Data: 2 bytes MSB/LSB, 16 steps per bar
         steps = new_bars * 16
@@ -2126,15 +2145,14 @@ class SeqtrakBridge:
         print(f"  Bar Length: {new_bars} bar(s) ({steps} steps)")
 
     def _update_bar_length_buttons(self):
-        """Update bar length button LEDs based on current bar count."""
-        track = self.keyboard_track
-        current_bars = self.track_bar_length.get(track, 1)
+        """Update bar length button LEDs based on current bar count.
 
-        # CC 24 (decrement) - dim if at minimum (1 bar)
-        self.set_button_led(24, LED_DIM if current_bars <= 1 else LED_ON)
-
-        # CC 106 (increment) - dim if at maximum (8 bars)
-        self.set_button_led(106, LED_DIM if current_bars >= 8 else LED_ON)
+        Since bar length cycles through [1, 2, 4, 8] bars,
+        both buttons are always active (no min/max boundaries).
+        """
+        # CC 24 (decrement) and CC 106 (increment) - always active for cycling
+        self.set_button_led(24, LED_ON)   # Bar length down
+        self.set_button_led(106, LED_ON)  # Bar length up
 
     def _clear_subdivision_leds(self):
         """Turn off all subdivision button LEDs (CC 36-43)."""
