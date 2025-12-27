@@ -477,6 +477,9 @@ class SeqtrakBridge:
         # Bar length per track (defaults to 1 bar = 16 steps)
         self.track_bar_length = {i: 1 for i in range(1, 12)}
 
+        # Variation per track (defaults to variation 1)
+        self.track_variation = {i: 1 for i in range(1, 12)}
+
         # Track states (1-11)
         self.track_states = [MuteState.UNMUTED] * 11
 
@@ -783,6 +786,8 @@ class SeqtrakBridge:
         """Update LCD for track mode - mode-specific display."""
         kb_track = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
         octave = self.layout.get_octave()
+        variation = self.track_variation.get(self.keyboard_track, 1)
+        tempo_str = f"{self.tempo} BPM" if self.tempo else "--- BPM"
 
         # Mode-specific display
         if self.current_pad_mode == PadMode.DRUM:
@@ -792,11 +797,14 @@ class SeqtrakBridge:
             bars = self.track_bar_length.get(self.keyboard_track, 1)
             page_info = f"Pg {self.step_page + 1}/4"
 
-            # Line 1: Track name, patch info, tempo
-            tempo_str = f"{self.tempo} BPM" if self.tempo else "--- BPM"
-            self.set_lcd_segments(1, kb_track, self.patch_name or "", mode_info, tempo_str)
-            # Line 2: Step sequencer info
-            self.set_lcd_segments(2, f"Steps:{selected_drum}", page_info, f"{bars} Bar(s)", "Shift+Pad=Sel")
+            # Line 1: Track name, patch info, mode info, variation label
+            self.set_lcd_segments(1, kb_track, self.patch_name or "", mode_info, "Variation")
+            # Line 2: Step sequencer info, variation value
+            self.set_lcd_segments(2, f"Steps:{selected_drum}", page_info, f"{bars} Bar(s)", f"Var {variation}")
+            # Line 3: Blank
+            self.set_lcd_segments(3, "", "", "", "")
+            # Line 4: BPM
+            self.set_lcd_segments(4, "", "", "", tempo_str)
 
         elif self.current_pad_mode == PadMode.SAMPLER:
             # Sampler mode: split view with sample pads + step sequencer
@@ -805,26 +813,30 @@ class SeqtrakBridge:
             pad_preset = get_preset_name_short(11, pad_info['bank_msb'], pad_info['bank_lsb'], pad_info['program'])
             bars = self.track_bar_length.get(self.keyboard_track, 1)
             page_info = f"Pg {self.step_page + 1}/4"
-            # Line 1: Track name, mode labels, tempo
-            tempo_str = f"{self.tempo} BPM" if self.tempo else "--- BPM"
-            self.set_lcd_segments(1, kb_track, "SAMPLER", "STEP", tempo_str)
-            # Line 2: Selected pad, step info, bar length
-            self.set_lcd_segments(2, f"Pad {pad_num}", page_info, f"{bars} Bar(s)", pad_preset or "---")
+
+            # Line 1: Track name, mode labels, variation label
+            self.set_lcd_segments(1, kb_track, "SAMPLER", "STEP", "Variation")
+            # Line 2: Selected pad, step info, bar length, variation value
+            self.set_lcd_segments(2, f"Pad {pad_num}", page_info, f"{bars} Bar(s)", f"Var {variation}")
+            # Line 3: Blank
+            self.set_lcd_segments(3, "", "", "", "")
+            # Line 4: BPM
+            self.set_lcd_segments(4, "", "", "", tempo_str)
 
         else:
             # Melodic mode: show scale info
             root_name = ROOT_NAMES[self.root_note]
             scale_name = get_scale_display_name(SCALE_NAMES[self.scale_index])
             bars = self.track_bar_length.get(self.keyboard_track, 1)
-            # Line 1: Track name, patch info, mode label, tempo
-            tempo_str = f"{self.tempo} BPM" if self.tempo else "--- BPM"
-            self.set_lcd_segments(1, kb_track, self.patch_name or "", "MELODIC", tempo_str)
-            # Line 2: Scale, octave, and bar length
-            self.set_lcd_segments(2, f"{root_name} {scale_name}", f"Oct {octave}", f"{bars} Bar(s)", "")
 
-        # Lines 3-4: Available for future use
-        self.set_lcd_segments(3, "", "", "", "")
-        self.set_lcd_segments(4, "", "", "", "")
+            # Line 1: Track name, patch info, mode label, variation label
+            self.set_lcd_segments(1, kb_track, self.patch_name or "", "MELODIC", "Variation")
+            # Line 2: Scale, octave, bar length, variation value
+            self.set_lcd_segments(2, f"{root_name} {scale_name}", f"Oct {octave}", f"{bars} Bar(s)", f"Var {variation}")
+            # Line 3: Blank
+            self.set_lcd_segments(3, "", "", "", "")
+            # Line 4: BPM
+            self.set_lcd_segments(4, "", "", "", tempo_str)
 
     def _update_device_display(self):
         """Update LCD for device mode with parameter names and values."""
@@ -1946,6 +1958,11 @@ class SeqtrakBridge:
             encoder_index = cc - 71  # 0-7
             self._handle_session_encoder(encoder_index, delta)
 
+        # Track mode: CC 78 = variation selection (1-6)
+        # Must be checked BEFORE arp mode
+        elif self.current_mode == 'track' and cc == 78:
+            self._adjust_variation(delta)
+
         # Arp mode: CC 77 = pattern, CC 78 = octave range
         # Must be checked BEFORE device mode
         elif self.arp_mode_active and cc == 77:
@@ -2153,6 +2170,32 @@ class SeqtrakBridge:
         # CC 24 (decrement) and CC 106 (increment) - always active for cycling
         self.set_button_led(24, LED_ON)   # Bar length down
         self.set_button_led(106, LED_ON)  # Bar length up
+
+    def _adjust_variation(self, delta):
+        """Adjust variation for current track.
+
+        Uses SysEx to set the variation on Seqtrak.
+        Address: 30 5[part] 0F where part = track - 1 (0-10)
+        Data: 1 byte, variation (0-5 for variations 1-6)
+
+        Variations 1-6 cycle with wraparound.
+        """
+        track = self.keyboard_track
+
+        # Get current variation
+        current_var = self.track_variation.get(track, 1)
+
+        # Calculate new variation (1-6 with wraparound)
+        new_var = ((current_var - 1 + delta) % 6) + 1
+
+        # Update local state
+        self.track_variation[track] = new_var
+
+        # Send SysEx to Seqtrak
+        self.protocol.select_track_variation(track, new_var)
+
+        self.update_display()
+        print(f"  Variation: {new_var} for {Track.NAMES.get(track, f'Track {track}')}")
 
     def _clear_subdivision_leds(self):
         """Turn off all subdivision button LEDs (CC 36-43)."""
