@@ -78,8 +78,12 @@ LED_ON = 127
 LED_DIM = 1
 UPPER_BRIGHT = 10
 UPPER_DIM = 7
+
 LOWER_BRIGHT = 13
 LOWER_DIM = 11
+
+# Pad color names for settings (subset of COLORS dictionary)
+PAD_COLOR_NAMES = ['off', 'gray', 'white', 'red', 'orange', 'yellow', 'lime', 'green', 'blue', 'purple', 'pink']
 
 
 # =============================================================================
@@ -331,6 +335,22 @@ class MIDIBridge:
                     {'name': 'Octave', 'type': 'int', 'key': 'default_octave', 'min': -2, 'max': 4, 'value': 2},
                     {'name': 'Root', 'type': 'select', 'key': 'default_root', 'options': ROOT_NAMES, 'value': 0},
                     {'name': 'Scale', 'type': 'select', 'key': 'default_scale', 'options': SCALE_NAMES[:12], 'value': 0},
+                ]
+            },
+            {
+                'name': 'Colors',
+                'items': [
+                    {'name': 'ScaleNote', 'type': 'select', 'key': 'color_scale_note', 'options': PAD_COLOR_NAMES, 'value': 3},  # white
+                    {'name': 'RootNote', 'type': 'select', 'key': 'color_root_note', 'options': PAD_COLOR_NAMES, 'value': 7},   # blue
+                    {'name': 'Chromatic', 'type': 'select', 'key': 'color_chromatic', 'options': PAD_COLOR_NAMES, 'value': 1},  # gray
+                    {'name': 'Pressed', 'type': 'select', 'key': 'color_pressed', 'options': PAD_COLOR_NAMES, 'value': 3},      # white
+                ]
+            },
+            {
+                'name': 'Encoders',
+                'items': [
+                    {'name': 'Bank', 'type': 'select', 'key': 'encoder_bank', 'options': ['Volume', 'Pan', 'Filter', 'FX/Mod'], 'value': 0},
+                    {'name': 'Info', 'type': 'label', 'value': 'Edit JSON'},
                 ]
             },
         ]
@@ -940,40 +960,53 @@ class MIDIBridge:
         self._update_pad_grid()
 
     def _update_settings_display(self):
-        """Update LCD for settings menu."""
+        """Update LCD for settings menu using 4-segment format."""
         cat = self.settings_categories[self.settings_category]
         cat_name = cat['name']
         items = cat['items']
 
-        # Line 1: Category name
-        self.push.set_lcd_line(1, f"SETTINGS: {cat_name}".center(68))
+        # Line 1: SETTINGS | Category name | (empty) | (empty)
+        self.push.set_lcd_segments(1, ["SETTINGS", cat_name, "", ""])
 
-        # Line 2: Current item value
+        # Line 2: Item name | Value | (empty) | (empty)
         if items:
             item = items[self.settings_item]
             value_str = self._format_setting_value(item)
-            self.push.set_lcd_line(2, f"{item['name']}: {value_str}".center(68))
+            self.push.set_lcd_segments(2, [item['name'], value_str, "", ""])
         else:
-            self.push.set_lcd_line(2, "(No settings)".center(68))
+            self.push.set_lcd_segments(2, ["(No settings)", "", "", ""])
 
-        # Line 3: Category tabs
-        cat_names = [c['name'][:8] for c in self.settings_categories]
-        # Highlight current category
+        # Line 3: Category tabs (pack 6 categories into 4 segments: 2+2+1+1)
+        cat_names = [c['name'][:7] for c in self.settings_categories]
+        # Pack categories: segments 0-1 get 2 each, segments 2-3 get 1 each
         segments = []
-        for i, name in enumerate(cat_names):
-            if i == self.settings_category:
-                segments.append(f"[{name}]".center(17))
+        for seg_idx in range(4):
+            if seg_idx < 2:
+                # First two segments: 2 categories each (indices 0-1, 2-3)
+                cat_idx1 = seg_idx * 2
+                cat_idx2 = seg_idx * 2 + 1
+                name1 = f"[{cat_names[cat_idx1]}]" if cat_idx1 == self.settings_category else cat_names[cat_idx1] if cat_idx1 < len(cat_names) else ""
+                name2 = f"[{cat_names[cat_idx2]}]" if cat_idx2 == self.settings_category else cat_names[cat_idx2] if cat_idx2 < len(cat_names) else ""
+                segments.append(f"{name1:^8}{name2:^9}")
             else:
-                segments.append(name.center(17))
+                # Last two segments: 1 category each (indices 4, 5)
+                cat_idx = seg_idx + 2
+                if cat_idx < len(cat_names):
+                    name = f"[{cat_names[cat_idx]}]" if cat_idx == self.settings_category else cat_names[cat_idx]
+                    segments.append(name)
+                else:
+                    segments.append("")
         self.push.set_lcd_segments(3, segments)
 
         # Line 4: Instructions
-        self.push.set_lcd_line(4, "Enc1:Cat Enc2:Item Enc3:Value | User:Exit")
+        self.push.set_lcd_segments(4, ["Enc1:Cat", "Enc2:Item", "Enc3:Value", "User:Exit"])
 
     def _format_setting_value(self, item: dict) -> str:
         """Format a setting value for display."""
         val = item['value']
-        if item['type'] == 'bool':
+        if item['type'] == 'label':
+            return str(val)  # Non-editable display text
+        elif item['type'] == 'bool':
             return 'ON' if val else 'OFF'
         elif item['type'] == 'select':
             options = item.get('options', [])
@@ -1014,6 +1047,10 @@ class MIDIBridge:
 
     def _adjust_setting_value(self, item: dict, delta: int):
         """Adjust a setting value by delta."""
+        # Labels are not editable
+        if item['type'] == 'label':
+            return
+
         val = item['value']
 
         if item['type'] == 'bool':
@@ -1040,7 +1077,9 @@ class MIDIBridge:
         """Apply current settings values to config and save."""
         for cat in self.settings_categories:
             for item in cat['items']:
-                key = item['key']
+                key = item.get('key')  # Labels don't have keys
+                if not key:
+                    continue
                 val = item['value']
 
                 # Map settings to config locations
@@ -1064,6 +1103,11 @@ class MIDIBridge:
                     self.config.config.setdefault('keyboard', {})['default_root'] = val
                 elif key == 'default_scale':
                     self.config.config.setdefault('keyboard', {})['default_scale'] = SCALE_NAMES[val]
+                # Pad color settings
+                elif key.startswith('color_'):
+                    color_key = key.replace('color_', '')
+                    color_name = PAD_COLOR_NAMES[val] if 0 <= val < len(PAD_COLOR_NAMES) else 'white'
+                    self.config.config.setdefault('pad_colors', {})[color_key] = color_name
 
         # Save config
         try:
@@ -1162,8 +1206,9 @@ class MIDIBridge:
         self._update_single_pad(pad_note)
 
     def _get_pressed_pad_color(self) -> int:
-        """Get color for pressed pad."""
-        return color_value('white')  # Full brightness white
+        """Get color for pressed pad from config."""
+        pressed_color = self.pad_colors.get('pressed', 'white')
+        return color_value(pressed_color)
 
     def _update_single_pad(self, pad_note: int):
         """Update color of a single pad based on layout."""
@@ -1208,17 +1253,19 @@ class MIDIBridge:
     # =========================================================================
 
     def _update_main_display(self):
-        """Update main LCD display."""
-        # Line 1: Mode/Bank name
+        """Update main LCD display using 4-segment format."""
+        # Line 1: Mode | Encoder Bank | Channel | Mode label
         bank_names = ['Volume', 'Pan/Send', 'Track', 'Device']
         bank_name = bank_names[self.encoder_bank] if self.encoder_bank < len(bank_names) else 'Unknown'
-        self.push.set_lcd_line(1, f"MIDI Bridge - {bank_name}".center(68))
+        channel_str = f"Ch {self.config.midi_channel + 1}"
+        self.push.set_lcd_segments(1, ["MIDI Bridge", bank_name, channel_str, "KEYBOARD"])
 
-        # Line 2: Scale info
+        # Line 2: Scale | Octave | In Key/Chromatic | (empty)
         scale_name = get_scale_display_name(SCALE_NAMES[self.scale_index])
         root_name = ROOT_NAMES[self.root_note]
         mode_str = "In Key" if self.in_key_mode else "Chromatic"
-        self.push.set_lcd_line(2, f"{root_name} {scale_name} ({mode_str})".center(68))
+        octave_str = f"Oct {self.octave_offset:+d}"
+        self.push.set_lcd_segments(2, [f"{root_name} {scale_name}", octave_str, mode_str, ""])
 
         # Line 3: Encoder labels
         self._update_encoder_display()
@@ -1261,27 +1308,28 @@ class MIDIBridge:
         self.push.set_lcd_segments(4, [tempo_str, octave_str, play_str, rec_str])
 
     def _update_scale_display(self):
-        """Update display for scale mode overlay."""
-        # Line 1: Title
-        self.push.set_lcd_line(1, "SCALE SELECTION".center(68))
+        """Update display for scale mode overlay using 4-segment format."""
+        # Line 1: Title segments
+        self.push.set_lcd_segments(1, ["SCALE", "SELECTION", "", ""])
 
         # Line 2: Current scale and root
         scale_name = get_scale_display_name(SCALE_NAMES[self.scale_index])
         root_name = ROOT_NAMES[self.root_note]
         mode_str = "In Key" if self.in_key_mode else "Chromatic"
-        self.push.set_lcd_line(2, f"{root_name} {scale_name}".center(68))
+        self.push.set_lcd_segments(2, [f"{root_name} {scale_name}", mode_str, "", ""])
 
         # Line 3: Instructions
-        self.push.set_lcd_segments(3, ["<Root>", mode_str, "Scroll:", "Scale>"])
+        self.push.set_lcd_segments(3, ["<Root>", "Mode:", "Scroll:", "Scale>"])
 
         # Line 4: Hint
-        self.push.set_lcd_line(4, "Press Scale again to exit".center(68))
+        self.push.set_lcd_segments(4, ["Scale btn", "to exit", "", ""])
 
     def _show_popup(self, text: str, duration: float = 1.5):
-        """Show a temporary popup message on LCD line 4."""
+        """Show a temporary popup message on LCD line 4 using segments."""
         self.lcd_popup_active = True
         self.lcd_popup_end_time = time.time() + duration
-        self.push.set_lcd_line(4, text.center(68))
+        # Display popup across first two segments for visibility
+        self.push.set_lcd_segments(4, [text, "", "", ""])
 
     # =========================================================================
     # MAIN EVENT LOOP

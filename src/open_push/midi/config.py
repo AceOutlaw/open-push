@@ -58,6 +58,7 @@ DEFAULT_CONFIG = {
         'root_note': 'blue',        # Root/octave notes
         'chromatic_note': 'gray',   # Out-of-scale notes in chromatic mode
         'off_note': 'off',          # Out-of-scale notes in in-key mode
+        'pressed': 'white',         # Color when pad is pressed
     },
 
     # Global controls (persist across modes)
