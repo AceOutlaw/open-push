@@ -40,6 +40,18 @@ from open_push.midi.push_hardware import (
 )
 from open_push.midi.config import MIDIConfig
 
+# Import Bluetooth module (optional - may not be available on all platforms)
+try:
+    from open_push.midi.outputs.bluetooth import (
+        BluetoothMIDIOutput,
+        get_bluetooth_status,
+        check_bluetooth_available,
+    )
+    BLUETOOTH_AVAILABLE = True
+except ImportError:
+    BLUETOOTH_AVAILABLE = False
+    BluetoothMIDIOutput = None
+
 # Import music modules
 from open_push.music.layout import IsomorphicLayout
 from open_push.music.scales import SCALE_NAMES, SCALE_DISPLAY_NAMES, get_scale_display_name
@@ -292,6 +304,13 @@ class MIDIBridge:
         # PAD COLORS (configurable via config)
         # =================================================================
         self.pad_colors = self.config.pad_colors
+
+        # =================================================================
+        # BLUETOOTH STATE
+        # =================================================================
+        self.bt_output: Optional[BluetoothMIDIOutput] = None
+        self.bt_enabled = False
+        self.bt_advertising = False
 
         # =================================================================
         # LCD POPUP STATE
@@ -1108,6 +1127,11 @@ class MIDIBridge:
                     color_key = key.replace('color_', '')
                     color_name = PAD_COLOR_NAMES[val] if 0 <= val < len(PAD_COLOR_NAMES) else 'white'
                     self.config.config.setdefault('pad_colors', {})[color_key] = color_name
+                # Bluetooth settings
+                elif key == 'bt_enabled':
+                    self._set_bluetooth_enabled(val)
+                elif key == 'bt_advertising':
+                    self._set_bluetooth_advertising(val)
 
         # Save config
         try:
@@ -1115,6 +1139,65 @@ class MIDIBridge:
             print("Settings saved")
         except Exception as e:
             print(f"Failed to save settings: {e}")
+
+    # =========================================================================
+    # BLUETOOTH CONTROL
+    # =========================================================================
+
+    def _set_bluetooth_enabled(self, enabled: bool):
+        """Enable or disable Bluetooth MIDI."""
+        if not BLUETOOTH_AVAILABLE:
+            print("Bluetooth not available on this platform")
+            self._show_popup("BT unavailable")
+            return
+
+        if enabled and not self.bt_enabled:
+            # Enable Bluetooth
+            try:
+                self.bt_output = BluetoothMIDIOutput(name="OpenPush MIDI")
+                if self.bt_output.start():
+                    self.bt_enabled = True
+                    print("Bluetooth MIDI enabled")
+                    self._show_popup("BT enabled")
+                else:
+                    print("Failed to start Bluetooth MIDI")
+                    self._show_popup("BT start fail")
+            except Exception as e:
+                print(f"Bluetooth error: {e}")
+                self._show_popup("BT error")
+
+        elif not enabled and self.bt_enabled:
+            # Disable Bluetooth
+            if self.bt_output:
+                self.bt_output.stop()
+                self.bt_output = None
+            self.bt_enabled = False
+            self.bt_advertising = False
+            print("Bluetooth MIDI disabled")
+            self._show_popup("BT disabled")
+
+    def _set_bluetooth_advertising(self, advertising: bool):
+        """Start or stop Bluetooth advertising (pairing mode)."""
+        if not BLUETOOTH_AVAILABLE or not self.bt_enabled:
+            if advertising:
+                self._show_popup("Enable BT first")
+            return
+
+        if advertising and not self.bt_advertising:
+            # Start advertising
+            if self.bt_output and hasattr(self.bt_output, 'start_advertising'):
+                self.bt_output.start_advertising()
+            self.bt_advertising = True
+            print("Bluetooth advertising started")
+            self._show_popup("Pairing mode")
+
+        elif not advertising and self.bt_advertising:
+            # Stop advertising
+            if self.bt_output and hasattr(self.bt_output, 'stop_advertising'):
+                self.bt_output.stop_advertising()
+            self.bt_advertising = False
+            print("Bluetooth advertising stopped")
+            self._show_popup("Pairing off")
 
     # =========================================================================
     # PAD HANDLING (Always active, independent of encoder bank)
