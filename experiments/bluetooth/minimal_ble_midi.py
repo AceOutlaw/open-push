@@ -126,8 +126,7 @@ class MidiChar(dbus.service.Object):
         if not self.notifying:
             return False
         # BLE-MIDI packet: [header, timestamp, ...midi]
-        packet = [0x80, 0x80] + list(midi_bytes)
-        value = dbus.Array(packet, signature='y')
+        value = dbus.Array(bytes([0x80, 0x80]) + midi_bytes, signature='y')
         self.PropertiesChanged('org.bluez.GattCharacteristic1', {'Value': value}, [])
         return False  # Return False to remove from idle queue
 
@@ -228,7 +227,7 @@ def midi_monitor_thread(char):
                     if midi_in:
                         try:
                             midi_in.close()
-                        except:
+                        except Exception:
                             pass
                         midi_in = None
                 time.sleep(1)  # Poll every second when no device
@@ -239,7 +238,7 @@ def midi_monitor_thread(char):
                 if midi_in:
                     try:
                         midi_in.close()
-                    except:
+                    except Exception:
                         pass
                 print(f"[MIDI] Connecting to: {available}")
                 midi_in = mido.open_input(available)
@@ -263,7 +262,7 @@ def midi_monitor_thread(char):
             if midi_in:
                 try:
                     midi_in.close()
-                except:
+                except Exception:
                     pass
                 midi_in = None
             time.sleep(1)  # Wait before retry

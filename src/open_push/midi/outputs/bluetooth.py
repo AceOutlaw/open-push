@@ -355,38 +355,5 @@ def check_ble_midi_setup():
     print()
 
 
-# Script to setup Bluetooth MIDI on the Pi
-SETUP_SCRIPT = """#!/bin/bash
-# Setup Bluetooth MIDI on Raspberry Pi
-
-echo "Setting up Bluetooth MIDI..."
-
-# Install dependencies
-sudo apt update
-sudo apt install -y bluez bluez-tools python3-dbus
-
-# Enable Bluetooth
-sudo systemctl enable bluetooth
-sudo systemctl start bluetooth
-
-# Make discoverable and pairable
-sudo bluetoothctl << EOF
-power on
-discoverable on
-pairable on
-agent on
-default-agent
-EOF
-
-# Install ble-midi-server (optional)
-pip3 install ble-midi-server
-
-echo "Bluetooth MIDI setup complete!"
-echo ""
-echo "To start BLE-MIDI server:"
-echo "  python3 -m ble_midi_server --name 'OpenPush MIDI'"
-"""
-
-
 if __name__ == "__main__":
     check_ble_midi_setup()

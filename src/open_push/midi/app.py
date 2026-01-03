@@ -992,22 +992,26 @@ class MIDIBridge:
         cat_names = [c['name'][:7] for c in self.settings_categories]
         # Pack categories: segments 0-1 get 2 each, segments 2-3 get 1 each
         segments = []
+        def get_category_label(cat_idx):
+            """Get category label, bracketed if selected."""
+            if cat_idx >= len(cat_names):
+                return ""
+            name = cat_names[cat_idx]
+            return f"[{name}]" if cat_idx == self.settings_category else name
+
         for seg_idx in range(4):
             if seg_idx < 2:
                 # First two segments: 2 categories each (indices 0-1, 2-3)
                 cat_idx1 = seg_idx * 2
                 cat_idx2 = seg_idx * 2 + 1
-                name1 = f"[{cat_names[cat_idx1]}]" if cat_idx1 == self.settings_category else cat_names[cat_idx1] if cat_idx1 < len(cat_names) else ""
-                name2 = f"[{cat_names[cat_idx2]}]" if cat_idx2 == self.settings_category else cat_names[cat_idx2] if cat_idx2 < len(cat_names) else ""
+                name1 = get_category_label(cat_idx1)
+                name2 = get_category_label(cat_idx2)
                 segments.append(f"{name1:^8}{name2:^9}")
             else:
                 # Last two segments: 1 category each (indices 4, 5)
                 cat_idx = seg_idx + 2
-                if cat_idx < len(cat_names):
-                    name = f"[{cat_names[cat_idx]}]" if cat_idx == self.settings_category else cat_names[cat_idx]
-                    segments.append(name)
-                else:
-                    segments.append("")
+                name = get_category_label(cat_idx)
+                segments.append(name)
         self.push.set_lcd_segments(3, segments)
 
         # Line 4: Instructions
@@ -1211,7 +1215,7 @@ class MIDIBridge:
         if midi_note < 0 or midi_note > 127:
             return
 
-        channel = self.config.keyboard_config.get('midi_channel', 0)
+        channel = self.config.midi_channel
 
         # Send note off
         self.output.send_note_off(midi_note, channel)
