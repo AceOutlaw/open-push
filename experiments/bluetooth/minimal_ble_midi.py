@@ -191,11 +191,22 @@ class Advert(dbus.service.Object):
 
 
 def find_midi_input():
-    """Find a USB MIDI input device."""
+    """Find a USB MIDI input device. Prefers 'MIDI In' over 'DAW In' ports."""
+    candidates = []
     for name in mido.get_input_names():
         if 'Through' not in name and 'RtMidi' not in name:
+            candidates.append(name)
+
+    if not candidates:
+        return None
+
+    # Prefer ports with "MIDI In" over "DAW In" (for Launchpad X, etc.)
+    for name in candidates:
+        if 'MIDI In' in name:
             return name
-    return None
+
+    # Fall back to first candidate
+    return candidates[0]
 
 
 def midi_monitor_thread(char):
