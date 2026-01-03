@@ -1773,9 +1773,8 @@ class SeqtrakBridge:
         print(f"  Launched Row {row + 1}: {', '.join(launched_tracks)}")
 
         # Start playback if not already playing
-        if not self.playing:
+        if not self.is_playing:
             self.protocol.start()
-
     # -------------------------------------------------------------------------
     # Mode Switching (matching Reason app pattern)
     # -------------------------------------------------------------------------
