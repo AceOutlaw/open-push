@@ -54,7 +54,6 @@ sync_files() {
         --exclude='*.pyc' \
         --exclude='.DS_Store' \
         --exclude='Content/' \
-        --exclude='raspberry-pi-setup/' \
         "$LOCAL_DIR/" "$PI_HOST:$PI_DIR/"
     echo -e "${GREEN}Files synced${NC}"
 }

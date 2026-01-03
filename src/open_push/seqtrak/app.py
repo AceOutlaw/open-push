@@ -427,7 +427,8 @@ BUTTONS = {
     # Navigation
     'up': 46, 'down': 47, 'left': 44, 'right': 45,
     'page_left': 63, 'page_right': 62,
-    'shift': 49, 'select': 48,
+    'shift': 49,
+    'select': 48,  # Also used as DELETE button (Push doesn't have dedicated DELETE)
 
     # 16 Buttons Below LCD
     'upper_1': 20, 'upper_2': 21, 'upper_3': 22, 'upper_4': 23,
@@ -455,6 +456,8 @@ class SeqtrakBridge:
         self.current_mode = 'welcome'  # welcome, note, track, device, mixer, scale
         self.previous_mode = 'track'   # Mode to return to after scale mode
         self.shift_held = False
+        self.delete_held = False  # SELECT button held (acts as DELETE)
+        self.track_select_overlay = False  # Track selection overlay active
 
         # Pad mode (derived from keyboard_track type)
         self.current_pad_mode = PadMode.MELODIC  # Default for SYNTH1
@@ -566,6 +569,18 @@ class SeqtrakBridge:
         self.layout = IsomorphicLayout()
         self.layout.set_scale(self.root_note, SCALE_NAMES[self.scale_index])
         self.layout.set_in_key_mode(self.in_key_mode)
+
+        # Settings menu state
+        self.settings_mode = False  # Whether in settings menu
+        self.selected_audio_direction = 'ipad_to_seqtrak'  # Which audio route is selected
+
+        # Import SubprocessManager for iPad audio routing
+        try:
+            from .helpers import SubprocessManager
+        except ImportError:
+            # Running as script, use absolute import
+            from open_push.seqtrak.helpers import SubprocessManager
+        self.subprocess_mgr = SubprocessManager()
 
         # Ports (set in run())
         self.push_in = None
@@ -896,6 +911,172 @@ class SeqtrakBridge:
         # Line 4: Empty (page navigation via CC 62/63 buttons)
         self.set_lcd_segments(4, "", "", "", "")
 
+    def _show_track_select_overlay(self):
+        """Display track selection overlay on LCD and light up track buttons."""
+        # Update LCD to show track selection prompt
+        self.set_lcd_segments(1, "SELECT TRACK", "", "", "")
+        self.set_lcd_segments(2, "KICK  SNAR CLAP", "HAT1  HAT2 PERC1", "PERC2 SYN1", "")
+        self.set_lcd_segments(3, "SYN2  DX   SMPL", "", "", "")
+        self.set_lcd_segments(4, "", "", "", "")
+
+        # Light up LCD buttons for tracks 1-11
+        # Upper row: Tracks 1-8
+        for i, cc in enumerate([20, 21, 22, 23, 24, 25, 26, 27]):
+            self.push_out.send(mido.Message('control_change', control=cc, value=1))
+
+        # Lower row: Tracks 9-11, rest off
+        for i, cc in enumerate([102, 103, 104, 105, 106, 107, 108, 109]):
+            if i < 3:  # SYNTH2, DX, SAMPLER
+                self.push_out.send(mido.Message('control_change', control=cc, value=1))
+            else:
+                self.push_out.send(mido.Message('control_change', control=cc, value=0))
+
+    def _handle_track_select_button(self, cc):
+        """Handle LCD button press for direct track selection.
+
+        Returns True if the button was handled, False otherwise.
+        """
+        # Map LCD button CCs to track numbers
+        track_map = {
+            20: 1,   # KICK
+            21: 2,   # SNARE
+            22: 3,   # CLAP
+            23: 4,   # HAT1
+            24: 5,   # HAT2
+            25: 6,   # PERC1
+            26: 7,   # PERC2
+            27: 8,   # SYNTH1
+            102: 9,  # SYNTH2
+            103: 10, # DX
+            104: 11, # SAMPLER
+        }
+
+        if cc in track_map:
+            track = track_map[cc]
+            self.keyboard_track = track
+            self.protocol.select_track(track)
+            self._update_pad_mode()
+            track_name = Track.NAMES.get(track, f"T{track}")
+            print(f"  → Selected track {track}: {track_name}")
+
+            # Exit overlay after selection
+            self.track_select_overlay = False
+            self.update_display()
+            return True
+
+        return False
+
+    def _show_delete_menu(self):
+        """Display delete menu when DELETE button is held."""
+        track_name = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
+        variation = self.track_variation.get(self.keyboard_track, 1)
+
+        # Line 1: DELETE menu title
+        self.set_lcd_segments(1, "DELETE MENU", "", "", f"{track_name} V{variation}")
+
+        # Line 2: Delete options
+        self.set_lcd_segments(2, "[1] Current Var", "[2] All Vars (T)", "[3] All (Song)", "")
+
+        # Line 3: Description
+        self.set_lcd_segments(3, f"Delete V{variation}", f"Delete all 6", "Clear song", "")
+
+        # Line 4: Warning
+        self.set_lcd_segments(4, "Press LCD button", "to confirm", "", "")
+
+        # Light up option buttons
+        for cc in [20, 21, 22]:  # Buttons 1-3
+            self.push_out.send(mido.Message('control_change', control=cc, value=1))
+        # Turn off remaining buttons
+        for cc in list(range(23, 28)) + list(range(102, 110)):
+            self.push_out.send(mido.Message('control_change', control=cc, value=0))
+
+    def _handle_delete_button(self, cc):
+        """Handle delete menu button presses.
+
+        Returns True if button was handled, False otherwise.
+        """
+        if cc == 20:  # Button 1: Delete current variation
+            self._delete_current_variation()
+            return True
+        elif cc == 21:  # Button 2: Delete all variations for current track
+            self._delete_all_variations_track()
+            return True
+        elif cc == 22:  # Button 3: Delete all variations for all tracks
+            self._delete_all_variations_song()
+            return True
+
+        return False
+
+    def _delete_current_variation(self):
+        """Level 1: Delete current variation for selected track."""
+        track = self.keyboard_track
+        variation = self.track_variation.get(track, 1)
+
+        print(f"  Deleting Track {track} Variation {variation}...")
+
+        # Select the variation first
+        self.protocol.select_track_variation(track, variation)
+
+        # Delete all steps/ticks in this variation
+        self._clear_variation_data(track, variation)
+
+        print(f"  ✓ Deleted T{track} V{variation}")
+        self.delete_held = False  # Release delete mode
+        self.update_display()
+
+    def _delete_all_variations_track(self):
+        """Level 2: Delete all 6 variations for current track."""
+        track = self.keyboard_track
+        track_name = Track.NAMES.get(track, f"T{track}")
+
+        print(f"  Deleting all variations for Track {track} ({track_name})...")
+
+        for variation in range(1, 7):  # Variations 1-6
+            self.protocol.select_track_variation(track, variation)
+            self._clear_variation_data(track, variation)
+            print(f"    Cleared V{variation}")
+
+        print(f"  ✓ Cleared all variations for {track_name}")
+        self.delete_held = False
+        self.update_display()
+
+    def _delete_all_variations_song(self):
+        """Level 3: Delete all variations for all tracks (clear song)."""
+        print("  Deleting all variations for all tracks...")
+
+        for track in range(1, 12):  # Tracks 1-11
+            track_name = Track.NAMES.get(track, f"T{track}")
+            print(f"    Clearing {track_name}...")
+
+            for variation in range(1, 7):  # Variations 1-6
+                self.protocol.select_track_variation(track, variation)
+                self._clear_variation_data(track, variation)
+
+        print("  ✓ Song cleared (all variations deleted)")
+        self.delete_held = False
+        self.update_display()
+
+    def _clear_variation_data(self, track, variation):
+        """Clear all note data for a specific track variation.
+
+        Sends delete commands for all steps/ticks based on track type.
+        Assumes max pattern length for safety.
+        """
+        if track <= 7:  # Drum tracks (1-7)
+            # Delete all 64 possible steps
+            for step in range(64):
+                self.protocol.send_drum_delete(track, step)
+
+        elif track == 11:  # Sampler track
+            # Delete all 256 possible ticks (64 steps × 4 ticks/step)
+            for tick in range(256):
+                self.protocol.send_sampler_delete(tick)
+
+        else:  # Melodic tracks (8-10: SYNTH1, SYNTH2, DX)
+            # Delete all 256 possible ticks
+            for tick in range(256):
+                self.protocol.send_melodic_delete(track, tick)
+
     def _update_mixer_display(self):
         """Update LCD for mixer mode with track volumes.
 
@@ -1038,6 +1219,74 @@ class SeqtrakBridge:
         self.set_lcd_line_raw(2, scale_texts[1].ljust(17) + " " * 51)
         self.set_lcd_line_raw(3, build_line(scale_texts[2], upper_seg1, upper_seg2, f"{in_key_mark}In Key"))
         self.set_lcd_line_raw(4, build_line(scale_texts[3], lower_seg1, lower_seg2, f"{chromat_mark}Chromat"))
+
+    def _display_settings_menu(self):
+        """Display settings menu - iPad Audio controls."""
+        # Get status
+        i2s_running = self.subprocess_mgr.is_running('ipad_to_seqtrak')
+        s2i_running = self.subprocess_mgr.is_running('seqtrak_to_ipad')
+        i2s_status = self.subprocess_mgr.get_status('ipad_to_seqtrak')
+        s2i_status = self.subprocess_mgr.get_status('seqtrak_to_ipad')
+
+        # Build indicators with selection marker
+        i2s_sel = ">" if self.selected_audio_direction == 'ipad_to_seqtrak' else " "
+        s2i_sel = ">" if self.selected_audio_direction == 'seqtrak_to_ipad' else " "
+
+        i2s_ind = "*" if i2s_running else "o"
+        s2i_ind = "*" if s2i_running else "o"
+
+        # Line 1: Title and column headers
+        self.set_lcd_segments(1, "Settings", "iPad>Seqtrak", "Seqtrak>iPad", "")
+
+        # Line 2: Audio routing status with selection
+        self.set_lcd_segments(2, "Audio Route", f"{i2s_sel}{i2s_ind} ON" if i2s_running else f"{i2s_sel}{i2s_ind} OFF",
+                                                f"{s2i_sel}{s2i_ind} ON" if s2i_running else f"{s2i_sel}{s2i_ind} OFF", "")
+
+        # Line 3: Status details
+        self.set_lcd_segments(3, "", i2s_status, s2i_status, "")
+
+        # Line 4: Help text
+        self.set_lcd_segments(4, "Enc1:Select", "Press:Toggle", "", "User:Exit")
+
+    def _handle_settings_encoder(self, cc, value):
+        """Handle encoder input in settings mode."""
+        print(f"[Settings] Encoder CC {cc}, value {value}")
+
+        # Encoder 1 turn (CC 71) - Select audio direction
+        if cc == 71:
+            if value < 64:  # Clockwise
+                self.selected_audio_direction = 'seqtrak_to_ipad'
+                print(f"  Selected: Seqtrak>iPad")
+            else:  # Counter-clockwise
+                self.selected_audio_direction = 'ipad_to_seqtrak'
+                print(f"  Selected: iPad>Seqtrak")
+            self._display_settings_menu()
+
+        # Encoder 1 press (CC 20) - Toggle selected direction
+        elif cc == 20:
+            print(f"  Encoder press detected")
+            if self.subprocess_mgr.is_running(self.selected_audio_direction):
+                success, msg = self.subprocess_mgr.stop(self.selected_audio_direction)
+                print(f"  Stopped {self.selected_audio_direction}: {msg}")
+            else:
+                success, msg = self.subprocess_mgr.start_alsaloop(self.selected_audio_direction)
+                print(f"  Started {self.selected_audio_direction}: {msg}")
+            self._display_settings_menu()
+
+    def _handle_settings_button(self, cc, value):
+        """Handle button input in settings mode."""
+        print(f"[Settings] Button CC {cc}, value {value}")
+
+        # Encoder 1 press (CC 20) - Toggle selected direction
+        if cc == 20:
+            print(f"  Encoder press detected (button handler)")
+            if self.subprocess_mgr.is_running(self.selected_audio_direction):
+                success, msg = self.subprocess_mgr.stop(self.selected_audio_direction)
+                print(f"  Stopped {self.selected_audio_direction}: {msg}")
+            else:
+                success, msg = self.subprocess_mgr.start_alsaloop(self.selected_audio_direction)
+                print(f"  Started {self.selected_audio_direction}: {msg}")
+            self._display_settings_menu()
 
     def update_transport_leds(self):
         """Update Play/Stop button LEDs."""
@@ -1523,6 +1772,10 @@ class SeqtrakBridge:
 
         print(f"  Launched Row {row + 1}: {', '.join(launched_tracks)}")
 
+        # Start playback if not already playing
+        if not self.playing:
+            self.protocol.start()
+
     # -------------------------------------------------------------------------
     # Mode Switching (matching Reason app pattern)
     # -------------------------------------------------------------------------
@@ -1592,11 +1845,63 @@ class SeqtrakBridge:
         """Handle button press/release."""
         # Track shift state
         if cc == BUTTONS['shift']:
+            was_held = self.shift_held
             self.shift_held = (value > 0)
+            # Exit track selection overlay when shift is released
+            if was_held and not self.shift_held and self.track_select_overlay:
+                self.track_select_overlay = False
+                self.update_display()
+                print("← Exited track selection overlay")
             return
+
+        # Track DELETE button state (SELECT button acts as DELETE)
+        if cc == BUTTONS['select']:
+            self.delete_held = (value > 0)
+            if self.delete_held:
+                self._show_delete_menu()
+            else:
+                self.update_display()  # Restore normal display
+            return
+
+        # Shift + Track = Enter track selection overlay
+        if cc == BUTTONS['track'] and value > 0 and self.shift_held:
+            self.track_select_overlay = True
+            self._show_track_select_overlay()
+            print("→ Entered track selection overlay")
+            return
+
+        # Handle track selection via LCD buttons when overlay is active
+        if self.track_select_overlay and value > 0:
+            if self._handle_track_select_button(cc):
+                return  # Button was handled by track select
+
+        # Handle delete menu options when DELETE is held
+        if self.delete_held and value > 0:
+            if self._handle_delete_button(cc):
+                return  # Button was handled by delete menu
 
         # Only process button presses, not releases
         if value == 0:
+            return
+
+        # Shift + User (CC 59) = Enter/exit settings menu
+        if cc == 59:  # User button
+            if self.shift_held and not self.settings_mode:
+                # Enter settings mode
+                self.settings_mode = True
+                self._display_settings_menu()
+                print("→ Entered settings menu")
+                return
+            elif self.settings_mode:
+                # Exit settings mode
+                self.settings_mode = False
+                self.update_display()
+                print("← Exited settings menu")
+                return
+
+        # If in settings mode, handle settings-specific input
+        if self.settings_mode:
+            self._handle_settings_button(cc, value)
             return
 
         # Scale mode buttons
@@ -1919,6 +2224,11 @@ class SeqtrakBridge:
 
     def handle_encoder(self, cc, value):
         """Handle encoder turn."""
+        # If in settings mode, handle settings-specific encoder input
+        if self.settings_mode:
+            self._handle_settings_encoder(cc, value)
+            return
+
         # Relative encoder: 1-63 = clockwise, 65-127 = counter-clockwise
         if value < 64:
             delta = 1  # Clockwise

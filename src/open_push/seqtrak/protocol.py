@@ -648,6 +648,59 @@ class SeqtrakProtocol:
         msg = mido.Message('note_off', channel=channel - 1, note=note, velocity=0)
         self.port.send(msg)
 
+    def send_drum_delete(self, track, step):
+        """Delete a drum step.
+
+        SysEx: F0 43 10 7F 1C 0C 70 [0x20+track-1] 00 [step] F7
+
+        Args:
+            track: Drum track number (1-7)
+            step: Step number (0-63)
+        """
+        if not 1 <= track <= 7:
+            return
+        if not 0 <= step <= 63:
+            return
+
+        address = [0x70, 0x20 + track - 1, 0x00]
+        data = [step]
+        self._send_sysex(address, data)
+
+    def send_melodic_delete(self, track, tick):
+        """Delete a melodic note tick.
+
+        SysEx: F0 43 10 7F 1C 0C 74 [sub+0x20] 00 [tick_hi] [tick_lo] F7
+
+        Args:
+            track: Melodic track number (8-10: SYNTH1, SYNTH2, DX)
+            tick: Tick position (0-1023+)
+        """
+        if not 8 <= track <= 10:
+            return
+
+        sub = track - 8  # SYNTH1=0, SYNTH2=1, DX=2
+        tick_hi = (tick >> 7) & 0x7F
+        tick_lo = tick & 0x7F
+
+        address = [0x74, 0x20 + sub, 0x00]
+        data = [tick_hi, tick_lo]
+        self._send_sysex(address, data)
+
+    def send_sampler_delete(self, tick):
+        """Delete a sampler tick.
+
+        SysEx: F0 43 10 7F 1C 0C 72 50 00 [tick_hi] [tick_lo] F7
+
+        Args:
+            tick: Tick position (0-1023+)
+        """
+        tick_hi = (tick >> 7) & 0x7F
+        tick_lo = tick & 0x7F
+
+        address = [0x72, 0x50, 0x00]
+        data = [tick_hi, tick_lo]
+        self._send_sysex(address, data)
+
 
 # =============================================================================
 # UTILITY FUNCTIONS

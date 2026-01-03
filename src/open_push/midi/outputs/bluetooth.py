@@ -47,12 +47,37 @@ BLE_MIDI_CHAR_UUID = "7772E5DB-3868-4112-A1A9-F2669D106BF3"
 
 def check_bluetooth_available() -> bool:
     """Check if Bluetooth is available and enabled."""
+    # First check if ble-midi service or ble_gatt.py is running
+    try:
+        result = subprocess.run(
+            ['pgrep', '-f', 'ble_gatt.py'],
+            capture_output=True,
+            timeout=2
+        )
+        if result.returncode == 0:
+            return True  # BLE MIDI service is running, BT is available
+    except Exception:
+        pass
+
+    # Fall back to checking via hciconfig (more reliable than bluetoothctl)
+    try:
+        result = subprocess.run(
+            ['hciconfig', 'hci0'],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        return 'UP RUNNING' in result.stdout
+    except Exception:
+        pass
+
+    # Last resort: try bluetoothctl with short timeout
     try:
         result = subprocess.run(
             ['bluetoothctl', 'show'],
             capture_output=True,
             text=True,
-            timeout=5
+            timeout=2
         )
         return 'Powered: yes' in result.stdout
     except Exception:
@@ -78,12 +103,65 @@ def get_bluetooth_status() -> dict:
         'name': 'Unknown'
     }
 
+    # First check if ble-midi service is running - if so, BT is available
+    try:
+        result = subprocess.run(
+            ['pgrep', '-f', 'ble_gatt.py'],
+            capture_output=True,
+            timeout=2
+        )
+        if result.returncode == 0:
+            status['available'] = True
+            status['powered'] = True
+            status['discoverable'] = True
+            status['pairable'] = True
+            status['name'] = 'OpenPush MIDI (BLE)'
+            return status
+    except Exception:
+        pass
+
+    # Check via hciconfig (more reliable than bluetoothctl when btmidi runs)
+    try:
+        result = subprocess.run(
+            ['hciconfig', 'hci0'],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        if 'UP RUNNING' in result.stdout:
+            status['available'] = True
+            status['powered'] = True
+            if 'PSCAN' in result.stdout:
+                status['discoverable'] = True
+            if 'ISCAN' in result.stdout:
+                status['pairable'] = True
+            # Try to get name from btmgmt
+            try:
+                name_result = subprocess.run(
+                    ['btmgmt', 'info'],
+                    capture_output=True,
+                    text=True,
+                    timeout=2
+                )
+                for line in name_result.stdout.split('\n'):
+                    if 'name' in line.lower() and 'short' not in line.lower():
+                        parts = line.split()
+                        if len(parts) >= 2:
+                            status['name'] = ' '.join(parts[1:])
+                            break
+            except Exception:
+                pass
+            return status
+    except Exception:
+        pass
+
+    # Fall back to bluetoothctl with short timeout
     try:
         result = subprocess.run(
             ['bluetoothctl', 'show'],
             capture_output=True,
             text=True,
-            timeout=5
+            timeout=2
         )
 
         for line in result.stdout.split('\n'):
@@ -105,141 +183,75 @@ def get_bluetooth_status() -> dict:
 
 class BluetoothMIDIOutput:
     """
-    Bluetooth MIDI output using BLE-MIDI protocol.
+    Bluetooth MIDI output wrapper.
 
-    This class provides a high-level interface for sending MIDI over
-    Bluetooth LE. It can use different backends:
-
-    1. ble-midi-server (Python package) - Recommended
-    2. bluez-alsa with MIDI bridging
-    3. Custom GATT server (most complex)
-
-    Usage:
-        bt_midi = BluetoothMIDIOutput(name="OpenPush MIDI")
-        if bt_midi.start():
-            bt_midi.send_note_on(60, 100, 0)
-            bt_midi.send_note_off(60, 0)
-            bt_midi.stop()
+    This class connects to the 'OpenPush BLE' virtual port created by the
+    systemd service (ble-midi.service running ble_gatt.py).
+    It does NOT manage the Bluetooth adapter or spawn servers itself.
     """
 
     def __init__(self, name: str = "OpenPush MIDI"):
-        """
-        Initialize Bluetooth MIDI output.
-
-        Args:
-            name: Bluetooth device name shown to clients
-        """
         self.name = name
         self._running = False
         self._connected = False
-        self._server_process = None
         self._midi_port = None
-        self._virtual_port_name = "OpenPush-BT"
-
-        # Callbacks
-        self.on_connect: Optional[Callable] = None
-        self.on_disconnect: Optional[Callable] = None
-
-    @property
-    def connected(self) -> bool:
-        """Check if a client is connected."""
-        return self._connected
-
-    @property
-    def running(self) -> bool:
-        """Check if the BLE-MIDI server is running."""
-        return self._running
+        self._virtual_port_name = "OpenPush BLE" # Must match ble_gatt.py
 
     def start(self, use_virtual_port: bool = True) -> bool:
-        """
-        Start the Bluetooth MIDI server.
-
-        Args:
-            use_virtual_port: If True, create a virtual MIDI port that can
-                            be bridged to Bluetooth via external tools
-
-        Returns:
-            True if started successfully
-        """
+        """Connect to the BLE service's virtual port."""
         if self._running:
             return True
 
-        # Check Bluetooth status
-        status = get_bluetooth_status()
-        if not status['available']:
-            print("Bluetooth not available")
-            return False
-
-        if not status['powered']:
-            print("Enabling Bluetooth...")
-            if not enable_bluetooth():
-                print("Failed to enable Bluetooth")
+        print(f"Connecting to BLE service port: {self._virtual_port_name}...")
+        
+        # We don't spawn servers anymore. We just look for the port.
+        try:
+            # Check if port exists
+            outputs = mido.get_output_names()
+            port_name = None
+            for name in outputs:
+                if self._virtual_port_name in name:
+                    port_name = name
+                    break
+            
+            if not port_name:
+                print(f"Waiting for {self._virtual_port_name}...")
+                # It might not be created yet if service is starting
                 return False
 
-        if use_virtual_port:
-            return self._start_virtual_port()
-        else:
-            return self._start_ble_server()
-
-    def _start_virtual_port(self) -> bool:
-        """
-        Start with a virtual MIDI port approach.
-
-        This creates a virtual MIDI port that can be bridged to Bluetooth
-        using tools like bluez-alsa or a separate BLE-MIDI server.
-        """
-        try:
-            # Create virtual MIDI port using mido
-            self._midi_port = mido.open_output(
-                self._virtual_port_name,
-                virtual=True
-            )
+            self._midi_port = mido.open_output(port_name)
             self._running = True
-            print(f"Virtual MIDI port created: {self._virtual_port_name}")
-            print("Use bluez-alsa or ble-midi-server to bridge to Bluetooth")
+            print(f"Connected to {port_name}")
             return True
-        except Exception as e:
-            print(f"Error creating virtual port: {e}")
-            return False
 
-    def _start_ble_server(self) -> bool:
-        """
-        Start the BLE-MIDI GATT server.
-
-        This requires the ble-midi-server package or custom implementation.
-        """
-        try:
-            # Try ble-midi-server first
-            self._server_process = subprocess.Popen(
-                ['python3', '-m', 'ble_midi_server', '--name', self.name],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-            self._running = True
-            print(f"BLE-MIDI server started as '{self.name}'")
-            return True
-        except FileNotFoundError:
-            print("ble-midi-server not found")
-            print("Install with: pip3 install ble-midi-server")
-            print("Falling back to virtual port mode")
-            return self._start_virtual_port()
         except Exception as e:
-            print(f"Error starting BLE server: {e}")
+            print(f"Error connecting to BLE port: {e}")
             return False
 
     def stop(self):
-        """Stop the Bluetooth MIDI server."""
+        """Close connection to virtual port."""
         self._running = False
-
-        if self._server_process:
-            self._server_process.terminate()
-            self._server_process = None
-
         if self._midi_port:
             self._midi_port.close()
             self._midi_port = None
+        print("Bluetooth output closed")
 
-        print("Bluetooth MIDI stopped")
+    def _start_virtual_port(self) -> bool:
+        # Legacy method kept for interface compatibility, maps to start()
+        return self.start()
+
+    def _start_ble_server(self) -> bool:
+        # Legacy method kept for interface compatibility, maps to start()
+        return self.start()
+
+    def start_advertising(self):
+        # The system service handles advertising.
+        # We could potentially signal it via DBus if we wanted dynamic control,
+        # but for now we assume it's always advertising/available.
+        print("BLE Advertising is managed by system service")
+
+    def stop_advertising(self):
+        print("BLE Advertising is managed by system service")
 
     def send(self, msg: mido.Message):
         """Send a MIDI message."""
