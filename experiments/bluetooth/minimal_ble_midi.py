@@ -198,6 +198,66 @@ def find_midi_input():
     return None
 
 
+def midi_monitor_thread(char):
+    """Monitor for MIDI devices and forward messages. Auto-reconnects on unplug."""
+    import time
+    current_device = None
+    midi_in = None
+
+    while True:
+        try:
+            # Check for available MIDI input
+            available = find_midi_input()
+
+            # If no device and we had one, it was unplugged
+            if available is None:
+                if current_device:
+                    print(f"[MIDI] {current_device} disconnected")
+                    current_device = None
+                    if midi_in:
+                        try:
+                            midi_in.close()
+                        except:
+                            pass
+                        midi_in = None
+                time.sleep(1)  # Poll every second when no device
+                continue
+
+            # If device changed, switch to new one
+            if available != current_device:
+                if midi_in:
+                    try:
+                        midi_in.close()
+                    except:
+                        pass
+                print(f"[MIDI] Connecting to: {available}")
+                midi_in = mido.open_input(available)
+                current_device = available
+                print(f"[MIDI] Ready: {current_device}")
+
+            # Read MIDI messages (non-blocking with timeout)
+            for msg in midi_in.iter_pending():
+                midi_bytes = msg.bytes()
+                if char.notifying:
+                    GLib.timeout_add(0, char.send_midi, midi_bytes)
+                    print(f"[TX] {msg}")
+                else:
+                    print(f"[--] {msg} (no client)")
+
+            time.sleep(0.001)  # Small delay to prevent CPU spin
+
+        except Exception as e:
+            print(f"[MIDI] Error: {e}")
+            current_device = None
+            if midi_in:
+                try:
+                    midi_in.close()
+                except:
+                    pass
+                midi_in = None
+            time.sleep(1)  # Wait before retry
+
+
 def main():
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
     bus = dbus.SystemBus()
@@ -237,28 +297,10 @@ def main():
         reply_handler=lambda: print("[OK] Advertising as 'PiBLE'"),
         error_handler=lambda e: print(f"[ERR] Ad: {e}"))
 
-    # Find and open MIDI input
-    midi_name = find_midi_input()
-    if midi_name:
-        print(f"[OK] MIDI input: {midi_name}")
-
-        def midi_thread():
-            with mido.open_input(midi_name) as midi_in:
-                print("[OK] Listening for MIDI...")
-                for msg in midi_in:
-                    # Pass through raw - no channel remapping
-                    midi_bytes = msg.bytes()
-                    if char.notifying:
-                        # Use timeout_add with 0ms instead of idle_add to avoid queue buildup
-                        GLib.timeout_add(0, char.send_midi, midi_bytes)
-                        print(f"[TX] {msg}")
-                    else:
-                        print(f"[--] {msg} (no client)")
-
-        t = threading.Thread(target=midi_thread, daemon=True)
-        t.start()
-    else:
-        print("[!!] No MIDI input found")
+    # Start MIDI monitor thread (auto-detects and reconnects devices)
+    t = threading.Thread(target=midi_monitor_thread, args=(char,), daemon=True)
+    t.start()
+    print("[OK] MIDI monitor started (auto-detects controllers)")
 
     print("\nReady! Connect from iOS.")
     GLib.MainLoop().run()
