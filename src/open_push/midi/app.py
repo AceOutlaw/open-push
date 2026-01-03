@@ -1178,7 +1178,7 @@ class MIDIBridge:
             out_velocity = max(1, min(127, out_velocity))
 
         # Get output channel from config
-        channel = self.config.keyboard_config.get('midi_channel', 0)
+        channel = self.config.midi_channel
 
         # Send note on
         self.output.send_note_on(midi_note, out_velocity, channel)
