@@ -492,6 +492,7 @@ class SeqtrakBridge:
         # Selected track for keyboard input (default SYNTH 1)
         self.keyboard_track = Track.SYNTH1
         self.patch_name = ""  # Patch name (updated from Seqtrak feedback)
+        self.track_preset_names = {}  # {track: name} read from Seqtrak (01 1p 35)
 
         # Active notes for proper note-off
         self.active_notes = {}  # {pad_note: midi_note}
@@ -656,6 +657,21 @@ class SeqtrakBridge:
                     print(f"  Preset: {self.patch_name}")
                     self.update_display()
 
+    @staticmethod
+    def _decode_preset_name(sysex_data):
+        """Decode a preset name from Yamaha 7-bit packed data.
+
+        Data comes in 8-byte groups: one byte of high bits, then 7 data bytes,
+        e.g. 00 'TS_RNB_' 00 'kick_rn' 00 'b' -> "TS_RNB_kick_rnb".
+        """
+        raw = bytearray()
+        for i in range(0, len(sysex_data), 8):
+            high_bits = sysex_data[i]
+            for j, b in enumerate(sysex_data[i + 1:i + 8]):
+                raw.append(b | (0x80 if high_bits & (0x40 >> j) else 0))
+        name = raw.split(b'\x00', 1)[0]
+        return name.decode('ascii', errors='ignore').strip()
+
     def handle_seqtrak_sysex(self, data):
         """Parse and handle SysEx from Seqtrak."""
         # Expected format: 43 10 7F 1C 0C [addr_h] [addr_m] [addr_l] [data...]
@@ -673,10 +689,6 @@ class SeqtrakBridge:
         # Extract address (bytes 5-7) and data (byte 8+)
         addr = list(data[5:8])
         sysex_data = list(data[8:])
-
-        # Debug: show address for preset-related messages
-        if addr == Address.PRESET_NAME:
-            print(f"  [SysEx] Got PRESET_NAME response, {len(sysex_data)} bytes")
 
         # Play State
         if addr == Address.PLAY_STATE and sysex_data:
@@ -699,18 +711,15 @@ class SeqtrakBridge:
             self.update_display()
             print(f"Seqtrak: SAMPLE RECORD {'ON' if self.is_sample_recording else 'OFF'}")
 
-        # Preset Name
-        elif addr == Address.PRESET_NAME and sysex_data:
-            # Extract ASCII name from data
-            name_bytes = []
-            for b in sysex_data:
-                if b == 0x00:
-                    break
-                if 0x20 <= b <= 0x7E:
-                    name_bytes.append(b)
-            self.patch_name = bytes(name_bytes).decode('ascii', errors='ignore').strip()
-            self.update_display()
-            print(f"Seqtrak: Preset '{self.patch_name}'")
+        # Preset Name (per track: 01 1[track-1] 35)
+        elif addr[0] == 0x01 and addr[2] == 0x35 and 0x10 <= addr[1] <= 0x1A and sysex_data:
+            track = addr[1] - 0x10 + 1
+            name = self._decode_preset_name(sysex_data)
+            self.track_preset_names[track] = name
+            if track == self.keyboard_track:
+                self.patch_name = name
+                self.update_display()
+            print(f"Seqtrak: {Track.NAMES.get(track, f'Track {track}')} preset '{name}'")
 
         # Tempo
         elif addr == Address.TEMPO and len(sysex_data) >= 2:
@@ -954,7 +963,10 @@ class SeqtrakBridge:
         if cc in track_map:
             track = track_map[cc]
             self.keyboard_track = track
+            self.patch_name = (self.track_preset_names.get(track)
+                               or self._get_track_preset_display(track))
             self.protocol.select_track(track)
+            self.protocol.request_preset_name(track)
             self._update_pad_mode()
             track_name = Track.NAMES.get(track, f"T{track}")
             print(f"  → Selected track {track}: {track_name}")
@@ -3515,6 +3527,7 @@ class SeqtrakBridge:
         self.track_bank_lsb[track] = new_lsb
         self.track_program[track] = new_prog
         self.patch_name = get_preset_name_short(track, bank_msb, new_lsb, new_prog)
+        self.track_preset_names[track] = self.patch_name  # keep cache in step with the change
         self.update_display()
         print(f"  Patch: {self.patch_name}")
 
@@ -3566,12 +3579,13 @@ class SeqtrakBridge:
         else:
             self.keyboard_track = 11  # Wrap to last track
 
-        # Get stored preset info for this track
-        self.patch_name = self._get_track_preset_display(self.keyboard_track)
+        # Show cached name immediately (from Seqtrak, else bank/program lookup)
+        self.patch_name = (self.track_preset_names.get(self.keyboard_track)
+                           or self._get_track_preset_display(self.keyboard_track))
 
-        # Inform Seqtrak of track selection and request current preset
+        # Inform Seqtrak of track selection and request this track's preset name
         self.protocol.select_track(self.keyboard_track)
-        self.protocol.request_parameter(Address.PRESET_NAME)
+        self.protocol.request_preset_name(self.keyboard_track)
 
         track_name = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
         print(f"<< Track: {track_name}")
@@ -3586,12 +3600,13 @@ class SeqtrakBridge:
         else:
             self.keyboard_track = 1  # Wrap to first track
 
-        # Get stored preset info for this track
-        self.patch_name = self._get_track_preset_display(self.keyboard_track)
+        # Show cached name immediately (from Seqtrak, else bank/program lookup)
+        self.patch_name = (self.track_preset_names.get(self.keyboard_track)
+                           or self._get_track_preset_display(self.keyboard_track))
 
-        # Inform Seqtrak of track selection and request current preset
+        # Inform Seqtrak of track selection and request this track's preset name
         self.protocol.select_track(self.keyboard_track)
-        self.protocol.request_parameter(Address.PRESET_NAME)
+        self.protocol.request_preset_name(self.keyboard_track)
 
         track_name = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
         print(f"Track: {track_name} >>")
@@ -3707,8 +3722,9 @@ class SeqtrakBridge:
             self.patch_name = self._get_track_preset_display(self.keyboard_track)
             self.update_display()
 
-            # Request current state from Seqtrak
-            self.protocol.request_parameter(Address.PRESET_NAME)
+            # Request current state from Seqtrak (preset names for all tracks)
+            for track in range(1, 12):
+                self.protocol.request_preset_name(track)
             self.protocol.request_parameter(Address.TEMPO)
 
             # Main loop - poll both Push and Seqtrak inputs

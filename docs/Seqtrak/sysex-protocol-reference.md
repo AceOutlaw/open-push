@@ -761,6 +761,13 @@ Use SysEx for parameters not available via standard MIDI CC.
 
 ---
 
+> **Read first (2026-10-11):** Yamaha's Data List "MIDI Data Table" (`reference files/Yamaha/Seqtrak
+> Data List V2/md/32–36-*.md`) is the **official** map for every parameter address (`00`, `30`, `31`,
+> `41`, `42`, `48`, `49`, `50` blocks). Several speculative labels below have been corrected against
+> it. The `01 1x xx` UI/feedback range and `70/72/74` step data are **not** in Yamaha's docs — those
+> remain reverse-engineered. Coverage tracking, capture findings and open questions:
+> **`FUNCTIONALITY-MAP.md`**.
+
 ## General SysEx Format
 
 ```
@@ -792,7 +799,10 @@ F0 43 10 7F 1C 0C [addr_h] [addr_m] [addr_l] [data...] F7
 ### Master Volume
 | Address | Data | Notes |
 |---------|------|-------|
-| `00 00 00` | 00-7F | 0-127, global output level |
+| `00 00 00` | 00-7F | **Speaker Master Volume** (official), default 64. Sent by the volume buttons, preceded by `01 10 2E 09` (volume display mode) |
+| `00 00 01` | 00-7F | **Headphone Master Volume** (official), default 32 |
+
+Step size per button press not yet confirmed (only 0–2 observed).
 
 ### Tempo (BPM)
 | Address | Data | Notes |
@@ -809,12 +819,17 @@ F0 43 10 7F 1C 0C [addr_h] [addr_m] [addr_l] [data...] F7
 |---------|------|-------|
 | `30 40 7C` | [MSB] [LSB] | 2 bytes, swing amount |
 
-### Loop Enable
+### Pattern Select Mode
 | Address | Data | Notes |
 |---------|------|-------|
-| `30 40 79` | 00/01 | 0=Off, 1=On (captured in live session) |
+| `30 40 79` | 00/01 | **Pattern Select Mode**: 0 = normal, 1 = advanced (official name; previously mislabeled "Loop Enable") |
 
 ### Scale Type (Global)
+
+Official name: **Scale** = scale *slot* 1–8. Each slot's notes are user-definable at `30 4D xx`
+(8 slots × 7 notes, MIDI note values, sent on project load). The names below may only be the
+default slot contents — verify.
+
 | Address | Data | Scale |
 |---------|------|-------|
 | `30 40 7E` | 00 | Chromatic |
@@ -885,9 +900,23 @@ Selects the active variation for a specific track. Each track can have an indepe
 | DX | `30 59 0F` | 00-05 | Variation 1-6 |
 | SAMPLER | `30 5A 0F` | 00-05 | Variation 1-6 |
 
+**Hardware behavior (captured 2026-10-11):**
+- **Global variation change** (all tracks): Seqtrak sends `30 5p 0F vv` for all 11 tracks, then `01 10 2A vv`.
+- **Per-track change**: `01 10 27 tt` (track select), then only that track's `30 5t 0F vv` — no `01 10 2A`.
+- The bridge's `select_track_variation()` / `select_all_variations()` send exactly this. The bridge does
+  **not yet listen** for these messages, so Seqtrak-side changes don't update the Push.
+
 **Note**: Mute/Solo uses documented MIDI CC, not SysEx. See official Seqtrak MIDI spec:
 - CC 23 = Mute (on any channel)
 - CC 24 = Solo (on any channel)
+
+Official SysEx equivalents: **Mute** `30 5p 29` (`00` off, `7D` on); **Solo Track** `30 40 68`
+(`00` off, `01–0B` = track 1–11).
+
+### Choke Group
+| Address | Data | Notes |
+|---------|------|-------|
+| `30 5p 08` | 00-7F | **Group Number** (official): 0 = off, 1–127 = group. Seen for HAT1/HAT2/PERC1/PERC2 |
 
 ### Track Volume
 Address format: `30 5[track] 00`
@@ -905,15 +934,21 @@ Address format: `30 5[track] 01`
 | KICK | `30 50 01` | 00-7F (0=L, 40=Center, 7F=R) |
 | ... | ... | ... |
 
-### Track Filter/Cutoff (Speculative)
-Address format: `30 5[track] 16`
+### Pattern Step Counts (per variation)
+**Corrected 2026-10-11** — previously labeled "Track Filter/Cutoff (Speculative)". Official name:
+**Pattern n Step**, 2 bytes, 1–128 (`1st bit6-0 → bit13-7, 2nd bit6-0 → bit6-0`), default `00 10` (16).
 
-| Track | Address | Data | Notes |
-|-------|---------|------|-------|
-| KICK | `30 50 16` | [MSB] [LSB] | 2-byte value, seen incrementing 00 11 → 00 22 |
-| DX | `30 59 16` | [MSB] [LSB] | Values: 00 10, 00 20, 00 40, 01 00 |
+| Offset | Pattern |
+|--------|---------|
+| `30 5p 16` | Pattern 1 |
+| `30 5p 18` | Pattern 2 |
+| `30 5p 1A` | Pattern 3 |
+| `30 5p 1C` | Pattern 4 |
+| `30 5p 1E` | Pattern 5 |
+| `30 5p 20` | Pattern 6 |
 
-**Observed values**: Increment by powers of 2 (0x10, 0x20, 0x40, 0x100), suggesting this may be a filter parameter or similar.
+The observed values `00 10`, `00 20`, `00 40`, `01 00` = 16, 32, 64, 128 steps — explains the
+"powers of 2" pattern.
 
 ---
 
@@ -949,6 +984,7 @@ Values observed: `0A 0A` (active/highlighted), `01 01` (inactive)
 | Address | Data | Mode |
 |---------|------|------|
 | `01 10 2E` | 01 | Default/idle |
+| | 02, 03 | ❓ Seen around master-effect knob use (likely master-effect screens) |
 | | 09 | Volume adjust |
 | | 14 | Scale select (0x14 = 20) |
 | | 17 | Octave adjust (0x17 = 23) |
@@ -965,8 +1001,13 @@ Values observed: `0A 0A` (active/highlighted), `01 01` (inactive)
 ### Additional UI State Addresses
 | Address | Data | Notes |
 |---------|------|-------|
-| `01 10 30` | 00/01 | Unknown toggle (seen during pattern change) |
+| `01 10 30` | 00/01 | Unknown toggle (seen during pattern change); also `01 1p 30` per track on track select |
 | `01 10 2D` | [val] [val] | 2-byte state (seen: 06 06, 01 01) |
+| `01 10 1D` / `1E` / `1F` | 00/01 | ❓ Likely Master Effect 1 / 2 / 3 state (1D seen before FX1 knob, 1F before FX3 knob) |
+| `01 10 16` | 110-byte block | 🟡 **Project name** (all zero for device-created, unnamed projects). Official project name: `30 40 00–57` |
+| `01 1p 53`/`54`/`55` | 1 byte each | ❓ Per-track sound info on track select (`09 00 02` drum/synth, `08 00` for sampler) |
+| `01 1p 5C`/`5D`/`5E` | 1 byte each | ❓ Per-track, differs per preset — likely an ID of the loaded sound |
+| `01 1n 50–52`, `59–5B` | 1 byte each | ❓ n = 0–2, sent with master-effect state on project load |
 | `01 10 53` | 00-7F | Unknown state (seen: 09) |
 | `01 10 54` | 00-7F | Unknown state (seen: 00) |
 | `01 10 55` | 00-7F | Unknown state (seen: 02) |
@@ -1198,7 +1239,9 @@ This pattern was discovered through code implementation and hardware verificatio
 
 Long-form message (110 bytes) contains preset name as ASCII:
 
-**Address**: `01 10 35`
+**Address**: `01 1p 35` — **per track** (p = track 0–A). `01 10 35` is KICK; e.g. `01 17 35` =
+SYNTH1, `01 18 35` = SYNTH2, `01 19 35` = DX. Sent as part of the track-select state dump.
+(Bridge currently only matches `01 10 35`.)
 
 **Example:**
 ```
@@ -1210,9 +1253,17 @@ Decoded: "TS_RNB_" + "kick_rn" + "b" = Preset name for RnB kick sound
 
 ---
 
-## Effect Parameters
+## Sound Element Parameters (41 / 42) — corrected
 
-### Per-Track Effect Sends (Drum Tracks)
+> **Corrected 2026-10-11.** These were originally labeled "effect sends/params". Official:
+> `41 ep xx` = **Sound element Oscillator / Amplitude / Pitch** and `42 ep xx` = **element
+> Filter / EQ / LFO**, where the middle byte = **e** (element 0–7, high nibble) + **p** (part 0–A,
+> low nibble). So `41 00/10/20…70 0A` are KICK's elements 0–7 (offset `0A`), not 8 tracks, and
+> `41 xA` is SAMPLER (part A) element x. Per-track reverb/delay **sends** are actually
+> `31 1p 19` / `31 1p 1A`. Look up offset names in the Data List (`36-…part-3.md`). The original
+> observations are kept below.
+
+### (original) Per-Track Effect Sends (Drum Tracks)
 Address format: `41 [track*16] 0A`
 
 | Track | Address | Data | Notes |
@@ -1260,6 +1311,15 @@ For tracks 8-11, the addressing uses a different base offset:
 ## Sound Engine Parameters (31 xx xx)
 
 These addresses control the synth engine parameters per-track.
+
+> **Corrected 2026-10-11.** Official block names (Data List): `31 0p` = Sound Name,
+> `31 1p` = **Sound Common General**, `31 2p` = **Insertion Effect A**, `31 3p` = **Insertion
+> Effect B**, `31 4p` = LFO, `31 5p` = **Arpeggiator**. Insertion type = offset `00` (2 bytes,
+> codes in the Effect Type List), params from `03`. Known `31 1p` names: `00` AEG decay/release
+> (synth) · `01–05` DX carrier attack/decay, mod amount, ratio, feedback · `14` Volume ·
+> `19` Reverb Send · `1A` Delay Send · `1E/1F` Portamento switch/time · `22` Key Assign ·
+> `23` Mono/Poly/Chord · `2C/2D/2E` AEG attack/decay/sustain · `31–34` FEG · `39–43` 3-band EQ ·
+> `45–4F` 2-band EQ (`48` low gain, `4D` high gain). The original observations are kept below.
 
 ### Address Structure
 
@@ -1317,7 +1377,21 @@ These appear to be synth/modulation parameters:
 
 ---
 
-## Arpeggiator/Motion Parameters (50 xx xx)
+## SAMPLER Sample Parameters (50 eA xx) — corrected
+
+> **Corrected 2026-10-11.** Originally labeled "Arpeggiator/Motion". Official: `50 eA xx` =
+> **SAMPLER Sample**, e = pad/element 0–6. Confirmed by capture on sampler track select:
+>
+> | Address | Size | Name | Seen |
+> |---|---|---|---|
+> | `50 eA 60` | 4 | Loop Length | `00 01 26 5F` |
+> | `50 eA 66` | 4 | **Start Point** | `00 00 00 00` |
+> | `50 eA 6A` | 4 | **End Point** | `00 01 26 5F` |
+>
+> 4-byte values: `1st bit2-0 → bit23-21, 2nd → bit20-14, 3rd → bit13-7, 4th → bit6-0`.
+> The arpeggiator is at `31 5p xx`. Original observations kept below.
+
+## (original) Arpeggiator/Motion Parameters (50 xx xx)
 
 | Address | Data | Notes |
 |---------|------|-------|
@@ -1337,16 +1411,16 @@ These appear to be synth/modulation parameters:
 
 | Range | Purpose |
 |-------|---------|
-| `00 xx xx` | Master/global parameters (volume) |
-| `01 1x xx` | UI state, display, selection |
-| `01 17 xx` | Options/navigation, preset names |
-| `30 40 xx` | Global settings (tempo, scale, key, swing, loop) |
-| `30 5x xx` | Track parameters (x = track 0-A: vol, pan, variation, octave, filter) |
-| `31 1x xx` | Sound engine single-byte params (per-track) |
-| `31 2x xx` | Sound engine 2-byte params (modulation) |
-| `31 3x xx` | Sound engine 2-byte params (envelope/filter) |
-| `41 xx xx` | Effect parameters (per-track sends) |
-| `50 xx xx` | Arpeggiator/motion parameters |
+| `00 00 xx` | System settings (master volumes, MIDI, Wi-Fi, click, sync, sampling…) — official |
+| `01 1p xx` | UI state / feedback, per track p (selection, display, preset name, project name) — undocumented |
+| `30 40 xx` | Project common (name, tempo, swing, master step, scale slot, key, solo) — official |
+| `30 41`–`30 4D` | Send reverb/delay, Master FX 1–4, Master EQ, A/D input, USB audio in, scale definitions — official |
+| `30 5p xx` | Project track (vol, pan, choke group, octave, pattern select, pattern step counts, mute) — official |
+| `30 6p` / `30 7p` | Chord notes of scale — official |
+| `31 0p`–`31 5p` | Sound name, common, Insertion A, Insertion B, LFO, Arpeggiator — official |
+| `41 ep` / `42 ep` | Sound element osc/amp/pitch, filter/EQ/LFO (e = element, p = part) — official |
+| `48 09` / `49 o9` | DX common / operator — official |
+| `50 eA xx` | SAMPLER sample (start/end/loop per pad) — official |
 | `70 xx xx` | Drum step data (tracks 0-6) |
 | `72 xx xx` | Sampler step data (track 10) |
 | `74 xx xx` | Synth/DX step data (tracks 7-9) |
@@ -1428,10 +1502,15 @@ These parameters are NOT in the official MIDI CC spec and require SysEx:
 - [x] Sound design parameters by track type - See "Sound Design Parameters by Track Type"
 - [x] MIDI Implementation details - See "MIDI Implementation Chart Reference"
 
+- [x] Effect type selection addresses — master FX `30 43–46 00`, send reverb `30 41 00`, send delay `30 42 00`, track insertion `31 2p 00` / `31 3p 00` (official, 2026-10-11)
+- [x] Sample start/end points — `50 eA 66` / `50 eA 6A` (official + captured, 2026-10-11)
+- [x] Variation hardware behavior — global vs per-track (captured, 2026-10-11)
+- [x] Choke groups — `30 5p 08` (official + captured, 2026-10-11)
+
 ### Remaining
-- [ ] Effect type *selection* SysEx addresses (which address sets reverb/delay/master FX type)
 - [ ] Pattern copy/paste SysEx commands
-- [ ] Sample start/end points (sampler-specific SysEx addresses)
+- [ ] Load preset / load project commands from the app (needs MIDI Monitor spy mode)
+- [ ] Meaning of `01 1p 53–55`, `01 1p 5C–5E`, `01 1n 50–5B`, `01 10 1D–1F` (see `FUNCTIONALITY-MAP.md`)
 - [ ] Motion sequence data format (within 50 xx xx)
 - [ ] Complete 31 xx xx parameter name mapping (need correlation with Sound Design params)
 - [ ] Complete 41 xx xx parameter name mapping (need correlation with Effect params)

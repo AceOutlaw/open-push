@@ -447,6 +447,20 @@ class SeqtrakProtocol:
     # Track Control
     # -------------------------------------------------------------------------
 
+    def request_preset_name(self, track):
+        """
+        Request the current preset (patch) name for a track.
+
+        The name lives at 01 1[track-1] 35 (per track, not just 01 10 35).
+        Seqtrak replies with a 110-byte Parameter Change on the same address.
+
+        Args:
+            track: Track number (1-11)
+        """
+        if not 1 <= track <= 11:
+            return
+        self.request_parameter([0x01, 0x10 + (track - 1), 0x35])
+
     def _track_address(self, track, offset):
         """Build track-specific address."""
         # Track 1-11 maps to 0x50-0x5A
