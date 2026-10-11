@@ -86,7 +86,7 @@
 
 ---
 
-### 6. Melodic Track Bar Length Not Working
+### 6. Melodic Track Bar Length Not Working - **Complete**
 **Severity**: High
 **Description**: Cannot adjust bar length for melodic tracks (SYNTH 1, SYNTH 2, DX, SAMPLER - channels 8-11). Pattern length adjustment works for drum tracks but not bar length for melodic tracks.
 
@@ -135,7 +135,7 @@
 
 ---
 
-### 2. Variation Selector for Recording
+### 2. Variation Selector for Recording **Complete**
 **Priority**: High
 **Description**: Need a way to select which variation (1-6) to record into, especially when adding new parts without switching all tracks.
 

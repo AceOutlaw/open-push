@@ -59,6 +59,7 @@ Complete control of Yamaha Seqtrak groovebox from Push. **Deployed on Raspberry 
 - ✅ Device mode (preset selection and navigation)
 - ✅ Note repeat
 - ✅ Sample recording via USB audio
+- ✅ **iPad bidirectional audio** (sample from iPad, record to iPad)
 - ✅ **Raspberry Pi deployment** (auto-start on boot, headless)
 
 **Quick Start:**
@@ -73,9 +74,10 @@ python3 src/open_push/seqtrak/app.py
 - Headless operation (no monitor/keyboard required)
 - Auto-start on boot via systemd service
 - USB audio routing (Push → Seqtrak for sampling)
+- **iPad bidirectional audio** (iPad ↔ Seqtrak via USB-C, maintains Push MIDI control)
 - SSH access for updates and monitoring
 - ~45 second startup time
-- Portable standalone rig (Push + Seqtrak + Pi)
+- Portable standalone rig (Push + Seqtrak + Pi + optional iPad)
 
 ## Hardware Support
 
