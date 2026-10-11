@@ -60,13 +60,15 @@ class SystemSettingsMode(ModeBase):
         self.show_settings_display()
 
     def exit(self):
-        """Exit System Settings Mode."""
+        """Exit System Settings Mode (teardown only).
+
+        Mode transitions are driven by BridgeApp.switch_mode(), which calls
+        this during the switch — so exit() must never call switch_mode()
+        itself (infinite recursion).
+        """
         # Note: alsaloop processes are kept running when exiting settings
         # User must manually stop them if needed
         super().exit()
-        # Return to previous mode
-        if self.previous_mode:
-            self.app.switch_mode(self.previous_mode)
 
     def handle_midi(self, msg):
         """
@@ -78,7 +80,7 @@ class SystemSettingsMode(ModeBase):
         if msg.type == 'control_change':
             # User button (CC 59) - Exit back to previous mode
             if msg.control == 59 and msg.value == 127:
-                self.exit()
+                self.app.switch_mode(self.previous_mode or 'seqtrak')
                 return
 
             # iPad Audio page (current_page == 0)

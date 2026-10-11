@@ -157,8 +157,12 @@ class BridgeApp:
                 if self.handle_mode_switch_triggers(msg):
                     return
 
-                # Delegate to active mode
-                self.active_mode.handle_midi(msg)
+                # For SeqtrakControlMode, use original handler to avoid recursion
+                # (SeqtrakControlMode.handle_midi delegates back to bridge.handle_midi)
+                if isinstance(self.active_mode, SeqtrakControlMode):
+                    original_handle(msg)
+                else:
+                    self.active_mode.handle_midi(msg)
 
             # Replace bridge's handle_midi temporarily
             self.seqtrak_bridge.handle_midi = handle_with_mode_switching

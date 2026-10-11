@@ -531,10 +531,14 @@ class PushHardware:
 
         if timeout is None:
             return self._input_port.poll()
-        elif timeout == 0:
-            return self._input_port.receive()
-        else:
-            return self._input_port.receive(block=True)
+
+        # mido's receive() has no timeout argument, so poll until deadline
+        deadline = time.monotonic() + timeout
+        while True:
+            msg = self._input_port.poll()
+            if msg is not None or time.monotonic() >= deadline:
+                return msg
+            time.sleep(0.001)
 
     def iter_messages(self):
         """Iterate over incoming messages (blocking)."""
