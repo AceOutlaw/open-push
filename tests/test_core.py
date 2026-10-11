@@ -185,11 +185,12 @@ def test_button_mappings():
     assert CC_TO_BUTTON[85] == 'play'
     assert CC_TO_BUTTON[86] == 'record'
 
-    # Upper and lower row buttons
-    assert BUTTON_CC['upper_1'] == 102
-    assert BUTTON_CC['upper_8'] == 109
-    assert BUTTON_CC['lower_1'] == 20
-    assert BUTTON_CC['lower_8'] == 27
+    # Upper and lower row buttons (Push 1, verified on hardware in 57a6f20):
+    # upper row (closer to LCD) = CC 20-27, lower row (closer to pads) = CC 102-109
+    assert BUTTON_CC['upper_1'] == 20
+    assert BUTTON_CC['upper_8'] == 27
+    assert BUTTON_CC['lower_1'] == 102
+    assert BUTTON_CC['lower_8'] == 109
 
     print("  Button mappings OK")
 
