@@ -430,6 +430,7 @@ BUTTONS = {
     'shift': 49,
     'select': 48,
     'delete': 118,  # Hold for the delete menu
+    'user': 59,     # Shift+User = settings menu
 
     # 16 Buttons Below LCD
     'upper_1': 20, 'upper_2': 21, 'upper_3': 22, 'upper_4': 23,
@@ -1941,10 +1942,12 @@ class SeqtrakBridge:
             self.set_button_led(BUTTONS['page_left'], LED_OFF)
             self.set_button_led(BUTTONS['page_right'], LED_OFF)
 
-        # Patch cycling buttons always available (CC 22, CC 104) - but not in mixer mode
+        # Patch cycling (CC 22, CC 104) and bar length (CC 24, CC 106) - not in mixer mode
         if mode != 'mixer':
             self.set_button_led(BUTTONS['upper_3'], LED_ON)  # CC 22 - prev patch
             self.set_button_led(BUTTONS['lower_3'], LED_ON)  # CC 104 - next patch
+            self.set_button_led(BUTTONS['upper_5'], LED_ON)  # CC 24 - bar length down
+            self.set_button_led(BUTTONS['lower_5'], LED_ON)  # CC 106 - bar length up
 
         # Update display
         self.update_display()
@@ -1962,6 +1965,7 @@ class SeqtrakBridge:
         if cc == BUTTONS['shift']:
             was_held = self.shift_held
             self.shift_held = (value > 0)
+            self.set_button_led(cc, LED_ON if self.shift_held else LED_DIM)
             # Exit track selection overlay when shift is released
             if was_held and not self.shift_held and self.track_select_overlay:
                 self.track_select_overlay = False
@@ -1972,6 +1976,7 @@ class SeqtrakBridge:
         # Track DELETE button state (hold for the delete menu)
         if cc == BUTTONS['delete']:
             self.delete_held = (value > 0)
+            self.set_button_led(cc, LED_ON if self.delete_held else LED_DIM)
             if self.delete_held:
                 self._show_delete_menu()
             else:
@@ -3918,6 +3923,9 @@ class SeqtrakBridge:
             self.set_button_led(BUTTONS['tap_tempo'], LED_ON)  # Tap tempo always available
             self.set_button_led(BUTTONS['octave_up'], LED_DIM)
             self.set_button_led(BUTTONS['octave_down'], LED_DIM)
+            # Every other button that does something, so it can be found in the dark
+            for name in ('session', 'shift', 'delete', 'user', 'record', 'repeat', 'accent'):
+                self.set_button_led(BUTTONS[name], LED_DIM)
 
             print()
             print("=" * 60)
