@@ -47,6 +47,14 @@ pulled back to an older track. Retest on hardware.
 - Sampler delete: `72 50 00 [tick_hi] [tick_lo]` (line 1088-1130)
 - May not be implemented in `app.py`
 
+**Root cause (2026-10-11):** not the delete message. A device capture of sampler Step Input
+showed add `72 30 00` / delete `74 73 00` + `[tick_hi] [tick_lo] 00 [3C+pad] 64 00 00 78`,
+byte-identical to what the bridge sends (since 7bb1841). The bug is state: the Push only knew
+steps pressed on the Push since the bridge started, so a step placed on the device (or before a
+restart) got a second "add" instead of a delete. Fix: the bridge now follows sampler step
+edits made on the device. Remaining gap: sampler steps can't be read back, so steps that
+existed before the bridge started still aren't known.
+
 ---
 
 ### 3. Missing Parameters on Display
@@ -144,15 +152,16 @@ never appear on the Push step grid. The grid was only a local memory of Push pre
 bridge never read step data. A Push press on a step already set on the device sent "add"
 instead of "delete".
 
-**Fix (2026-10-11, drum tracks 1-7)** — on `integration`, awaiting hardware test:
+**Fix (2026-10-11, drum tracks 1-7)** — `integration` 4ffd6f7, **verified on hardware** (drum steps entered on the Seqtrak show on the Push):
 - Listens for the device's own step edits: add `70 [t-1] 00 [step] ...`, delete `70 [0x20+t-1] 00 [step]`.
 - Reads stored steps with `70 [0x40+t-1] [step]` (data = set, no data = empty) at startup and
   whenever a drum track's pattern changes; reads are throttled to one per 3 ms.
 - Verified on hardware that both messages exist (KICK steps 1/5/9/13, then 5 removed); the
   decode was checked offline against the captured bytes.
 
-**Still open**: sampler and SYNTH 1/SYNTH 2/DX steps (`72`/`74`) don't answer read requests;
-capture the Seqtrak app opening a melodic pattern with steps to find their readback. Also
+**Sampler (2026-10-11):** live add/delete from the device is now followed (see bug #2).
+**Still open**: sampler steps (`72`) don't answer read requests, so they can't be loaded at startup. SYNTH 1/SYNTH 2/DX
+have no step grid on the Push (or a step view in the Seqtrak app), so they don't need step sync. Also
 confirm the readback reflects the newly selected pattern when a variation change is queued
 while playing.
 

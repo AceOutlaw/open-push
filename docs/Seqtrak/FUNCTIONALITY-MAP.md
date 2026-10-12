@@ -235,6 +235,19 @@ steps present.
   → their readback format is still unknown (needs a spy capture with steps present).
 - Removing a step also sent `01 10 2D` 00→01 and `01 1p 39` for all tracks (❓ UI/edit state).
 
+**Melodic steps confirmed (2026-10-11, SYNTH 1 Step Input mode on the device — hold [PAGE] +
+track knob):**
+- Add: `72 [g] 00 [tick_hi] [tick_lo] 00 [note] [vel] 00 00 [prob]`
+  (e.g. `72 00 00 02 68 00 3C 2D 00 00 78` = step 4, C4, vel 45, prob 120).
+- Delete: `74 [0x70+g>>4] 00` + the **same 8-byte payload** (e.g. `74 70 00 02 68 00 3C 2D 00 00 78`).
+- Position is a 14-bit tick (`hi*128 + lo`), **120 ticks per step** (480 PPQN): step 2 = `00 78`,
+  step 3 = `01 70`, step 16 = `0E 08`.
+- Group g: SYNTH 1 = `00` (captured); sampler = `30` / delete `74 73` (captured, note =
+  `3C` + pad index, vel `64`; selecting a pad sends `01 10 28 [pad]`). SYNTH 2 = `10` and
+  DX = `20` are inferred, not yet captured.
+- Each edit is wrapped in `01 10 19 03`→`00` and `01 10 2D 06 06`→`01 01` (❓ step-edit UI flags).
+- Melodic/sampler steps don't answer Parameter Requests (no readback found yet).
+
 **Writes use plain Parameter Change** (`F0 43 10 …`), and the app sends **each value twice**
 (~2–25 ms apart). Seen:
 | Address | Values | Meaning |

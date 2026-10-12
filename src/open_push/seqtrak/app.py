@@ -752,6 +752,13 @@ class SeqtrakBridge:
         elif addr[0] == 0x70 and 0x40 <= addr[1] <= 0x46:
             self._set_drum_step(addr[1] - 0x40 + 1, addr[2], bool(sysex_data))
 
+        # Sampler step added/deleted on the Seqtrak:
+        # 72 30 00 / 74 73 00 [tick_hi] [tick_lo] 00 [note] [vel] 00 00 [prob]
+        elif addr in ([0x72, 0x30, 0x00], [0x74, 0x73, 0x00]) and len(sysex_data) >= 4:
+            ticks = (sysex_data[0] << 7) | sysex_data[1]
+            if ticks % 120 == 0:
+                self._set_sampler_step(sysex_data[3] - 0x3C, ticks // 120, addr[0] == 0x72)
+
         # Track selected on the Seqtrak itself: 01 10 27 [0-10]
         elif addr == Address.TRACK_SELECT and sysex_data and sysex_data[0] <= 0x0A:
             track = sysex_data[0] + 1
@@ -3040,6 +3047,17 @@ class SeqtrakBridge:
             return
         steps[step_index] = on
         if self.current_pad_mode == PadMode.DRUM and track == self.selected_drum_track:
+            self.update_grid()
+
+    def _set_sampler_step(self, pad_index, step_index, on):
+        """Record a sampler step state reported by the Seqtrak and redraw if visible."""
+        if not 0 <= pad_index <= 6 or not 0 <= step_index < 128:
+            return
+        steps = self.sampler_step_states.setdefault(pad_index, [False] * 128)
+        if steps[step_index] == on:
+            return
+        steps[step_index] = on
+        if self.current_pad_mode == PadMode.SAMPLER and pad_index == self.selected_sampler_pad:
             self.update_grid()
 
     def _request_drum_steps(self, track):
