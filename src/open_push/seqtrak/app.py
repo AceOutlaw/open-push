@@ -3234,7 +3234,7 @@ class SeqtrakBridge:
         """Toggle a sampler step (pad 0-6, step 0-127) on the Seqtrak.
 
         The sampler stores an ordered note list (see docs/Seqtrak/STEP-SEQUENCER.md):
-        - add:    72 30 00 [tick_hi] [tick_lo] 00 [3C+pad] 64 00 00 00   (length 0)
+        - add:    72 30 00 [tick_hi] [tick_lo] 00 [3C+pad] 64 00 00 77   (length 119)
         - remove: 74 30 [index] 00, index from the mirror read with 75 30 [index]
         The list is re-read shortly after every edit to keep indexes exact.
         """

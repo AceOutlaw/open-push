@@ -30,14 +30,15 @@ Request (`F0 43 30 7F 1C 0C [H] [M] [L] F7`, the device replies with a Parameter
 - **Position** = 14-bit tick `hi*128 + lo`, **120 ticks per step** (480 PPQN):
   step 1 = `00 00`, step 2 = `00 78`, step 3 = `01 70`, step 5 = `03 60`, step 6 = `04 58`, step 16 = `0E 08`.
 - **Note:** sampler pad n (1–7) = `3C + n − 1`. Melodic = MIDI note.
-- **Length** (last byte) in ticks. `78` = 120 = one full step. The device's own key presses use `00`.
+- **Length** (last byte) in ticks. `78` = 120 = one full step. **`00` is silent** (the step is stored but
+  makes no sound). **Use `77` = 119**: it sounds and doesn't reach the next step (verified 2026-10-12).
 
 ## 2. Verified behaviours (2026-10-12)
 
 1. **Add** `72 30 00 01 70 00 3C 64 00 00 78` → pad 1 step 3 lit. No reply.
 2. **Add at an occupied position replaces** the note; the device reports the old one with `74 73 00 …`.
 3. **A note that reaches the next note on the same pad removes that next note** (device reports it
-   with `74 73 …`). With length `78` (a full step), adding step N removes step N+1. Use length `00`.
+   with `74 73 …`). With length `78` (a full step), adding step N removes step N+1. Length `77` doesn't.
 4. **`74 73 00` + note (the device's own report) is NOT accepted as a command** — tested exact bytes,
    and wrapped in the device's own edit messages (`01 10 2D 06 06` … `01 10 2D 01 01`, byte-for-byte
    what the device emits on a key press). Key stayed lit every time.

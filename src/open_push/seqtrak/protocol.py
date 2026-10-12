@@ -685,12 +685,12 @@ class SeqtrakProtocol:
     # (0 = earliest), and the list renumbers after a remove.
     NOTE_GROUPS = {8: 0x00, 9: 0x10, 10: 0x20, 11: 0x30}  # SYNTH1, SYNTH2, DX, SAMPLER
 
-    def add_note(self, track, tick, note, velocity=0x64, length=0):
+    def add_note(self, track, tick, note, velocity=0x64, length=0x77):
         """Add a note: 72 [g] 00 [tick_hi] [tick_lo] 00 [note] [vel] 00 00 [length].
 
         length is in ticks (120 = one step). A note that reaches the next note on
-        the same pad makes the Seqtrak remove that next note, so the default is 0
-        (what the Seqtrak's own keys send).
+        the same pad makes the Seqtrak remove that next note, and length 0 is
+        silent, so the default is 119: just under one step.
         """
         group = self.NOTE_GROUPS.get(track)
         if group is None:
