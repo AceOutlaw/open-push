@@ -497,7 +497,7 @@ class SeqtrakBridge:
         self._last_track_select_sent = 0.0  # time of our own track select (echo guard)
         self._step_read_queue = []          # pending step/note read addresses (throttled)
         self._last_step_read_sent = 0.0
-        # Mirror of the Seqtrak's sampler note list, in index order: [(tick, note), ...].
+        # Mirror of the Seqtrak's sampler note list, in index order: [(tick, note, length), ...].
         # Read with 75 30 [index]; the index is what a remove (74 30 [index] 00) needs.
         self.sampler_notes = []
         self._sampler_read_buf = {}         # index -> (tick, note) while a read is in flight
@@ -773,6 +773,14 @@ class SeqtrakBridge:
         # trusting them one by one.
         elif addr in ([0x72, 0x30, 0x00], [0x74, 0x73, 0x00]):
             self._schedule_sampler_resync()
+
+        # Sample pad selected on the Seqtrak itself: 01 10 28 [pad 0-6]
+        elif addr == Address.SAMPLER_ELEMENT and sysex_data and sysex_data[0] <= 6:
+            if sysex_data[0] != self.selected_sampler_pad:
+                self.selected_sampler_pad = sysex_data[0]
+                if self.current_pad_mode == PadMode.SAMPLER:
+                    self.update_grid()
+                    self.update_display()
 
         # Sampler note list readback: 75 30 [index] -> 8 bytes, or no data past the end
         elif addr[0] == 0x75 and addr[1] == 0x30:
@@ -3102,7 +3110,8 @@ class SeqtrakBridge:
         if self._sampler_read_done:
             return
         if len(data) >= 8:
-            self._sampler_read_buf[index] = ((data[0] << 7) | data[1], data[3])
+            self._sampler_read_buf[index] = ((data[0] << 7) | data[1], data[3],
+                                             (data[6] << 7) | data[7])
             if index == self._sampler_read_next - 1 and self._sampler_read_next < 128:
                 self._queue_sampler_reads(16)
             return
@@ -3116,7 +3125,7 @@ class SeqtrakBridge:
         """Replace the sampler mirror and rebuild the per-pad step grid from it."""
         self.sampler_notes = notes
         states = {}
-        for tick, note in notes:
+        for tick, note, _length in notes:
             pad, step = note - 0x3C, round(tick / 120)
             if 0 <= pad <= 6 and 0 <= step < 128:
                 states.setdefault(pad, [False] * 128)[step] = True
@@ -3230,28 +3239,59 @@ class SeqtrakBridge:
         state_str = "ON" if new_state else "OFF"
         print(f"  Step {step_num} for {track_name}: {state_str}")
 
+    # Length for a sampler step with no later step on its pad: let the sample ring
+    # out (4 bars). The pad's next step chokes it anyway.
+    SAMPLER_RING_OUT = 4 * 16 * 120
+
+    def _sampler_ring_length(self, note, tick):
+        """Ticks from `tick` up to just before the pad's next note (or the ring-out length)."""
+        later = [t for t, n, _ in self.sampler_notes if n == note and t > tick]
+        return min(later) - tick - 1 if later else self.SAMPLER_RING_OUT
+
     def _toggle_sampler_step(self, pad_index, step_index):
         """Toggle a sampler step (pad 0-6, step 0-127) on the Seqtrak.
 
         The sampler stores an ordered note list (see docs/Seqtrak/STEP-SEQUENCER.md):
-        - add:    72 30 00 [tick_hi] [tick_lo] 00 [3C+pad] 64 00 00 77   (length 119)
+        - add:    72 30 00 [tick_hi] [tick_lo] 00 [3C+pad] 64 00 [len_hi] [len_lo]
         - remove: 74 30 [index] 00, index from the mirror read with 75 30 [index]
+        The Seqtrak stops a sample when its note ends, so each step rings until the
+        pad's next step (or rings out if there is none). Removing a step re-extends
+        the pad's previous step if it had been cut short at the removed one.
         The list is re-read shortly after every edit to keep indexes exact.
         """
         note = 0x3C + pad_index
         tick = step_index * 120
-        matches = [i for i, (t, n) in enumerate(self.sampler_notes)
+        matches = [i for i, (t, n, _) in enumerate(self.sampler_notes)
                    if n == note and round(t / 120) == step_index]
 
         if matches:
             for index in reversed(matches):  # highest first so lower indexes stay valid
                 self.protocol.remove_note(11, index)
                 self.sampler_notes.pop(index)
+            # Re-extend the previous step on this pad if it stopped at the removed one
+            earlier = [(i, t, length) for i, (t, n, length) in enumerate(self.sampler_notes)
+                       if n == note and t < tick]
+            if earlier:
+                i, t, length = earlier[-1]
+                if t + length >= tick - 1:
+                    new_length = self._sampler_ring_length(note, t)
+                    self.protocol.remove_note(11, i)
+                    self.protocol.add_note(11, t, note, length=new_length)
+                    self.sampler_notes[i] = (t, note, new_length)
             on = False
         else:
-            self.protocol.add_note(11, tick, note)
-            position = sum(1 for t, _ in self.sampler_notes if t <= tick)
-            self.sampler_notes.insert(position, (tick, note))
+            # Shorten an earlier step on this pad that would ring past this one
+            # (remove it and add it back), so the new step doesn't depend on how
+            # the Seqtrak resolves the overlap.
+            for i, (t, n, old) in enumerate(self.sampler_notes):
+                if n == note and t < tick <= t + old:
+                    self.protocol.remove_note(11, i)
+                    self.protocol.add_note(11, t, n, length=tick - t - 1)
+                    self.sampler_notes[i] = (t, n, tick - t - 1)
+            length = self._sampler_ring_length(note, tick)
+            self.protocol.add_note(11, tick, note, length=length)
+            position = sum(1 for t, _, _ in self.sampler_notes if t <= tick)
+            self.sampler_notes.insert(position, (tick, note, length))
             on = True
 
         self.sampler_step_states.setdefault(pad_index, [False] * 128)[step_index] = on
@@ -3433,6 +3473,7 @@ class SeqtrakBridge:
 
             self._sync_sampler_element(self.selected_sampler_pad)
             print(f"  Selected sampler pad {element + 1}")
+            self.update_grid()  # show this pad's steps
             self.update_display()
         else:
             # Normal press = trigger sample on channel 11

@@ -688,15 +688,16 @@ class SeqtrakProtocol:
     def add_note(self, track, tick, note, velocity=0x64, length=0x77):
         """Add a note: 72 [g] 00 [tick_hi] [tick_lo] 00 [note] [vel] 00 00 [length].
 
-        length is in ticks (120 = one step). A note that reaches the next note on
-        the same pad makes the Seqtrak remove that next note, and length 0 is
-        silent, so the default is 119: just under one step.
+        length is in ticks (120 = one step), 14 bits in the last two bytes. The
+        Seqtrak stops the sample when the note ends (length 0 is silent), and a
+        note that reaches the next note on the same pad removes that next note.
         """
         group = self.NOTE_GROUPS.get(track)
         if group is None:
             return
+        length = max(0, min(length, 0x3FFF))  # 14-bit, last two bytes
         data = [(tick >> 7) & 0x7F, tick & 0x7F, 0x00, note & 0x7F,
-                velocity & 0x7F, 0x00, 0x00, length & 0x7F]
+                velocity & 0x7F, 0x00, (length >> 7) & 0x7F, length & 0x7F]
         self._send_sysex([0x72, group, 0x00], data)
 
     def remove_note(self, track, index):

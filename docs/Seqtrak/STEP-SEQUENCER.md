@@ -30,8 +30,11 @@ Request (`F0 43 30 7F 1C 0C [H] [M] [L] F7`, the device replies with a Parameter
 - **Position** = 14-bit tick `hi*128 + lo`, **120 ticks per step** (480 PPQN):
   step 1 = `00 00`, step 2 = `00 78`, step 3 = `01 70`, step 5 = `03 60`, step 6 = `04 58`, step 16 = `0E 08`.
 - **Note:** sampler pad n (1–7) = `3C + n − 1`. Melodic = MIDI note.
-- **Length** (last byte) in ticks. `78` = 120 = one full step. **`00` is silent** (the step is stored but
-  makes no sound). **Use `77` = 119**: it sounds and doesn't reach the next step (verified 2026-10-12).
+- **Length** = last two bytes, 14-bit ticks (`hi*128 + lo`): `00 78` = 120 = one step, `05 50` = 720.
+  **The Seqtrak stops the sample when the note ends** — `00` is silent, 119/120 cut a sample after one
+  step (including notes from the Seqtrak's own Step Input), 720 let it ring out (verified by ear 2026-10-12).
+  The bridge gives each Push step a length up to just before that pad's next step, or 4 bars if none,
+  and shortens/re-extends the pad's previous step itself when steps are added or removed.
 
 ## 2. Verified behaviours (2026-10-12)
 
