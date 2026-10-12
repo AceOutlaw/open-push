@@ -428,7 +428,8 @@ BUTTONS = {
     'up': 46, 'down': 47, 'left': 44, 'right': 45,
     'page_left': 63, 'page_right': 62,
     'shift': 49,
-    'select': 48,  # Also used as DELETE button (Push doesn't have dedicated DELETE)
+    'select': 48,
+    'delete': 118,  # Hold for the delete menu
 
     # 16 Buttons Below LCD
     'upper_1': 20, 'upper_2': 21, 'upper_3': 22, 'upper_4': 23,
@@ -1929,8 +1930,8 @@ class SeqtrakBridge:
                 print("← Exited track selection overlay")
             return
 
-        # Track DELETE button state (SELECT button acts as DELETE)
-        if cc == BUTTONS['select']:
+        # Track DELETE button state (hold for the delete menu)
+        if cc == BUTTONS['delete']:
             self.delete_held = (value > 0)
             if self.delete_held:
                 self._show_delete_menu()
