@@ -493,6 +493,9 @@ class SeqtrakBridge:
         self.keyboard_track = Track.SYNTH1
         self.patch_name = ""  # Patch name (updated from Seqtrak feedback)
         self.track_preset_names = {}  # {track: name} read from Seqtrak (01 1p 35)
+        self._last_track_select_sent = 0.0  # time of our own track select (echo guard)
+        self._step_read_queue = []          # pending drum step read addresses (throttled)
+        self._last_step_read_sent = 0.0
 
         # Active notes for proper note-off
         self.active_notes = {}  # {pad_note: midi_note}
@@ -563,8 +566,10 @@ class SeqtrakBridge:
         self.session_selected_col = 0  # Currently selected column (0-7)
         self.session_selected_row = 0  # Currently selected row (0-5)
         # Pattern assignments: session_patterns[mixer_pos][row] = pattern (1-6)
-        # 12 mixer positions × 6 rows
-        self.session_patterns = [[1] * 6 for _ in range(12)]
+        # 12 mixer positions × 6 rows. Default: row N launches pattern N+1, so
+        # every launch button does something useful before any editing.
+        self.session_patterns = [[row + 1 for row in range(6)] for _ in range(12)]
+        self.session_launched_row = None  # Last launched row (highlighted)
 
         # Isomorphic layout (same as Reason app)
         self.layout = IsomorphicLayout()
@@ -657,6 +662,11 @@ class SeqtrakBridge:
                     print(f"  Preset: {self.patch_name}")
                     self.update_display()
 
+    def _send_track_select(self, track):
+        """Select a track on the Seqtrak and remember when we did it."""
+        self._last_track_select_sent = time.time()
+        self.protocol.select_track(track)
+
     @staticmethod
     def _decode_preset_name(sysex_data):
         """Decode a preset name from Yamaha 7-bit packed data.
@@ -710,6 +720,50 @@ class SeqtrakBridge:
             self.set_button_led(BUTTONS['record'], LED_ON if self.is_sample_recording else LED_DIM)
             self.update_display()
             print(f"Seqtrak: SAMPLE RECORD {'ON' if self.is_sample_recording else 'OFF'}")
+
+        # Per-track pattern (variation) select: 30 5[track-1] 0F [0-5]
+        elif addr[0] == 0x30 and 0x50 <= addr[1] <= 0x5A and addr[2] == 0x0F and sysex_data:
+            track = addr[1] - 0x50 + 1
+            variation = sysex_data[0] + 1
+            if self.track_variation.get(track) != variation:
+                self.track_variation[track] = variation
+                self._request_drum_steps(track)
+                if track == self.keyboard_track:
+                    self.update_display()
+
+        # Global variation indicator (Seqtrak variation buttons): 01 10 2A [0-5]
+        elif addr == Address.GLOBAL_VARIATION and sysex_data:
+            variation = sysex_data[0] + 1
+            for track in range(1, 12):
+                self.track_variation[track] = variation
+                self._request_drum_steps(track)
+            self.update_display()
+
+        # Drum step added on the Seqtrak: 70 [track-1] 00 [step] [note] [vel] [gate] [prob]
+        elif addr[0] == 0x70 and addr[1] <= 0x06 and addr[2] == 0x00 and sysex_data:
+            self._set_drum_step(addr[1] + 1, sysex_data[0], True)
+
+        # Drum step deleted on the Seqtrak: 70 [0x20+track-1] 00 [step]
+        elif addr[0] == 0x70 and 0x20 <= addr[1] <= 0x26 and addr[2] == 0x00 and sysex_data:
+            self._set_drum_step(addr[1] - 0x20 + 1, sysex_data[0], False)
+
+        # Drum step readback: 70 [0x40+track-1] [step] -> event data, or nothing if empty
+        elif addr[0] == 0x70 and 0x40 <= addr[1] <= 0x46:
+            self._set_drum_step(addr[1] - 0x40 + 1, addr[2], bool(sysex_data))
+
+        # Track selected on the Seqtrak itself: 01 10 27 [0-10]
+        elif addr == Address.TRACK_SELECT and sysex_data and sysex_data[0] <= 0x0A:
+            track = sysex_data[0] + 1
+            # Ignore echoes of our own recent selects (fast encoder turns)
+            recent_local = time.time() - self._last_track_select_sent < 0.5
+            if track != self.keyboard_track and not recent_local:
+                self.keyboard_track = track
+                self.patch_name = (self.track_preset_names.get(track)
+                                   or self._get_track_preset_display(track))
+                self.protocol.request_preset_name(track)
+                self._update_pad_mode()
+                self.update_display()
+                print(f"Seqtrak: track -> {Track.NAMES.get(track, f'Track {track}')}")
 
         # Preset Name (per track: 01 1[track-1] 35)
         elif addr[0] == 0x01 and addr[2] == 0x35 and 0x10 <= addr[1] <= 0x1A and sysex_data:
@@ -965,7 +1019,7 @@ class SeqtrakBridge:
             self.keyboard_track = track
             self.patch_name = (self.track_preset_names.get(track)
                                or self._get_track_preset_display(track))
-            self.protocol.select_track(track)
+            self._send_track_select(track)
             self.protocol.request_preset_name(track)
             self._update_pad_mode()
             track_name = Track.NAMES.get(track, f"T{track}")
@@ -1048,6 +1102,9 @@ class SeqtrakBridge:
             self._clear_variation_data(track, variation)
             print(f"    Cleared V{variation}")
 
+        # Return the track to the variation it was on (not left on V6)
+        self.protocol.select_track_variation(track, self.track_variation.get(track, 1))
+
         print(f"  ✓ Cleared all variations for {track_name}")
         self.delete_held = False
         self.update_display()
@@ -1063,6 +1120,9 @@ class SeqtrakBridge:
             for variation in range(1, 7):  # Variations 1-6
                 self.protocol.select_track_variation(track, variation)
                 self._clear_variation_data(track, variation)
+
+            # Return the track to the variation it was on (not left on V6)
+            self.protocol.select_track_variation(track, self.track_variation.get(track, 1))
 
         print("  ✓ Song cleared (all variations deleted)")
         self.delete_held = False
@@ -1658,6 +1718,8 @@ class SeqtrakBridge:
                         color = COLOR_GREEN  # Selected slot
                     elif track is None:
                         color = COLOR_YELLOW  # DRUM bus - distinctive color
+                    elif row == self.session_launched_row:
+                        color = COLOR_BLUE  # Last launched row (playing)
                     else:
                         color = COLOR_WHITE  # Available slot (brighter)
                 else:
@@ -1769,20 +1831,22 @@ class SeqtrakBridge:
         if row >= 6:
             return
 
-        base_pos = self.session_page * 8
-
-        # Send variation to each track based on pattern assignments
+        # Send variation to EVERY track (both session pages), not just the
+        # 8 visible columns - otherwise a row launch only half-happens.
         launched_tracks = []
-        for col in range(8):
-            mixer_pos = base_pos + col
-            if mixer_pos < len(MIXER_TRACK_ORDER):
-                track = MIXER_TRACK_ORDER[mixer_pos]
-                if track is not None:  # Skip DRUM bus
-                    pattern = self.session_patterns[mixer_pos][row]
-                    self.protocol.select_track_variation(track, pattern)
-                    launched_tracks.append(f"{MIXER_DISPLAY_NAMES[mixer_pos]}:{pattern}")
+        for mixer_pos, track in enumerate(MIXER_TRACK_ORDER):
+            if track is None:  # Skip DRUM bus
+                continue
+            pattern = self.session_patterns[mixer_pos][row]
+            self.protocol.select_track_variation(track, pattern)
+            self.track_variation[track] = pattern
+            self._request_drum_steps(track)
+            launched_tracks.append(f"{MIXER_DISPLAY_NAMES[mixer_pos]}:{pattern}")
 
+        self.session_launched_row = row
         print(f"  Launched Row {row + 1}: {', '.join(launched_tracks)}")
+        self._update_session_grid()
+        self._update_session_display()
 
         # Start playback if not already playing
         if not self.is_playing:
@@ -2528,6 +2592,7 @@ class SeqtrakBridge:
 
         # Send SysEx to Seqtrak
         self.protocol.select_track_variation(track, new_var)
+        self._request_drum_steps(track)
 
         self.update_display()
         print(f"  Variation: {new_var}/{max_var} for {Track.NAMES.get(track, f'Track {track}')}")
@@ -2964,6 +3029,40 @@ class SeqtrakBridge:
                     self._toggle_step(self.selected_drum_track, step_index)
 
         # Middle rows (2-3) are empty - ignore
+
+    def _set_drum_step(self, track, step_index, on):
+        """Record a drum step state reported by the Seqtrak and redraw if visible."""
+        if not 1 <= track <= 7 or not 0 <= step_index < 128:
+            return
+        steps = self.step_states.setdefault(track, [False] * 128)
+        if steps[step_index] == on:
+            return
+        steps[step_index] = on
+        if self.current_pad_mode == PadMode.DRUM and track == self.selected_drum_track:
+            self.update_grid()
+
+    def _request_drum_steps(self, track):
+        """Queue a read of all 128 steps of a drum track's current pattern.
+
+        Request 70 [0x40+track-1] [step]; the Seqtrak answers with the step's
+        event data, or with no data if the step is empty. Sent throttled from
+        the main loop so the USB MIDI link isn't flooded.
+        """
+        if not 1 <= track <= 7:
+            return
+        addrs = [[0x70, 0x40 + track - 1, step] for step in range(128)]
+        self._step_read_queue = [a for a in self._step_read_queue if a[1] != 0x40 + track - 1]
+        self._step_read_queue.extend(addrs)
+
+    def _process_step_reads(self):
+        """Send queued drum step reads, one every 3 ms."""
+        if not self._step_read_queue:
+            return
+        now = time.time()
+        if now - self._last_step_read_sent < 0.003:
+            return
+        self._last_step_read_sent = now
+        self.protocol.request_parameter(self._step_read_queue.pop(0))
 
     def _toggle_step(self, track, step_index):
         """Toggle a step in the drum sequencer.
@@ -3584,7 +3683,7 @@ class SeqtrakBridge:
                            or self._get_track_preset_display(self.keyboard_track))
 
         # Inform Seqtrak of track selection and request this track's preset name
-        self.protocol.select_track(self.keyboard_track)
+        self._send_track_select(self.keyboard_track)
         self.protocol.request_preset_name(self.keyboard_track)
 
         track_name = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
@@ -3605,7 +3704,7 @@ class SeqtrakBridge:
                            or self._get_track_preset_display(self.keyboard_track))
 
         # Inform Seqtrak of track selection and request this track's preset name
-        self.protocol.select_track(self.keyboard_track)
+        self._send_track_select(self.keyboard_track)
         self.protocol.request_preset_name(self.keyboard_track)
 
         track_name = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
@@ -3718,14 +3817,17 @@ class SeqtrakBridge:
             self._set_mode('track')
 
             # Select initial track and set initial patch name
-            self.protocol.select_track(self.keyboard_track)
+            self._send_track_select(self.keyboard_track)
             self.patch_name = self._get_track_preset_display(self.keyboard_track)
             self.update_display()
 
-            # Request current state from Seqtrak (preset names for all tracks)
+            # Request current state from Seqtrak (preset names + pattern per track)
             for track in range(1, 12):
                 self.protocol.request_preset_name(track)
+                self.protocol.request_parameter([0x30, 0x50 + track - 1, 0x0F])
             self.protocol.request_parameter(Address.TEMPO)
+            for track in range(1, 8):
+                self._request_drum_steps(track)
 
             # Main loop - poll both Push and Seqtrak inputs
             self.running = True
@@ -3750,6 +3852,9 @@ class SeqtrakBridge:
                     if seqtrak_in:
                         for msg in seqtrak_in.iter_pending():
                             self.handle_seqtrak_message(msg)
+
+                    # Send queued step reads (throttled)
+                    self._process_step_reads()
 
                     # Process note repeat for held pads
                     self._process_note_repeat()

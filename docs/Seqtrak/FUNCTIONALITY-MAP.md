@@ -224,6 +224,17 @@ ss = `2C…7F`; each reply is just the address with **no data** (likely = empty/
 ❓ Meaning of `40/50/60` (track group? note/velocity/gate layers?) — needs a capture with
 steps present.
 
+**Drum steps confirmed (2026-10-11, KICK steps 1/5/9/13 placed on the device, then 5 removed):**
+- **Live push from the device:** placing a step sends `70 [t-1] 00 [step] [note] [vel] [gate] [prob]`
+  (e.g. `70 00 00 08 3C 64 00 78`); removing one sends `70 [0x20+t-1] 00 [step]`. Same format the
+  bridge already sends, so the device announces its own edits unprompted.
+- **Readback:** `70 [0x40+t-1] [step]` (t = 1–7) answers with 6 bytes when the step is set
+  (`3C 64 00 3C 00 78`, likely note/vel/gate-hi/gate-lo/?/prob) and no data when empty.
+  `70 [0x60+t-1] [step]` answered `00` on set steps (❓ flag/micro-timing); `70 5x` stayed empty.
+- Only `70 4x/5x/6x` (x = 0–6) answer requests. `72`/`74` (sampler, synth/DX) answered nothing
+  → their readback format is still unknown (needs a spy capture with steps present).
+- Removing a step also sent `01 10 2D` 00→01 and `01 1p 39` for all tracks (❓ UI/edit state).
+
 **Writes use plain Parameter Change** (`F0 43 10 …`), and the app sends **each value twice**
 (~2–25 ms apart). Seen:
 | Address | Values | Meaning |

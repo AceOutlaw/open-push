@@ -24,6 +24,10 @@
 
 **Investigation Needed**: Check encoder handling rate limiting, track state update timing
 
+**Update (2026-10-11):** the bridge now listens for track changes made on the Seqtrak
+(`01 10 27`) and ignores echoes for 0.5 s after its own selects, so a fast turn can't be
+pulled back to an older track. Retest on hardware.
+
 ---
 
 ### 2. Sampler Step Sequencer - Cannot Remove Steps
@@ -73,6 +77,21 @@
 - MIDI message logging during failed launch attempts
 - Check SysEx pattern launch commands
 
+**Root causes found (2026-10-11)** — fix on `integration`, awaiting hardware test:
+1. Every session row defaulted to pattern 1 (`[[1]*6 ...]`), so all six launch buttons
+   re-selected variation 1 → looked like nothing happened. Now row N defaults to pattern N.
+2. A row launch only sent the 8 tracks on the visible page (skipped PERC1/PERC2/SAMPLER or
+   the other half). Now every track is sent.
+3. Launch didn't update `track_variation`, and the bridge ignored variation feedback from the
+   Seqtrak, so display/encoder state drifted. Now launches update state, the launched row is
+   highlighted blue, and the bridge listens for `30 5p 0F`, `01 10 2A`, `01 10 27`.
+4. Delete-all-variations helpers left tracks on variation 6. They now restore the previous one.
+5. Startup now reads each track's current pattern (`30 5p 0F`) so state starts correct.
+
+Still open: the bridge's 3/6 variation toggle writes `01 10 18`, but the device reported
+`01 10 18 = 0` while Pattern Select Mode `30 40 79 = 1` (advanced) and a track was on
+pattern 6. Capture toggling 3/6 on the hardware to confirm which address is the real switch.
+
 ---
 
 ### 5. Arpeggio + Note Repeat Interaction
@@ -115,6 +134,27 @@
 - Compare with working pattern length implementation for drum tracks
 
 **Reference**: See `docs/Seqtrak/TERMINOLOGY.md` for pattern vs bar distinction
+
+---
+
+### 7. Step Sequencer Doesn't Show Steps Entered on the Seqtrak
+**Severity**: High
+**Description**: Steps entered on the Push reach the Seqtrak, but steps entered on the Seqtrak
+never appear on the Push step grid. The grid was only a local memory of Push presses; the
+bridge never read step data. A Push press on a step already set on the device sent "add"
+instead of "delete".
+
+**Fix (2026-10-11, drum tracks 1-7)** — on `integration`, awaiting hardware test:
+- Listens for the device's own step edits: add `70 [t-1] 00 [step] ...`, delete `70 [0x20+t-1] 00 [step]`.
+- Reads stored steps with `70 [0x40+t-1] [step]` (data = set, no data = empty) at startup and
+  whenever a drum track's pattern changes; reads are throttled to one per 3 ms.
+- Verified on hardware that both messages exist (KICK steps 1/5/9/13, then 5 removed); the
+  decode was checked offline against the captured bytes.
+
+**Still open**: sampler and SYNTH 1/SYNTH 2/DX steps (`72`/`74`) don't answer read requests;
+capture the Seqtrak app opening a melodic pattern with steps to find their readback. Also
+confirm the readback reflects the newly selected pattern when a variation change is queued
+while playing.
 
 ---
 
