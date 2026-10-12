@@ -393,6 +393,15 @@ Code quality improvements from PR review:
 
 ---
 
+## Phase 7: Centralization and Protocol Deep-Dive (October 11-12, 2026)
+
+- Code from three machines (skai, production Mac, Pi) merged onto the `integration` branch; GitHub is the source of truth and every Pi deploy records its commit in `~/open-push/.deployed`.
+- The bridge now **reads** Seqtrak state with Parameter Requests (`F0 43 30 …`): patch names, patterns, drum steps, master volume.
+- **Sampler/melodic step remove solved** after it stalled in December: these tracks store an indexed note list — read `75 [g] [index]`, remove `74 [g] [index] 00`. The `74 7x` message we had been replaying is only the device's report.
+- Full write-up: `docs/Seqtrak/REVERSE-ENGINEERING-LOG-2026-10.md`; step protocol: `docs/Seqtrak/STEP-SEQUENCER.md`.
+
+---
+
 ## Key Technical Discoveries
 
 ### Push 1 Hardware

@@ -1,3 +1,5 @@
+> ⚠️ **Superseded (2026-10-12):** the sampler/melodic remove described here never worked. See `docs/Seqtrak/STEP-SEQUENCER.md` — verified remove is `74 [g] [index] 00`, readback `75 [g] [index]`.
+
 # Sampler Step Delete Fix
 
 ## The Bug

@@ -1098,6 +1098,8 @@ F0 43 10 7F 1C 0C 70 21 00 0A F7
 | ADD | `[track]` (0x00-0x06) | `[step] [note] [vel] [gate] [prob]` | `70 00 00 05 3C 64 00 78` |
 | DELETE | `[0x20+track]` (0x20-0x26) | `[step]` only | `70 20 00 05` |
 
+> ⚠️ **Superseded (2026-10-12):** the sampler/melodic remove described here never worked. See `docs/Seqtrak/STEP-SEQUENCER.md` — verified remove is `74 [g] [index] 00`, readback `75 [g] [index]`.
+
 ### SAMPLER Track (Channel 11) - Command `72`
 
 **Format (18 bytes total) - DIFFERENT from drums!**
