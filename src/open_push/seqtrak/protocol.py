@@ -680,40 +680,38 @@ class SeqtrakProtocol:
         data = [step]
         self._send_sysex(address, data)
 
-    def send_melodic_delete(self, track, tick):
-        """Delete a melodic note tick.
+    # Sampler / melodic note lists (verified 2026-10-12, see docs/Seqtrak/STEP-SEQUENCER.md).
+    # These tracks store an ordered list of notes; a note is addressed by its index
+    # (0 = earliest), and the list renumbers after a remove.
+    NOTE_GROUPS = {8: 0x00, 9: 0x10, 10: 0x20, 11: 0x30}  # SYNTH1, SYNTH2, DX, SAMPLER
 
-        SysEx: F0 43 10 7F 1C 0C 74 [sub+0x20] 00 [tick_hi] [tick_lo] F7
+    def add_note(self, track, tick, note, velocity=0x64, length=0):
+        """Add a note: 72 [g] 00 [tick_hi] [tick_lo] 00 [note] [vel] 00 00 [length].
 
-        Args:
-            track: Melodic track number (8-10: SYNTH1, SYNTH2, DX)
-            tick: Tick position (0-1023+)
+        length is in ticks (120 = one step). A note that reaches the next note on
+        the same pad makes the Seqtrak remove that next note, so the default is 0
+        (what the Seqtrak's own keys send).
         """
-        if not 8 <= track <= 10:
+        group = self.NOTE_GROUPS.get(track)
+        if group is None:
             return
+        data = [(tick >> 7) & 0x7F, tick & 0x7F, 0x00, note & 0x7F,
+                velocity & 0x7F, 0x00, 0x00, length & 0x7F]
+        self._send_sysex([0x72, group, 0x00], data)
 
-        sub = track - 8  # SYNTH1=0, SYNTH2=1, DX=2
-        tick_hi = (tick >> 7) & 0x7F
-        tick_lo = tick & 0x7F
+    def remove_note(self, track, index):
+        """Remove note number `index`: 74 [g] [index] 00 (the index is in the address)."""
+        group = self.NOTE_GROUPS.get(track)
+        if group is None or not 0 <= index <= 0x7F:
+            return
+        self._send_sysex([0x74, group, index], [0x00])
 
-        address = [0x74, 0x20 + sub, 0x00]
-        data = [tick_hi, tick_lo]
-        self._send_sysex(address, data)
-
-    def send_sampler_delete(self, tick):
-        """Delete a sampler tick.
-
-        SysEx: F0 43 10 7F 1C 0C 72 50 00 [tick_hi] [tick_lo] F7
-
-        Args:
-            tick: Tick position (0-1023+)
-        """
-        tick_hi = (tick >> 7) & 0x7F
-        tick_lo = tick & 0x7F
-
-        address = [0x72, 0x50, 0x00]
-        data = [tick_hi, tick_lo]
-        self._send_sysex(address, data)
+    def request_note(self, track, index):
+        """Request note number `index`: 75 [g] [index]. The reply has 8 bytes, or none past the end."""
+        group = self.NOTE_GROUPS.get(track)
+        if group is None or not 0 <= index <= 0x7F:
+            return
+        self.request_parameter([0x75, group, index])
 
 
 # =============================================================================

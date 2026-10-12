@@ -48,7 +48,10 @@ Request (`F0 43 30 7F 1C 0C [H] [M] [L] F7`, the device replies with a Parameter
    ⚠️ `74 30 00 [n]` (index in the *data*) always removes note #0 — the index belongs in the address.
 7. **SYNTH 1** (g = `00`): add, readback `75 00 [index]` and remove `74 00 [index] 00` all verified.
 8. **Clear a whole track:** `01 [10+t] 37 00` (device: hold Delete + press the track knob). Verified on
-   the sampler (`01 1A 37 00`) — cleared all pads.
+   the sampler (`01 1A 37 00`) — cleared all pads. ⚠️ It clears the variation **shown on the Seqtrak**,
+   not the one selected over MIDI with `30 5p 0F`: with the sampler switched to V2 over MIDI, the clear
+   emptied V1 and left V2. Readback (`75 g`) and remove (`74 g`) do follow the MIDI-selected variation,
+   so the bridge clears by reading the list and removing every index.
 
 To remove "pad p, step s": read `75 [g] 00, 01, …` until an empty reply, find the note whose position
 and note number match, send `74 [g] [index] 00`.

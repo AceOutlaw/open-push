@@ -495,8 +495,15 @@ class SeqtrakBridge:
         self.patch_name = ""  # Patch name (updated from Seqtrak feedback)
         self.track_preset_names = {}  # {track: name} read from Seqtrak (01 1p 35)
         self._last_track_select_sent = 0.0  # time of our own track select (echo guard)
-        self._step_read_queue = []          # pending drum step read addresses (throttled)
+        self._step_read_queue = []          # pending step/note read addresses (throttled)
         self._last_step_read_sent = 0.0
+        # Mirror of the Seqtrak's sampler note list, in index order: [(tick, note), ...].
+        # Read with 75 30 [index]; the index is what a remove (74 30 [index] 00) needs.
+        self.sampler_notes = []
+        self._sampler_read_buf = {}         # index -> (tick, note) while a read is in flight
+        self._sampler_read_next = 0         # next index to queue
+        self._sampler_read_done = True
+        self._sampler_resync_at = 0.0       # when to re-read the list (0 = not scheduled)
 
         # Active notes for proper note-off
         self.active_notes = {}  # {pad_note: midi_note}
@@ -512,7 +519,8 @@ class SeqtrakBridge:
         self.tempo = None
 
         # Master volume (0-127)
-        self.master_volume = 100
+        self.master_volume = 64  # Seqtrak default; replaced by the value read at startup
+        self._master_volume_known = False
 
         # Mixer mode state
         self.mixer_page = 0              # 0 or 1 (12 items across 2 pages)
@@ -728,7 +736,7 @@ class SeqtrakBridge:
             variation = sysex_data[0] + 1
             if self.track_variation.get(track) != variation:
                 self.track_variation[track] = variation
-                self._request_drum_steps(track)
+                self._request_track_steps(track)
                 if track == self.keyboard_track:
                     self.update_display()
 
@@ -737,7 +745,7 @@ class SeqtrakBridge:
             variation = sysex_data[0] + 1
             for track in range(1, 12):
                 self.track_variation[track] = variation
-                self._request_drum_steps(track)
+                self._request_track_steps(track)
             self.update_display()
 
         # Drum step added on the Seqtrak: 70 [track-1] 00 [step] [note] [vel] [gate] [prob]
@@ -752,12 +760,23 @@ class SeqtrakBridge:
         elif addr[0] == 0x70 and 0x40 <= addr[1] <= 0x46:
             self._set_drum_step(addr[1] - 0x40 + 1, addr[2], bool(sysex_data))
 
-        # Sampler step added/deleted on the Seqtrak:
-        # 72 30 00 / 74 73 00 [tick_hi] [tick_lo] 00 [note] [vel] 00 00 [prob]
-        elif addr in ([0x72, 0x30, 0x00], [0x74, 0x73, 0x00]) and len(sysex_data) >= 4:
-            ticks = (sysex_data[0] << 7) | sysex_data[1]
-            if ticks % 120 == 0:
-                self._set_sampler_step(sysex_data[3] - 0x3C, ticks // 120, addr[0] == 0x72)
+        # Speaker master volume (Seqtrak volume buttons, or reply to our startup read): 00 00 00 [vv]
+        elif addr == Address.MASTER_VOLUME and sysex_data:
+            changed = sysex_data[0] != self.master_volume
+            self.master_volume = sysex_data[0]
+            if changed and self._master_volume_known:
+                self._show_lcd_popup("VOLUME", self.master_volume)
+            self._master_volume_known = True
+
+        # Sampler note added (72 30 00 ...) or removal reported (74 73 00 ...) by the Seqtrak.
+        # Reports also follow replaces and overlaps, so re-read the list instead of
+        # trusting them one by one.
+        elif addr in ([0x72, 0x30, 0x00], [0x74, 0x73, 0x00]):
+            self._schedule_sampler_resync()
+
+        # Sampler note list readback: 75 30 [index] -> 8 bytes, or no data past the end
+        elif addr[0] == 0x75 and addr[1] == 0x30:
+            self._handle_sampler_note_reply(addr[2], sysex_data)
 
         # Track selected on the Seqtrak itself: 01 10 27 [0-10]
         elif addr == Address.TRACK_SELECT and sysex_data and sysex_data[0] <= 0x0A:
@@ -1147,15 +1166,20 @@ class SeqtrakBridge:
             for step in range(64):
                 self.protocol.send_drum_delete(track, step)
 
-        elif track == 11:  # Sampler track
-            # Delete all 256 possible ticks (64 steps × 4 ticks/step)
-            for tick in range(256):
-                self.protocol.send_sampler_delete(tick)
-
-        else:  # Melodic tracks (8-10: SYNTH1, SYNTH2, DX)
-            # Delete all 256 possible ticks
-            for tick in range(256):
-                self.protocol.send_melodic_delete(track, tick)
+        else:  # Sampler (11) and melodic tracks (8-10): note lists
+            # Read how many notes the selected variation holds, then remove them
+            # highest index first: 74 [g] [index] 00. (01 1p 37 00 "clear track"
+            # acts on the variation shown on the Seqtrak, not the one selected
+            # over MIDI, so it isn't used here.)
+            time.sleep(0.05)  # let the variation select land
+            count = self._read_note_list_blocking(track)
+            if count is None:
+                print(f"    Could not read notes for track {track}; nothing removed")
+                return
+            for index in reversed(range(count)):
+                self.protocol.remove_note(track, index)
+            if track == 11:
+                self._schedule_sampler_resync()
 
     def _update_mixer_display(self):
         """Update LCD for mixer mode with track volumes.
@@ -1848,7 +1872,7 @@ class SeqtrakBridge:
             pattern = self.session_patterns[mixer_pos][row]
             self.protocol.select_track_variation(track, pattern)
             self.track_variation[track] = pattern
-            self._request_drum_steps(track)
+            self._request_track_steps(track)
             launched_tracks.append(f"{MIXER_DISPLAY_NAMES[mixer_pos]}:{pattern}")
 
         self.session_launched_row = row
@@ -2505,6 +2529,7 @@ class SeqtrakBridge:
             if new_volume != self.master_volume:
                 self.master_volume = new_volume
                 self.protocol.set_master_volume(self.master_volume)
+                self._show_lcd_popup("VOLUME", self.master_volume)
                 print(f"Master Volume: {self.master_volume}")
 
         # Bar length control (CC 75)
@@ -2600,7 +2625,7 @@ class SeqtrakBridge:
 
         # Send SysEx to Seqtrak
         self.protocol.select_track_variation(track, new_var)
-        self._request_drum_steps(track)
+        self._request_track_steps(track)
 
         self.update_display()
         print(f"  Variation: {new_var}/{max_var} for {Track.NAMES.get(track, f'Track {track}')}")
@@ -3049,16 +3074,84 @@ class SeqtrakBridge:
         if self.current_pad_mode == PadMode.DRUM and track == self.selected_drum_track:
             self.update_grid()
 
-    def _set_sampler_step(self, pad_index, step_index, on):
-        """Record a sampler step state reported by the Seqtrak and redraw if visible."""
-        if not 0 <= pad_index <= 6 or not 0 <= step_index < 128:
+    def _request_track_steps(self, track):
+        """Re-read a track's steps from the Seqtrak (drums: step grid, sampler: note list)."""
+        if track == 11:
+            self._schedule_sampler_resync(0.0)
+        else:
+            self._request_drum_steps(track)
+
+    def _schedule_sampler_resync(self, delay=0.15):
+        """Re-read the sampler note list after `delay` seconds (debounced)."""
+        self._sampler_resync_at = time.time() + delay
+
+    def _request_sampler_notes(self):
+        """Queue a read of the sampler note list (75 30 0, 1, 2, ... until an empty reply)."""
+        self._sampler_read_buf = {}
+        self._sampler_read_done = False
+        self._step_read_queue = [a for a in self._step_read_queue if a[0] != 0x75]
+        self._sampler_read_next = 0
+        self._queue_sampler_reads(max(16, len(self.sampler_notes) + 8))
+
+    def _queue_sampler_reads(self, count):
+        last = min(128, self._sampler_read_next + count)
+        self._step_read_queue.extend([0x75, 0x30, i] for i in range(self._sampler_read_next, last))
+        self._sampler_read_next = last
+
+    def _handle_sampler_note_reply(self, index, data):
+        if self._sampler_read_done:
             return
-        steps = self.sampler_step_states.setdefault(pad_index, [False] * 128)
-        if steps[step_index] == on:
+        if len(data) >= 8:
+            self._sampler_read_buf[index] = ((data[0] << 7) | data[1], data[3])
+            if index == self._sampler_read_next - 1 and self._sampler_read_next < 128:
+                self._queue_sampler_reads(16)
             return
-        steps[step_index] = on
-        if self.current_pad_mode == PadMode.SAMPLER and pad_index == self.selected_sampler_pad:
-            self.update_grid()
+        # First empty reply = end of list
+        if all(i in self._sampler_read_buf for i in range(index)):
+            self._sampler_read_done = True
+            self._step_read_queue = [a for a in self._step_read_queue if a[0] != 0x75]
+            self._apply_sampler_notes([self._sampler_read_buf[i] for i in range(index)])
+
+    def _apply_sampler_notes(self, notes):
+        """Replace the sampler mirror and rebuild the per-pad step grid from it."""
+        self.sampler_notes = notes
+        states = {}
+        for tick, note in notes:
+            pad, step = note - 0x3C, round(tick / 120)
+            if 0 <= pad <= 6 and 0 <= step < 128:
+                states.setdefault(pad, [False] * 128)[step] = True
+        if states != {p: v for p, v in self.sampler_step_states.items() if any(v)}:
+            self.sampler_step_states = states
+            if self.current_pad_mode == PadMode.SAMPLER:
+                self.update_grid()
+
+    def _read_note_list_blocking(self, track, timeout=1.0):
+        """Read a sampler/melodic note list right now (used by the delete menu).
+
+        Other Seqtrak messages that arrive meanwhile are passed to the normal handler.
+        Returns the number of notes, or None if the list couldn't be read.
+        """
+        port = getattr(self, 'seqtrak_in', None)
+        if port is None:
+            return None
+        group = self.protocol.NOTE_GROUPS[track]
+        for index in range(128):
+            self.protocol.request_note(track, index)
+            deadline = time.time() + timeout
+            reply = None
+            while reply is None and time.time() < deadline:
+                for msg in port.iter_pending():
+                    d = list(msg.data) if msg.type == 'sysex' else []
+                    if len(d) >= 8 and d[0] == 0x43 and d[5:8] == [0x75, group, index]:
+                        reply = d[8:]
+                    else:
+                        self.handle_seqtrak_message(msg)
+                time.sleep(0.002)
+            if reply is None:
+                return None
+            if len(reply) < 8:
+                return index
+        return 128
 
     def _request_drum_steps(self, track):
         """Queue a read of all 128 steps of a drum track's current pattern.
@@ -3074,10 +3167,13 @@ class SeqtrakBridge:
         self._step_read_queue.extend(addrs)
 
     def _process_step_reads(self):
-        """Send queued drum step reads, one every 3 ms."""
+        """Send queued step/note reads, one every 3 ms; start due sampler re-reads."""
+        now = time.time()
+        if self._sampler_resync_at and now >= self._sampler_resync_at:
+            self._sampler_resync_at = 0.0
+            self._request_sampler_notes()
         if not self._step_read_queue:
             return
-        now = time.time()
         if now - self._last_step_read_sent < 0.003:
             return
         self._last_step_read_sent = now
@@ -3135,63 +3231,33 @@ class SeqtrakBridge:
         print(f"  Step {step_num} for {track_name}: {state_str}")
 
     def _toggle_sampler_step(self, pad_index, step_index):
-        """Toggle a step in the sampler sequencer.
+        """Toggle a sampler step (pad 0-6, step 0-127) on the Seqtrak.
 
-        Args:
-            pad_index: Sample pad index (0-6)
-            step_index: Step index (0-127)
-
-        SysEx format (verified from capture):
-            Both ADD and DELETE use the full 8-byte payload with 14-bit tick position.
-            
-            Payload: [tick_hi] [tick_lo] 00 [note] [vel] 00 00 [prob]
-            - tick: 14-bit value, 120 ticks per step (480 PPQN)
-            - note: 0x3C (60) + pad_index
-            - vel: 0x64 (100)
-            - prob: 0x78 (120)
-
-            Add Address:    72 30 00
-            Delete Address: 74 73 00
+        The sampler stores an ordered note list (see docs/Seqtrak/STEP-SEQUENCER.md):
+        - add:    72 30 00 [tick_hi] [tick_lo] 00 [3C+pad] 64 00 00 00   (length 0)
+        - remove: 74 30 [index] 00, index from the mirror read with 75 30 [index]
+        The list is re-read shortly after every edit to keep indexes exact.
         """
-        # Initialize step states for this pad if not present
-        if pad_index not in self.sampler_step_states:
-            self.sampler_step_states[pad_index] = [False] * 128
+        note = 0x3C + pad_index
+        tick = step_index * 120
+        matches = [i for i, (t, n) in enumerate(self.sampler_notes)
+                   if n == note and round(t / 120) == step_index]
 
-        # Toggle local state
-        self.sampler_step_states[pad_index][step_index] = not self.sampler_step_states[pad_index][step_index]
-        new_state = self.sampler_step_states[pad_index][step_index]
-
-        # Note: Do NOT send _sync_sampler_element here. 
-        # The logs show that sending the select command (01 10 28) is not required 
-        # and likely interferes with the step command flow.
-
-        # Calculate 14-bit tick position (16th notes @ 480 PPQN = 120 ticks)
-        ticks = step_index * 120
-        tick_hi = (ticks >> 7) & 0x7F
-        tick_lo = ticks & 0x7F
-
-        # Sample note is pad-specific (C4 + pad index).
-        sample_note = 0x3C + pad_index
-
-        # Construct full data payload (used for BOTH add and delete)
-        # [tick_hi, tick_lo, 00, note, vel, 00, 00, prob]
-        data = [tick_hi, tick_lo, 0x00, sample_note, 0x64, 0x00, 0x00, 0x78]
-
-        if new_state:
-            # Add step: 72 30 00
-            addr = [0x72, 0x30, 0x00]
+        if matches:
+            for index in reversed(matches):  # highest first so lower indexes stay valid
+                self.protocol.remove_note(11, index)
+                self.sampler_notes.pop(index)
+            on = False
         else:
-            # Delete step: 74 73 00
-            addr = [0x74, 0x73, 0x00]
+            self.protocol.add_note(11, tick, note)
+            position = sum(1 for t, _ in self.sampler_notes if t <= tick)
+            self.sampler_notes.insert(position, (tick, note))
+            on = True
 
-        self.protocol.send_parameter(addr, data)
-
-        # Update grid to show new state
+        self.sampler_step_states.setdefault(pad_index, [False] * 128)[step_index] = on
+        self._schedule_sampler_resync()
         self.update_grid()
-
-        step_num = step_index + 1
-        state_str = "ON" if new_state else "OFF"
-        print(f"  Sampler Step {step_num} for Pad {pad_index + 1}: {state_str}")
+        print(f"  Sampler Step {step_index + 1} for Pad {pad_index + 1}: {'ON' if on else 'OFF'}")
 
     def _sync_sampler_element(self, element):
         """Tell Seqtrak which sampler element (pad) is active for edits/recording."""
@@ -3845,8 +3911,10 @@ class SeqtrakBridge:
                 self.protocol.request_preset_name(track)
                 self.protocol.request_parameter([0x30, 0x50 + track - 1, 0x0F])
             self.protocol.request_parameter(Address.TEMPO)
+            self.protocol.request_parameter(Address.MASTER_VOLUME)
             for track in range(1, 8):
                 self._request_drum_steps(track)
+            self._request_sampler_notes()
 
             # Main loop - poll both Push and Seqtrak inputs
             self.running = True

@@ -47,7 +47,14 @@ pulled back to an older track. Retest on hardware.
 - Sampler delete: `72 50 00 [tick_hi] [tick_lo]` (line 1088-1130)
 - May not be implemented in `app.py`
 
-**Root cause (2026-10-11):** not the delete message. A device capture of sampler Step Input
+**Solved (2026-10-12)** — the real cause *was* the delete message. The sampler stores an indexed
+note list: read `75 30 [index]`, remove `74 30 [index] 00`. `74 73 00 …` is only the Seqtrak's report
+of a removal and is ignored as a command; the bridge's full-step note length (`… 78`) also made every
+add remove the next step. Fixed on `integration`: the sampler grid is read from the Seqtrak (including
+steps placed before the bridge started), removes use the note index, adds use length 0, and the list
+is re-read after every edit. Details: `docs/Seqtrak/STEP-SEQUENCER.md`. Awaiting hardware test.
+
+**Earlier analysis (2026-10-11, superseded):** not the delete message. A device capture of sampler Step Input
 showed add `72 30 00` / delete `74 73 00` + `[tick_hi] [tick_lo] 00 [3C+pad] 64 00 00 78`,
 byte-identical to what the bridge sends (since 7bb1841). The bug is state: the Push only knew
 steps pressed on the Push since the bridge started, so a step placed on the device (or before a
