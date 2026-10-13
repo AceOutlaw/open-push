@@ -146,6 +146,8 @@ DRUM_TRACK_COLORS = {
 # Step sequencer colors
 STEP_COLOR_ON = COLOR_GREEN
 STEP_COLOR_OFF = COLOR_DIM
+PLAYHEAD_COLOR = COLOR_WHITE      # Playhead on an empty step
+PLAYHEAD_COLOR_HIT = COLOR_YELLOW # Playhead on a set step
 
 # =============================================================================
 # NOTE REPEAT RATES (CC 36-43 → subdivision rate in beats)
@@ -485,6 +487,15 @@ class SeqtrakBridge:
         # Variation per track (defaults to variation 1)
         self.track_variation = {i: 1 for i in range(1, 12)}
 
+        # Step count per (track, variation), read from 30 5p 16..20 (16 if not read yet)
+        self.track_step_counts = {}
+
+        # Playhead, worked out from the tempo and when playback started (no MIDI clock).
+        # (start time, steps already played, BPM) while playing, else None.
+        self._playhead_origin = None
+        self._playhead_stopped_at = 0.0  # steps played at the last Stop (for Continue)
+        self._playhead_drawn = None      # (track, step) currently lit as the cursor
+
         # Variation mode: 3 or 6 variations available (global setting)
         self.variation_mode = 3  # Default: 3 variations
 
@@ -650,6 +661,12 @@ class SeqtrakBridge:
         """Handle any MIDI message from Seqtrak."""
         if msg.type == 'sysex':
             self.handle_seqtrak_sysex(msg.data)
+        elif msg.type == 'start':
+            self._playhead_start()
+        elif msg.type == 'continue':
+            self._playhead_start(self._playhead_stopped_at)
+        elif msg.type == 'stop':
+            self._playhead_stop()
         elif msg.type == 'control_change':
             # Bank Select messages
             channel = msg.channel + 1  # Convert to 1-indexed track
@@ -713,6 +730,10 @@ class SeqtrakBridge:
         # Play State
         if addr == Address.PLAY_STATE and sysex_data:
             self.is_playing = (sysex_data[0] == 0x01)
+            if self.is_playing and self._playhead_origin is None:
+                self._playhead_start()
+            elif not self.is_playing:
+                self._playhead_stop()
             self.update_transport_leds()
             self.update_display()
             print(f"Seqtrak: {'PLAYING' if self.is_playing else 'STOPPED'}")
@@ -740,6 +761,15 @@ class SeqtrakBridge:
                 self._request_track_steps(track)
                 if track == self.keyboard_track:
                     self.update_display()
+
+        # Step count per variation: 30 5[track-1] 16/18/1A/1C/1E/20 [msb] [lsb]
+        elif (addr[0] == 0x30 and 0x50 <= addr[1] <= 0x5A and 0x16 <= addr[2] <= 0x20
+              and addr[2] % 2 == 0 and len(sysex_data) >= 2):
+            track = addr[1] - 0x50 + 1
+            variation = (addr[2] - 0x16) // 2 + 1
+            steps = (sysex_data[0] << 7) | sysex_data[1]
+            if 1 <= steps <= 128:
+                self.track_step_counts[(track, variation)] = steps
 
         # Global variation indicator (Seqtrak variation buttons): 01 10 2A [0-5]
         elif addr == Address.GLOBAL_VARIATION and sysex_data:
@@ -1481,10 +1511,7 @@ class SeqtrakBridge:
                     self.set_pad_color(note, COLOR_OFF)
                 else:
                     # Get step state for selected drum track
-                    track_steps = self.step_states.get(self.selected_drum_track, [False] * 128)
-                    step_on = track_steps[step_index] if step_index < len(track_steps) else False
-                    color = STEP_COLOR_ON if step_on else STEP_COLOR_OFF
-                    self.set_pad_color(note, color)
+                    self.set_pad_color(note, self._step_pad_color(self.selected_drum_track, step_index))
 
     def _update_sampler_grid(self):
         """Update grid for sampler mode - split view like drums.
@@ -1515,10 +1542,7 @@ class SeqtrakBridge:
 
                     if step_index < 128:
                         # Get step state for selected sampler pad
-                        pad_steps = self.sampler_step_states.get(self.selected_sampler_pad, [False] * 128)
-                        step_on = pad_steps[step_index] if step_index < len(pad_steps) else False
-                        color = STEP_COLOR_ON if step_on else STEP_COLOR_OFF
-                        self.set_pad_color(note, color)
+                        self.set_pad_color(note, self._step_pad_color(Track.SAMPLER, step_index))
                     else:
                         self.set_pad_color(note, COLOR_OFF)
 
@@ -2037,6 +2061,7 @@ class SeqtrakBridge:
                 # Shift+Play = Stop (return to zero)
                 self.protocol.stop()
                 self.is_playing = False
+                self._playhead_stop()
                 self.update_transport_leds()
                 self.update_display()
                 print("  -> Sent Stop (Shift+Play = return to zero)")
@@ -2044,6 +2069,7 @@ class SeqtrakBridge:
                 # Already playing -> Stop
                 self.protocol.stop()
                 self.is_playing = False
+                self._playhead_stop()
                 self.update_transport_leds()
                 self.update_display()
                 print("■ STOP (toggle)")
@@ -2051,6 +2077,7 @@ class SeqtrakBridge:
                 # Not playing -> Play
                 self.protocol.start()
                 self.is_playing = True
+                self._playhead_start()
                 self.update_transport_leds()
                 self.update_display()
                 print("▶ PLAY")
@@ -2058,6 +2085,7 @@ class SeqtrakBridge:
         elif cc == BUTTONS['stop']:
             self.protocol.stop()
             self.is_playing = False
+            self._playhead_stop()
             self.update_transport_leds()
             self.update_display()
             print("■ STOP")
@@ -2561,8 +2589,8 @@ class SeqtrakBridge:
         """
         track = self.keyboard_track
 
-        # Get current bar length
-        current_bars = self.track_bar_length.get(track, 1)
+        # Get current bar length (from the Seqtrak's step count when it has been read)
+        current_bars = self._track_steps(track) // 16 or self.track_bar_length.get(track, 1)
 
         # Valid bar lengths (powers of 2 only)
         valid_bars = [1, 2, 4, 8]
@@ -2590,16 +2618,17 @@ class SeqtrakBridge:
         # Update local state
         self.track_bar_length[track] = new_bars
 
-        # Address: 30 5[part] 16 where part = track - 1 (0-indexed)
-        # Offset is 0x16 for melodic bar length (confirmed via MIDI capture)
+        # Address: 30 5[part] [16 + 2 * (variation - 1)] (pattern 1-6 step count)
         part = track - 1  # Convert 1-11 to 0-10
-        addr = [0x30, 0x50 + part, 0x16]
+        variation = self.track_variation.get(track, 1)
+        addr = [0x30, 0x50 + part, 0x16 + 2 * (variation - 1)]
 
         # Data: 2 bytes MSB/LSB, 16 steps per bar
         steps = new_bars * 16
         data = [steps >> 7, steps & 0x7F]
 
         self.protocol.send_parameter(addr, data)
+        self.track_step_counts[(track, variation)] = steps
 
         self.update_display()
         self._update_bar_length_buttons()
@@ -3075,6 +3104,85 @@ class SeqtrakBridge:
                     self._toggle_step(self.selected_drum_track, step_index)
 
         # Middle rows (2-3) are empty - ignore
+
+    # -------------------------------------------------------------------------
+    # Playhead (step cursor)
+    # -------------------------------------------------------------------------
+
+    def _track_steps(self, track):
+        """Step count of the track's current variation (16 until read from the Seqtrak)."""
+        return self.track_step_counts.get((track, self.track_variation.get(track, 1)), 16)
+
+    def _step_is_set(self, track, step_index):
+        if track == Track.SAMPLER:
+            steps = self.sampler_step_states.get(self.selected_sampler_pad, ())
+        else:
+            steps = self.step_states.get(track, ())
+        return step_index < len(steps) and steps[step_index]
+
+    def _step_pad_color(self, track, step_index):
+        """Pad colour for a step, with the playhead cursor on top."""
+        step_on = self._step_is_set(track, step_index)
+        if self._playhead_drawn == (track, step_index):
+            return PLAYHEAD_COLOR_HIT if step_on else PLAYHEAD_COLOR
+        return STEP_COLOR_ON if step_on else STEP_COLOR_OFF
+
+    def _step_grid_track(self):
+        """Track whose steps are on the pads, or None if no step grid is showing."""
+        if self.session_mode or self.current_mode in ('mute', 'welcome'):
+            return None
+        if self.current_pad_mode == PadMode.DRUM:
+            return self.selected_drum_track
+        if self.current_pad_mode == PadMode.SAMPLER:
+            return Track.SAMPLER
+        return None
+
+    def _step_pad_note(self, step_index):
+        """Pad note showing this step on the current page, or None if it's on another page."""
+        local = step_index - self.step_page * 32
+        if not 0 <= local < 32:
+            return None
+        row, col = 7 - local // 8, local % 8
+        return 36 + row * 8 + col
+
+    def _playhead_start(self, steps_played=0.0):
+        self._playhead_origin = (time.time(), steps_played, self.tempo or 120)
+
+    def _playhead_stop(self):
+        if self._playhead_origin is not None:
+            self._playhead_stopped_at = self._playhead_steps()
+        self._playhead_origin = None
+        self._draw_playhead(None)
+
+    def _playhead_steps(self):
+        """Sixteenth-note steps played since Start (one step = 15 / BPM seconds)."""
+        t0, steps0, bpm = self._playhead_origin
+        now = time.time()
+        steps = steps0 + (now - t0) * bpm / 15.0
+        tempo = self.tempo or 120
+        if tempo != bpm:
+            # Tempo changed while playing: carry on from here at the new speed
+            self._playhead_origin = (now, steps, tempo)
+        return steps
+
+    def _process_playhead(self):
+        """Light the pad of the step that is playing now (called from the main loop)."""
+        track = self._step_grid_track()
+        if self._playhead_origin is None or track is None:
+            self._draw_playhead(None)
+            return
+        step = int(self._playhead_steps()) % self._track_steps(track)
+        self._draw_playhead((track, step))
+
+    def _draw_playhead(self, target):
+        """Move the cursor to (track, step), or remove it with None. Repaints only two pads."""
+        if target == self._playhead_drawn:
+            return
+        old, self._playhead_drawn = self._playhead_drawn, target
+        for track, step in (p for p in (old, target) if p):
+            note = self._step_pad_note(step)
+            if note is not None and track == self._step_grid_track():
+                self.set_pad_color(note, self._step_pad_color(track, step))
 
     def _set_drum_step(self, track, step_index, on):
         """Record a drum step state reported by the Seqtrak and redraw if visible."""
@@ -3961,6 +4069,9 @@ class SeqtrakBridge:
                 self.protocol.request_parameter([0x30, 0x50 + track - 1, 0x0F])
             self.protocol.request_parameter(Address.TEMPO)
             self.protocol.request_parameter(Address.MASTER_VOLUME)
+            for track in range(1, 12):
+                for variation in range(6):
+                    self.protocol.request_parameter([0x30, 0x50 + track - 1, 0x16 + 2 * variation])
             for track in range(1, 8):
                 self._request_drum_steps(track)
             self._request_sampler_notes()
@@ -3997,6 +4108,9 @@ class SeqtrakBridge:
 
                     # Process arpeggiator
                     self._process_arpeggiator()
+
+                    # Move the step cursor
+                    self._process_playhead()
 
                     # Check LCD popup timeout
                     self._check_lcd_popup()
