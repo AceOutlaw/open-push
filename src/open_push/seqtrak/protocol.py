@@ -669,11 +669,11 @@ class SeqtrakProtocol:
 
         Args:
             track: Drum track number (1-7)
-            step: Step number (0-63)
+            step: Step number (0-127)
         """
         if not 1 <= track <= 7:
             return
-        if not 0 <= step <= 63:
+        if not 0 <= step <= 127:
             return
 
         address = [0x70, 0x20 + track - 1, 0x00]

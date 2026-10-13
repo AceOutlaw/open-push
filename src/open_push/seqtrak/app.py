@@ -496,6 +496,15 @@ class SeqtrakBridge:
         self._playhead_stopped_at = 0.0  # steps played at the last Stop (for Continue)
         self._playhead_drawn = None      # (track, step) currently lit as the cursor
 
+        # Notes recorded live (Push pads or Seqtrak keys) are not reported by the Seqtrak,
+        # so the steps on show are re-read while recording, and everything when it ends.
+        self._record_reread_at = 0.0
+
+        # After a project load or a delete, re-read the Seqtrak like at power-on.
+        self._resync_at = 0.0        # when to re-read (0 = not scheduled)
+        self._resync_full = False    # True: everything; False: steps only
+        self._seqtrak_ui_mode = 0    # 01 10 19: 00 idle, 03 step input, 04 Delete held
+
         # Variation mode: 3 or 6 variations available (global setting)
         self.variation_mode = 3  # Default: 3 variations
 
@@ -740,7 +749,10 @@ class SeqtrakBridge:
 
         # Record State
         elif addr == Address.RECORD_STATE and sysex_data:
+            was_recording = self.is_recording
             self.is_recording = (sysex_data[0] == 0x01)
+            if was_recording and not self.is_recording:
+                self._reread_all_steps()
             self.set_button_led(BUTTONS['record'], LED_ON if self.is_recording else LED_DIM)
             self.update_display()
             print(f"Seqtrak: RECORD {'ON' if self.is_recording else 'OFF'}")
@@ -770,6 +782,18 @@ class SeqtrakBridge:
             steps = (sysex_data[0] << 7) | sysex_data[1]
             if 1 <= steps <= 128:
                 self.track_step_counts[(track, variation)] = steps
+
+        # Project loaded on the Seqtrak (switched, deleted, new): it broadcasts the whole project,
+        # starting with 01 10 17 and master FX 30 43 00 ... (seen 2026-10-13 on project delete).
+        elif addr == [0x01, 0x10, 0x17]:
+            self._schedule_resync(full=True)
+
+        # Seqtrak UI mode 01 10 19: 04 = Delete held. Whatever was deleted isn't always
+        # reported step by step, so re-read the steps when Delete is let go.
+        elif addr == [0x01, 0x10, 0x19] and sysex_data:
+            if self._seqtrak_ui_mode == 0x04 and sysex_data[0] != 0x04:
+                self._schedule_resync()
+            self._seqtrak_ui_mode = sysex_data[0]
 
         # Global variation indicator (Seqtrak variation buttons): 01 10 2A [0-5]
         elif addr == Address.GLOBAL_VARIATION and sysex_data:
@@ -1153,6 +1177,7 @@ class SeqtrakBridge:
         self._clear_variation_data(track, variation)
 
         print(f"  ✓ Deleted T{track} V{variation}")
+        self._schedule_resync()
         self.delete_held = False  # Release delete mode
         self.update_display()
 
@@ -1172,6 +1197,7 @@ class SeqtrakBridge:
         self.protocol.select_track_variation(track, self.track_variation.get(track, 1))
 
         print(f"  ✓ Cleared all variations for {track_name}")
+        self._schedule_resync()
         self.delete_held = False
         self.update_display()
 
@@ -1191,6 +1217,7 @@ class SeqtrakBridge:
             self.protocol.select_track_variation(track, self.track_variation.get(track, 1))
 
         print("  ✓ Song cleared (all variations deleted)")
+        self._schedule_resync()
         self.delete_held = False
         self.update_display()
 
@@ -1201,8 +1228,8 @@ class SeqtrakBridge:
         Assumes max pattern length for safety.
         """
         if track <= 7:  # Drum tracks (1-7)
-            # Delete all 64 possible steps
-            for step in range(64):
+            # Delete all 128 possible steps
+            for step in range(128):
                 self.protocol.send_drum_delete(track, step)
 
         else:  # Sampler (11) and melodic tracks (8-10): note lists
@@ -2107,6 +2134,8 @@ class SeqtrakBridge:
                 # Normal record toggle via SysEx
                 self.is_recording = not self.is_recording
                 self.protocol.record(self.is_recording)
+                if not self.is_recording:
+                    self._reread_all_steps()
                 self.set_button_led(BUTTONS['record'], LED_ON if self.is_recording else LED_DIM)
                 self.update_display()
                 print(f"● RECORD {'ON' if self.is_recording else 'OFF'}")
@@ -3275,8 +3304,60 @@ class SeqtrakBridge:
                 return index
         return 128
 
-    def _request_drum_steps(self, track):
-        """Queue a read of all 128 steps of a drum track's current pattern.
+    def _request_seqtrak_state(self):
+        """Read everything the Push shows from the Seqtrak (power-on, project load)."""
+        for track in range(1, 12):
+            self.protocol.request_preset_name(track)
+            self.protocol.request_parameter([0x30, 0x50 + track - 1, 0x0F])
+        self.protocol.request_parameter(Address.TEMPO)
+        self.protocol.request_parameter(Address.MASTER_VOLUME)
+        for track in range(1, 12):
+            for variation in range(6):
+                self.protocol.request_parameter([0x30, 0x50 + track - 1, 0x16 + 2 * variation])
+        for track in range(1, 8):
+            self._request_drum_steps(track)
+        self._request_sampler_notes()
+
+    def _schedule_resync(self, full=False, delay=0.5):
+        """Re-read the Seqtrak after `delay` s (debounced, so a burst of changes lands first)."""
+        self._resync_full = self._resync_full or full
+        self._resync_at = time.time() + delay
+
+    def _process_resync(self):
+        if not self._resync_at or time.time() < self._resync_at:
+            return
+        self._resync_at = 0.0
+        if self._resync_full:
+            print("Seqtrak: re-reading project")
+            self._request_seqtrak_state()
+        else:
+            for track in range(1, 8):
+                self._request_drum_steps(track)
+            self._request_sampler_notes()
+        self._resync_full = False
+
+    def _reread_all_steps(self):
+        """Re-read every drum track and the sampler list (after recording)."""
+        for track in range(1, 8):
+            self._request_drum_steps(track, self._track_steps(track))
+        self._request_sampler_notes()
+
+    def _process_record_reads(self):
+        """While recording, re-read the steps on show about once a second."""
+        if not (self.is_recording and self.is_playing):
+            return
+        now = time.time()
+        if now < self._record_reread_at or self._step_read_queue:
+            return
+        self._record_reread_at = now + 1.0
+        if self.current_pad_mode == PadMode.SAMPLER:
+            self._request_sampler_notes()
+        elif self.current_pad_mode == PadMode.DRUM:
+            self._request_drum_steps(self.selected_drum_track,
+                                     self._track_steps(self.selected_drum_track))
+
+    def _request_drum_steps(self, track, count=128):
+        """Queue a read of the first `count` steps (default all 128) of a drum track's current pattern.
 
         Request 70 [0x40+track-1] [step]; the Seqtrak answers with the step's
         event data, or with no data if the step is empty. Sent throttled from
@@ -3284,7 +3365,7 @@ class SeqtrakBridge:
         """
         if not 1 <= track <= 7:
             return
-        addrs = [[0x70, 0x40 + track - 1, step] for step in range(128)]
+        addrs = [[0x70, 0x40 + track - 1, step] for step in range(count)]
         self._step_read_queue = [a for a in self._step_read_queue if a[1] != 0x40 + track - 1]
         self._step_read_queue.extend(addrs)
 
@@ -4063,18 +4144,8 @@ class SeqtrakBridge:
             self.patch_name = self._get_track_preset_display(self.keyboard_track)
             self.update_display()
 
-            # Request current state from Seqtrak (preset names + pattern per track)
-            for track in range(1, 12):
-                self.protocol.request_preset_name(track)
-                self.protocol.request_parameter([0x30, 0x50 + track - 1, 0x0F])
-            self.protocol.request_parameter(Address.TEMPO)
-            self.protocol.request_parameter(Address.MASTER_VOLUME)
-            for track in range(1, 12):
-                for variation in range(6):
-                    self.protocol.request_parameter([0x30, 0x50 + track - 1, 0x16 + 2 * variation])
-            for track in range(1, 8):
-                self._request_drum_steps(track)
-            self._request_sampler_notes()
+            # Request current state from Seqtrak
+            self._request_seqtrak_state()
 
             # Main loop - poll both Push and Seqtrak inputs
             self.running = True
@@ -4101,6 +4172,8 @@ class SeqtrakBridge:
                             self.handle_seqtrak_message(msg)
 
                     # Send queued step reads (throttled)
+                    self._process_resync()
+                    self._process_record_reads()
                     self._process_step_reads()
 
                     # Process note repeat for held pads
