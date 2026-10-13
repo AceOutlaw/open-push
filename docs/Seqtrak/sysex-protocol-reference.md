@@ -4,6 +4,17 @@ Complete MIDI protocol documentation for Yamaha Seqtrak, combining official Yama
 
 *Source: Yamaha SEQTRAK User Guide (MIDI section) + live MIDI capture logs*
 
+> **Read this before using this file (updated 2026-10-13).** The Seqtrak is not in any AI model's training
+> data; this file is the reference for what each message does. Status key: ✅ verified on hardware ·
+> 🟡 observed, not fully verified · ❓ unknown — anything unmarked from Dec 2025 should be treated as 🟡.
+> - **Step data:** the "Step Sequencer Data" section below was rewritten from verified tests; details in
+>   `docs/Seqtrak/STEP-SEQUENCER.md` (wins on any disagreement).
+> - **What a button / LED / mode does on the device:** Yamaha's user guide, text extract at
+>   `reference files/Yamaha/User Guide/SEQTRAK_user_guide_En_D0.txt` (local only) — cite its § numbers.
+> - **Official parameter addresses:** `docs/Seqtrak/midi-data-table.md` and the Data List PDFs.
+> - **How things were found + lessons:** `docs/Seqtrak/REVERSE-ENGINEERING-LOG-2026-10.md`.
+> - A message the Seqtrak *sends* may only be a report; never assume it works as a command until tested.
+
 ---
 
 # PART 1: Standard MIDI (Official Documentation)
@@ -77,6 +88,16 @@ Each track type has 15 sound categories available:
 | EQ High Gain | 20 | 1-11 | 40-88 | 64=flat |
 | EQ Low Gain | 21 | 1-11 | 40-88 | 64=flat |
 | Expression | 11 | 1-11 | 0-127 | Expression control (receive only) |
+
+**Bridge use (from code):** Device mode sends these CCs on the selected track's channel —
+drums: 7, 10, 25, 73, 75, 74, 71, 91, 94, 20, 21; synth/DX add 26, 5, 65, 27, 28, 29; DX adds 116–119;
+sampler: 7, 10, 73, 75, 74, 71, 91, 94, 20, 21. 🟡 (official CCs, "Sound design knobs ✅ Send" in
+`FUNCTIONALITY-MAP.md`; not individually verified). Used by bridge: `protocol.py:send_track_cc` ←
+`app.py:handle_encoder` (device mode, tables `DEVICE_PARAMS_*`). Mixer mode sends CC 7 per track
+(`protocol.py:set_track_volume` ← `app.py:handle_encoder`, `app.py:_adjust_drum_bus_volume` = CC 7 on
+channels 1–7 scaled by the DRUM bus level). Note: the bridge clamps every value to 0–127, not to the
+ranges above (e.g. EQ 40–88, CC 26 0–2, CC 27 0–16, CC 29 0–9). The bridge does not read these back
+(it starts each knob from a default) and ignores CCs the Seqtrak sends, except Bank Select.
 
 ### Drum-Only Parameters (Channels 1-7)
 
@@ -155,6 +176,13 @@ Each track type has 15 sound categories available:
 
 **Important**: Mute and Solo are receive-only. Seqtrak will respond to these CCs but won't send them.
 
+**Bridge use (from code):** Mute = CC 23 value `127` (on) / `0` (off) on the track's channel; Solo = CC 24
+**always sent on channel 1**, value = track 1–11, `0` = solo off. 🟡 (official CCs; mixer listed as
+working, not explicitly re-verified). Used by bridge: `protocol.py:mute_track_cc` / `solo_track_cc` ←
+`app.py:_toggle_track_mute`, `_toggle_track_mute_simple`, `_toggle_track_solo`, `_toggle_drum_bus_mute`
+(DRUM bus = mute CC on channels 1–7). The bridge can't read mute/solo back, so its LEDs don't follow
+changes made on the Seqtrak (the readable SysEx equivalents are `30 5p 29` and `30 40 68`).
+
 ---
 
 ## Transport (MIDI Realtime)
@@ -179,6 +207,29 @@ Program Change: [program]
 ```
 
 Send on the appropriate channel (1-11) for the target track.
+
+**Bank values (official, `midi-data-table.md`) and bridge use (from code):**
+| Target | Bank MSB | Bank LSB | Program | Channel | Status / used by bridge |
+|---|---|---|---|---|---|
+| Drum / Synth / DX sound | 63 (`3F`) | 0–31 preset, 32–47 user | 0–127 | track 1–10 | ✅ (official + "Preset select ✅" in `FUNCTIONALITY-MAP.md`). `app.py:_cycle_patch` (patch encoder CC 73; Shift = jump 128) |
+| SAMPLER element (pad) sound | 62 (`3E`) | 0–3 preset, 4–11 user | 0–127 (72–127 reserved) | **channel = element number** (official) | 🟡 Bridge sends on MIDI channels **1–7** for pads 1–7 (mido channel 0–6), *not* channel 11. `app.py:_cycle_sampler_pad_preset` (19e7dbd, 2025-12-24). Not verified on hardware — worth testing, since channels 1–7 are also the drum tracks |
+| Project | 64 (`40`) | 0 | 0–8 (8 = temporary) | ignored | Not used by the bridge |
+
+The bridge also **listens** for CC 0 / CC 32 / Program Change from the Seqtrak on channels 1–11
+(`app.py:handle_seqtrak_message`) and shows the looked-up preset name when it's the selected track. The
+name the Seqtrak itself reports (`01 1p 35`, Part 3) overrides this lookup.
+
+---
+
+## Notes (bridge use, from code)
+
+| What | Channel | Note | Status | Used by bridge |
+|---|---|---|---|---|
+| Drum pads | track 1–7 | 60 (`3C`, C4); the 8th pad = PERC 2 at note 67 | 🟡 | `protocol.py:trigger_note` / `release_note` ← `app.py:_handle_drum_pad`, note repeat `app.py:_process_note_repeat` |
+| Melodic keyboard | 8–10 (SYNTH 1, SYNTH 2, DX) | from the isomorphic layout | 🟡 | `protocol.py:trigger_note` ← `app.py:_handle_melodic_pad`, arpeggiator `app.py:_process_arpeggiator` (bridge-side arp, not the Seqtrak's) |
+| Sampler pads 1–7 | 11 | 60–66 (`3C`–`42`) = pad 1–7 | 🟡 (same note mapping as sampler step data, ✅ there) | `app.py:_handle_sampler_pad` (direct `note_on`/`note_off`) |
+
+Note off is sent as `8n` with velocity 0. With Accent on, the bridge replaces the velocity with a fixed accent value.
 
 ---
 
@@ -781,16 +832,40 @@ F0 43 10 7F 1C 0C [addr_h] [addr_m] [addr_l] [data...] F7
 └── SysEx start
 ```
 
+### Parameter Request (read any address) ✅
+```
+F0 43 30 7F 1C 0C [addr_h] [addr_m] [addr_l] F7      ← 3n = Parameter Request (n = device 0)
+```
+The Seqtrak answers with a normal Parameter Change (`F0 43 10 … [addr] [data] F7`) on the same address,
+or with **no data bytes** when the slot is empty (step reads `70 4t ss`, note reads `75 g i`). Works for
+official and undocumented ranges (`01 1x`, `70`, `75`) — verified 2026-10-11/12
+(`REVERSE-ENGINEERING-LOG-2026-10.md` §1). Used by bridge: `protocol.py:request_parameter`, called from
+`app.py:_request_seqtrak_state` (startup + project load: all 11 preset names `01 1p 35`, all 11
+`30 5p 0F`, tempo, master volume, all 66 `30 5p 16–20` step counts, drum steps, sampler notes),
+`app.py:_process_step_reads` (throttled to one request every 3 ms), `app.py:handle_encoder` (tempo
+when unknown), `app.py:_read_note_list_blocking`.
+
 ---
 
 ## Transport Control
 
 | Function | Address | Data | Notes |
 |----------|---------|------|-------|
-| Play State | `01 10 20` | 01=Playing, 00=Stopped | Feedback from device |
-| Record State | `01 10 21` | 01=Recording, 00=Stopped | Feedback from device |
+| Play State | `01 10 20` | 01=Playing, 00=Stopped | Feedback from device. ✅ Used by bridge: `app.py:handle_seqtrak_sysex` (transport LEDs, playhead start/stop) |
+| Record State | `01 10 21` | 01=Recording, 00=Stopped | Feedback from device. ✅ Used by bridge: `app.py:handle_seqtrak_sysex` (record LED; on 01→00 re-reads all steps, since live-recorded notes are not reported) |
+| Record (command) | `01 10 21` | 01=On, 00=Off | 🟡 The bridge **sends** this to start/stop recording — no separate command address is known. Used by bridge: `protocol.py:record` ← `app.py:handle_button` (Record) |
+| Sample Record State | `01 10 22` | 01=Sampling, 00=Stopped | ✅ Feedback from device. Used by bridge: `app.py:handle_seqtrak_sysex` |
+| Sample Record (command) | `01 10 22` | 01=On, 00=Off | 🟡 Sent by the bridge on Shift+Record, preceded by `01 10 28 [pad]` (sampler pad select). Used by bridge: `protocol.py:sample_record` ← `app.py:handle_button`. Added 2025-12-25 (d344a59), not explicitly verified |
 
 **Note**: For controlling transport, use MIDI Realtime messages (FA=Start, FC=Stop, FB=Continue).
+
+**Bridge use of realtime messages (from code):**
+| Message | Direction | Status | Used by bridge |
+|---|---|---|---|
+| FA Start | bridge → Seqtrak | ✅ | `protocol.py:start` ← `app.py:handle_button` (Play), `app.py:_launch_session_row` (starts playback if stopped) |
+| FC Stop | bridge → Seqtrak | ✅ | `protocol.py:stop` ← `app.py:handle_button` (Play toggle, Shift+Play, Stop), `app.py:run` (on exit) |
+| FB Continue | bridge → Seqtrak | — | `protocol.py:continue_playback` exists but is never called |
+| FA / FB / FC | Seqtrak → bridge | 🟡 | `app.py:handle_seqtrak_message` → playhead start / resume / stop (150927a, 2026-10-12). The bridge does **not** use F8 clock; the playhead is computed from tempo |
 
 ---
 
@@ -799,25 +874,41 @@ F0 43 10 7F 1C 0C [addr_h] [addr_m] [addr_l] [data...] F7
 ### Master Volume
 | Address | Data | Notes |
 |---------|------|-------|
-| `00 00 00` | 00-7F | **Speaker Master Volume** (official), default 64. Sent by the volume buttons, preceded by `01 10 2E 09` (volume display mode) |
-| `00 00 01` | 00-7F | **Headphone Master Volume** (official), default 32 |
+| `00 00 00` | 00-7F | ✅ **Speaker Master Volume** (official), default `0x64` = 100 (corrected from code + midi-data-table, 2026-10-12; previously read "default 64"). Sent by the volume buttons, preceded by `01 10 2E 09` (volume display mode). Readable with a Parameter Request |
+| `00 00 01` | 00-7F | **Headphone Master Volume** (official), default 32 (`0x20`) |
 
 Step size per button press not yet confirmed (only 0–2 observed).
+
+Used by bridge (09fd543, 2026-10-12; ✅ per `REVERSE-ENGINEERING-LOG-2026-10.md` §1 "Volume"):
+write `protocol.py:set_master_volume` ← `app.py:handle_encoder` (Push master encoder CC 79);
+read at startup `app.py:_request_seqtrak_state`; listen `app.py:handle_seqtrak_sysex` (shows a VOLUME popup
+when the Seqtrak's own buttons change it).
 
 ### Tempo (BPM)
 | Address | Data | Notes |
 |---------|------|-------|
 | `30 40 76` | [MSB] [LSB] | 2 bytes, 5-300 BPM. Example: `00 78` = 120 BPM |
 
+✅ (official + working). Used by bridge: write `protocol.py:set_tempo` ← `app.py:handle_encoder` (tempo
+encoder CC 14; the bridge clamps to 20–300) and `protocol.py:tap_tempo` (Tap Tempo button: the bridge
+averages up to 4 taps itself and sends the BPM here — no device tap command is known); read at startup
+`app.py:_request_seqtrak_state`; listen `app.py:handle_seqtrak_sysex`.
+
 ### Pattern Length
 | Address | Data | Notes |
 |---------|------|-------|
-| `30 40 7A` | [MSB] [LSB] | 2 bytes, 1-128 steps |
+| `30 40 7A` | [MSB] [LSB] | 2 bytes, 1-128 steps. Official name **Pattern Master Step**. Not used by the bridge (it writes the per-variation counts `30 5p 16–20` instead) |
 
 ### Swing
 | Address | Data | Notes |
 |---------|------|-------|
-| `30 40 7C` | [MSB] [LSB] | 2 bytes, swing amount |
+| `30 40 7C` | [MSB] [LSB] | 2 bytes. Official name **Swing Offset**, −58…+58, default 0. Captured on project load as `01 00` = 0 (`FUNCTIONALITY-MAP.md`) |
+
+**Corrected from code, 2025-12-24 (d107efd) + official table:** previously only "swing amount". The bridge
+sends `01 [amount]` with amount `00–1C` (0–28, even numbers only) — i.e. 0…+28 above the `01 00` centre.
+🟡 Not explicitly verified on hardware; ❓ how negative swing is encoded (presumably below `01 00`).
+Used by bridge: `protocol.py:set_swing` ← `app.py:handle_encoder` (swing encoder CC 15). The bridge does
+not read or listen for swing.
 
 ### Pattern Select Mode
 | Address | Data | Notes |
@@ -869,6 +960,11 @@ default slot contents — verify.
 | | 09 | DX |
 | | 0A | SAMPLER |
 
+✅ Both directions. Used by bridge: send `protocol.py:select_track` ← `app.py:_send_track_select` (track
+encoder CC 71, startup); listen `app.py:handle_seqtrak_sysex` (follows track changes made on the device,
+then requests that track's preset name `01 1p 35`). The bridge ignores a `01 10 27` that arrives within
+0.5 s of its own select, because the Seqtrak echoes it (4ffd6f7, 2026-10-11).
+
 ### Track Octave
 Address format: `30 5[track] 0C`
 
@@ -880,6 +976,10 @@ Address format: `30 5[track] 0C`
 | SYNTH 1 | `30 57 0C` | 3D-42 |
 
 Values: 3D=-3, 3E=-2, 3F=-1, 40=0, 41=+1, 42=+2
+
+⚠️ Yamaha's official table (`midi-data-table.md`) gives **Octave −2…+2** (`3E`–`42`); `3D` (−3) is unverified.
+Not used by the bridge (`protocol.py:set_track_octave` exists but is never called; Push octave buttons only
+shift the pad layout).
 
 ### Per-Track Variation Selection
 Address format: `30 5[track] 0F`
@@ -903,8 +1003,14 @@ Selects the active variation for a specific track. Each track can have an indepe
 **Hardware behavior (captured 2026-10-11):**
 - **Global variation change** (all tracks): Seqtrak sends `30 5p 0F vv` for all 11 tracks, then `01 10 2A vv`.
 - **Per-track change**: `01 10 27 tt` (track select), then only that track's `30 5t 0F vv` — no `01 10 2A`.
-- The bridge's `select_track_variation()` / `select_all_variations()` send exactly this. The bridge does
-  **not yet listen** for these messages, so Seqtrak-side changes don't update the Push.
+- The bridge's `select_track_variation()` sends exactly this (`select_all_variations()` exists but is not called).
+- **Corrected from code, 2026-10-11 (4ffd6f7):** the bridge now **listens** for `30 5p 0F` and `01 10 2A`
+  (`app.py:handle_seqtrak_sysex`) and **reads** all 11 `30 5p 0F` at startup / project load
+  (`app.py:_request_seqtrak_state`), so Seqtrak-side changes update the Push and trigger a step re-read.
+  ✅ readable and reported on change (`REVERSE-ENGINEERING-LOG-2026-10.md` §1).
+- Used by bridge (send): `app.py:_adjust_variation` (encoder CC 78 in track mode), `app.py:_launch_session_row`
+  (session row launch → every track), `app.py:_delete_current_variation` / `_delete_all_variations_track` /
+  `_delete_all_variations_song` (select each variation, clear it, then restore the previous one).
 
 **Note**: Mute/Solo uses documented MIDI CC, not SysEx. See official Seqtrak MIDI spec:
 - CC 23 = Mute (on any channel)
@@ -950,6 +1056,10 @@ Address format: `30 5[track] 01`
 The observed values `00 10`, `00 20`, `00 40`, `01 00` = 16, 32, 64, 128 steps — explains the
 "powers of 2" pattern.
 
+Used by bridge: write `app.py:_adjust_bar_length` (encoder CC 75: cycles 16/32/64/128 steps on the
+**current** variation's offset — corrected 150927a, 2026-10-12, it used to always write pattern 1); read
+all 66 at startup `app.py:_request_seqtrak_state`; listen `app.py:handle_seqtrak_sysex` (playhead loop length).
+
 ---
 
 ## Pattern/Variation Control
@@ -962,6 +1072,9 @@ The observed values `00 10`, `00 20`, `00 40`, `01 00` = 16, 32, 64, 128 steps �
 When Seqtrak's variation buttons are pressed (selecting all tracks at once), the device broadcasts this address as feedback. It indicates the "global" variation state when all tracks are synchronized.
 
 **Note**: To set variation per-track programmatically, use `30 5[track] 0F` (see Track Parameters section above).
+
+🟡 Used by bridge (listen only): `app.py:handle_seqtrak_sysex` sets all 11 tracks to that variation and
+re-reads their steps (4ffd6f7, 2026-10-11). The bridge never sends `01 10 2A`.
 
 ### Pattern State Broadcast
 When changing patterns, state is broadcast to all 11 tracks:
@@ -1008,12 +1121,23 @@ Values observed: `0A 0A` (active/highlighted), `01 01` (inactive)
 | `01 1p 53`/`54`/`55` | 1 byte each | ❓ Per-track sound info on track select (`09 00 02` drum/synth, `08 00` for sampler) |
 | `01 1p 5C`/`5D`/`5E` | 1 byte each | ❓ Per-track, differs per preset — likely an ID of the loaded sound |
 | `01 1n 50–52`, `59–5B` | 1 byte each | ❓ n = 0–2, sent with master-effect state on project load |
+| `01 10 17` | 00 | 🟡 First message of the **project-load broadcast** (seen on project delete 2026-10-13, burst ends `01 10 00 00`); the bridge re-reads everything after it |
+| `01 10 18` | 00/02/03/08/16 | 🟡 Device display state: `03` = a step key is held, `08` = micro timing shown, `00` = back to normal |
+| `01 10 18` (bridge write) | 02 / 00 | ❓ The bridge **sends** `02` = "6 variations", `00` = "3 variations" (Shift + encoder CC 78 in track mode; `app.py:_toggle_variation_mode`, since 059a98a, 2025-12-27). Never verified; the device read `01 10 18 = 00` while Pattern Select Mode `30 40 79 = 01` (`REVERSE-ENGINEERING-LOG-2026-10.md` §1), and the observed meaning above is display state. The official setting is probably Pattern Select Mode `30 40 79` |
+| `01 10 28` | 00-06 | 🟡 **Sampler pad (element) selected**, pad 1–7. Both directions: the device sends it when a pad is picked on the Seqtrak; the bridge sends it on Shift+pad and before sample recording. Used by bridge: `protocol.py:select_sampler_element` ← `app.py:_sync_sampler_element`, `app.py:handle_button` (Shift+Record); listen `app.py:handle_seqtrak_sysex` (redraws that pad's steps; e9017bc, 2026-10-12). Captured on track select as `01 10 28 00` (`FUNCTIONALITY-MAP.md`) |
+| `01 10 19` | 00/03/04 | ✅ Device UI mode: `03` step-input edit, `04` **Delete held**, `00` idle |
+| `01 10 20` / `21` / `22` | 00/01 | ✅ Play / Record / Sample-record state (Stop while recording sends `21 00`) |
+| `01 10 27` | 00-0A | ✅ Track selected on the device |
+| `77 01 10 [x] 00 [step]` | — | 🟡 A step key is held on the device (x = `01` SNARE, `00` KICK seen — likely track) |
+| `01 10 2E` | 31 / 0A / 03 | 🟡 Sent with step-key hold (31), micro timing (0A), release (03) — the blinking indicator |
 | `01 10 53` | 00-7F | Unknown state (seen: 09) |
 | `01 10 54` | 00-7F | Unknown state (seen: 00) |
 | `01 10 55` | 00-7F | Unknown state (seen: 02) |
 | `01 10 5C` | 00-7F | Unknown state (seen: 00) |
 | `01 10 5D` | 00-7F | Unknown state (seen: 50 = 80 decimal) |
 | `01 10 5E` | 00-7F | Unknown state (seen: 7F = 127) |
+| `01 10 2C` | 01-06 | ❓ Only in `protocol.py` (`PATTERN_VAR_B`, sent with `01 10 28` by the unused `select_variation()`). Never captured from the device for variations |
+| `01 18 30` | 00-03 | ❓ Only in `protocol.py` (`PATTERN_BANK`, "banks 1–4", unused `select_bank()`). Unverified; compare `01 17 30` (options page) and `01 1p 30` above |
 
 ---
 
@@ -1031,209 +1155,71 @@ Example from capture (SYNTH 1, channel 8):
 - Bank Select (fine): 6
 - Program: 96
 
+Bank values, the SAMPLER element variant (MSB 62, channel = element) and bridge use: see Part 1 "Sound Selection".
+
 ---
 
 ## Step Sequencer Data
 
-### DRUM Tracks (Channels 1-7) - Command `70`
+> **Status key:** ✅ verified on hardware (readback or the user's eyes) · 🟡 observed, not fully verified ·
+> ❓ unknown. Full write-up, test history and examples: `docs/Seqtrak/STEP-SEQUENCER.md` (wins if this
+> section ever disagrees). Rewritten 2026-10-13; the Dec 2025 version of this section was wrong about the
+> drum data bytes, the sampler delete (`72 50 00` never worked) and the "SYNTH/DX command `74 73`" (a report).
 
-**Format (15 bytes total):**
+### Two storage models
+| | Drum tracks 1–7 | SAMPLER (11) + SYNTH 1 / SYNTH 2 / DX (8–10) |
+|---|---|---|
+| Stored as | Fixed grid, one slot per step 0–127 | Ordered **list of notes**, addressed by **index** (0 = earliest; renumbers after a remove) |
+| Add | `70 [t] 00` + `[step] [note] [vel] [len_hi] [len_lo]` ✅ | `72 [g] 00` + 8-byte note ✅ |
+| Remove | `70 [20+t] 00` + `[step]` ✅ | **`74 [g] [index] 00`** ✅ (index in the address; `74 [g] 00 [n]` always removes #0) |
+| Read (Parameter Request) | `70 [40+t] [step]` → 6 bytes, or no data if empty ✅ | `75 [g] [index]` → 8-byte note, no data = end of list ✅ |
+| Clear whole track | — | `01 [10+t] 37 00` ✅ — but acts on the variation **shown on the device**, not the MIDI-selected one |
+
+`t` = track − 1 (KICK 0 … PERC2 6). `g` = group: SYNTH 1 `00` ✅, SYNTH 2 `10` 🟡, DX `20` 🟡, SAMPLER `30` ✅.
+Reads and edits act on the track's **currently selected variation** (`30 5p 0F`).
+
+### Drum step data (6 bytes, as read back)
 ```
-70 [track] [var] [step] [note] [vel] [dur_h] [dur_l]
-│    │      │      │      │      │      └───────────── Duration (2 bytes)
-│    │      │      │      │      └── Velocity (0-127)
-│    │      │      │      └── MIDI note (3C = 60 = C4)
-│    │      │      └── Step number (00-7F, up to 128 steps)
-│    │      └── Variation (00 = variation 1)
-│    └── Track: 00=KICK, 01=SNARE, 02=CLAP, 03=HAT1, 04=HAT2, 05=PERC1, 06=PERC2
-└── Drum step command
+[note] [vel] [substep] [60 + micro] [len_hi] [len_lo]
+  3C    64      00          3C          00       78      ← a step entered on the step keys
 ```
+| Byte | Meaning | Status |
+|---|---|---|
+| note | always `3C` so far | 🟡 |
+| vel | `64` (100) on every note so far, incl. played-in | ❓ soft/hard Push hits not yet tested |
+| substep | `00` none; seen `01`, `02`, `04` (user guide §6.4: none, ×2, ×3 8th-trip, ×3 16th-trip, ×4) | ✅ it's substep; ❓ value→option mapping |
+| 60 + micro | micro timing in ticks, −60…+59 (§6.3); `3C` = on the grid | ✅ (`6C` = +48, `0E` = −46) |
+| len (14-bit) | note length in ticks (120 = 1 step). Step entry = `00 78`; played in = key hold time (48…134 seen) | 🟡 strong evidence |
 
-**Example - KICK step 0:**
+The add command `70 [t] 00 [step] 3C 64 00 78` = note, vel, then length 120 (substep/micro not included).
+
+### Sampler / melodic note (8 bytes)
 ```
-70 00 00 00 3C 64 00 78
-   │  │  │  │  │  └────── Duration = 0x78 = 120 ticks
-   │  │  │  │  └── Velocity = 0x64 = 100
-   │  │  │  └── Note = 0x3C = 60 (C4)
-   │  │  └── Step 0
-   │  └── Variation 0
-   └── Track 0 (KICK)
+[tick_hi] [tick_lo] 00 [note] [vel] 00 [len_hi] [len_lo]
 ```
+- Position = 14-bit tick, **120 ticks per step**: step 1 `00 00`, step 2 `00 78`, step 3 `01 70`, step 6 `04 58`, step 16 `0E 08`.
+- Note: sampler pad n (1–7) = `3C + n − 1`; melodic = MIDI note. ✅
+- Length = 14-bit ticks. **The Seqtrak stops the sample when the note ends** (`0` = silent). A note that
+  reaches the next note on the same pad removes that next note. ✅ Adding at an occupied position replaces. ✅
 
-**Example - SNARE step 5:**
-```
-70 01 00 05 3C 64 00 78
-   └── Track 1 (SNARE)
-```
+### What the device reports (Seqtrak → bridge)
+| Message | When | Status |
+|---|---|---|
+| `70 [t] 00 [step] …` | drum step turned on with the step keys | ✅ |
+| `70 [20+t] 00 [step]` | drum step turned off on the device | ✅ |
+| `70 [10+t] [param] [step] [value]` | per-step edit on the device: param `00` = micro timing (60+offset), `03` = substep | ✅ report; ❓ untested as a command; ❓ probability param |
+| `72 [g] 00` + note | sampler/melodic note added on the device | ✅ |
+| `74 [70+g>>4] 00` + note | note removed (also after a replace or overlap) — **report only, sending it does nothing** | ✅ |
+| *(nothing)* | **notes recorded live** (Record on, played from Push or device keys) — they are stored and read back normally, but never reported | ✅ |
 
-**DELETE Step Format:**
-```
-70 [0x20+track] 00 [step]
-│    │              └── Step index (0-127)
-│    └── Track with 0x20 offset (delete flag)
-└── Drum step command
-```
-
-The delete command uses the **same command byte (0x70)** but adds **0x20 offset to the track byte** to indicate deletion, and sends **minimal data** (just the step index).
-
-**Example - Delete KICK step 5:**
-```
-F0 43 10 7F 1C 0C 70 20 00 05 F7
-                  │  │      └─ Step 5
-                  │  └─ Track 0 + 0x20 = 0x20 (delete flag)
-                  └─ Command 0x70 (drum step)
-```
-
-**Example - Delete SNARE step 10:**
-```
-F0 43 10 7F 1C 0C 70 21 00 0A F7
-                     │      └─ Step 10 (0x0A)
-                     └─ Track 1 + 0x20 = 0x21
-```
-
-**ADD vs DELETE Comparison:**
-
-| Operation | Track Byte | Data Bytes | Example (KICK step 5) |
-|-----------|------------|------------|----------------------|
-| ADD | `[track]` (0x00-0x06) | `[step] [note] [vel] [gate] [prob]` | `70 00 00 05 3C 64 00 78` |
-| DELETE | `[0x20+track]` (0x20-0x26) | `[step]` only | `70 20 00 05` |
-
-> ⚠️ **Superseded (2026-10-12):** the sampler/melodic remove described here never worked. See `docs/Seqtrak/STEP-SEQUENCER.md` — verified remove is `74 [g] [index] 00`, readback `75 [g] [index]`.
-
-### SAMPLER Track (Channel 11) - Command `72`
-
-**Format (18 bytes total) - DIFFERENT from drums!**
-```
-72 30 00 [step] [tick_pos] 00 [note] [vel] 00 00 [dur]
-│     │    │      │          │   │      │          └── Duration
-│     │    │      │          │   │      └── Velocity (0x64 = 100)
-│     │    │      │          │   └── Note (0x3F = 63)
-│     │    │      │          └── Padding
-│     │    │      └── Tick position within pattern (for micro-timing)
-│     │    └── Step number (00-0F)
-│     └── Unknown (always 00?)
-└── Sampler step command
-```
-
-**Tick position progression (16-step pattern):**
-| Step | Tick Pos | Calculation |
-|------|----------|-------------|
-| 0 | 00 00 | Step 0 at tick 0 |
-| 0 | 00 78 | Step 0 at tick 120 (alternative position?) |
-| 1 | 01 70 | Step 1 at tick 112? |
-| 2 | 02 68 | Step 2 at tick 104? |
-| ... | ... | Decreasing by 8 |
-| 15 | 0F 00 | Step 15 |
-
-**Note**: The tick position byte needs more analysis - may relate to swing or micro-timing.
-
-**DELETE Step Format (NEWLY DISCOVERED):**
-```
-72 50 00 [tick_hi] [tick_lo]
-│     │      └───────────────── Tick position (14-bit encoded)
-│     └── 0x50 = 0x30 + 0x20 (delete flag)
-└── Sampler step command
-```
-
-The sampler delete follows the **same 0x20 offset pattern** as drums:
-- ADD uses `72 30 00` → DELETE uses `72 50 00` (0x30 + 0x20)
-- DELETE sends **minimal data** (just tick position, no note/velocity/duration)
-
-**Tick Calculation:**
-- Ticks = step_index × 120
-- Encoded as 14-bit: `tick_hi = (ticks >> 7) & 0x7F`, `tick_lo = ticks & 0x7F`
-
-**Example - Delete sampler step 0:**
-```
-Step 0 = 0 × 120 = 0 ticks
-Tick encoding: tick_hi = 0x00, tick_lo = 0x00
-
-F0 43 10 7F 1C 0C 72 50 00 00 00 F7
-                  │  │      └──┴─ Tick position (0)
-                  │  └─ 0x50 (0x30 + 0x20 = delete flag)
-                  └─ Command 0x72 (sampler)
-```
-
-**Example - Delete sampler step 10:**
-```
-Step 10 = 10 × 120 = 1200 ticks = 0x4B0
-14-bit split: tick_hi = 0x09, tick_lo = 0x30
-
-F0 43 10 7F 1C 0C 72 50 00 09 30 F7
-                           └──┴─ Tick position (1200)
-```
-
-**Example - Delete sampler step 127:**
-```
-Step 127 = 127 × 120 = 15240 ticks = 0x3B88
-14-bit split: tick_hi = 0x77, tick_lo = 0x08
-
-F0 43 10 7F 1C 0C 72 50 00 77 08 F7
-                           └──┴─ Tick position (15240)
-```
-
-**ADD vs DELETE Comparison:**
-
-| Operation | Address | Data Bytes | Example (step 0) |
-|-----------|---------|------------|------------------|
-| ADD | `72 30 00` | `[tick_hi] [tick_lo] 00 [note] [vel] 00 00 [dur]` | `72 30 00 00 00 00 3C 64 00 00 78` |
-| DELETE | `72 50 00` | `[tick_hi] [tick_lo]` only | `72 50 00 00 00` |
-
-### SYNTH/DX Tracks - Command `74`
-
-**Format (18 bytes total) - Same as sampler:**
-```
-74 73 00 [step] [tick_pos] 00 [note] [vel] 00 00 [dur]
-│  │   │    │      │          │   │      │          └── Duration
-│  │   │    │      │          │   │      └── Velocity
-│  │   │    │      │          │   └── Note
-│  │   │    │      │          └── Padding
-│  │   │    │      └── Tick position (micro-timing)
-│  │   │    └── Step number (00-0F)
-│  │   └── Variation? (always 00?)
-│  └── Sub-command (73)
-└── Synth/DX step command
-```
-
-**Example sequence (16 steps descending tick positions):**
-```
-74 73 00 00 00 00 3C 64 00 00 78  Step 0, tick 0
-74 73 00 00 78 00 3C 64 00 00 78  Step 0, tick 120
-74 73 00 01 70 00 3C 64 00 00 78  Step 1
-74 73 00 02 68 00 3C 64 00 00 78  Step 2
-...
-74 73 00 0E 08 00 3C 64 00 00 78  Step 14
-74 73 00 0F 00 00 3C 64 00 00 78  Step 15
-```
-
-### Step Delete Pattern Summary
-
-All step sequencer DELETE commands follow a consistent pattern:
-
-**Common Pattern:**
-1. **Same command byte** as ADD (0x70 for drums, 0x72 for sampler)
-2. **Add 0x20 offset** to the middle byte of the ADD address
-3. **Minimal data** - only the step identifier (not full step data)
-
-**Why This Pattern:**
-- Uses address offset (0x20) as a "delete flag" instead of a separate command
-- Minimal data reduces MIDI bandwidth
-- Consistent across all track types
-
-**Summary Table:**
-
-| Track Type | ADD Address | DELETE Address | Step Identifier | Notes |
-|------------|-------------|----------------|-----------------|-------|
-| Drum (KICK) | `70 00 00` | `70 20 00` | `[step]` (0-127) | Direct step index |
-| Drum (SNARE) | `70 01 00` | `70 21 00` | `[step]` (0-127) | Direct step index |
-| ... | ... | ... | ... | All drums use +0x20 |
-| Sampler | `72 30 00` | `72 50 00` | `[tick_hi] [tick_lo]` | Ticks (step × 120) |
-
-**Pattern Recognition:**
-- Drum: `70 [track] 00` → `70 [track+0x20] 00`
-- Sampler: `72 30 00` → `72 50 00` (0x30 + 0x20)
-
-This pattern was discovered through code implementation and hardware verification after the official Yamaha documentation did not include DELETE command specifications.
+### Step-related LEDs and modes (Yamaha user guide)
+- **Purple step key = Parameter Lock** on that step (§9.2, p. 64). A VOLUME parameter lock changes the
+  note's velocity. ❓ where parameter locks are stored in SysEx.
+- Micro timing: hold a lit step key + turn the track knob (§6.3). Substep: hold a lit step key 2 s (§6.4).
+  Probability: hold a lit step key + [MUTE], 8 levels (§6.6). Note length (synth/sampler only): hold a
+  lit step key + turn [ALL] (§7.9, §8.10).
+- Pattern length 1–128 steps per variation: `30 5p 16/18/1A/1C/1E/20` (2 bytes, = steps) ✅ readable.
+  Lengthening copies existing bars into the new ones; shortening keeps data past the end (§5.2).
 
 ---
 
@@ -1243,7 +1229,15 @@ Long-form message (110 bytes) contains preset name as ASCII:
 
 **Address**: `01 1p 35` — **per track** (p = track 0–A). `01 10 35` is KICK; e.g. `01 17 35` =
 SYNTH1, `01 18 35` = SYNTH2, `01 19 35` = DX. Sent as part of the track-select state dump.
-(Bridge currently only matches `01 10 35`.)
+
+**Corrected from code, 2026-10-11 (4b05c4c — "Verified on pibridge with Seqtrak + Push 1"):** ✅ the bridge
+now **requests** `01 1p 35` with a Parameter Request (`F0 43 30 7F 1C 0C 01 1p 35 F7`) and accepts the
+reply on any `01 10–1A 35` (previously it only matched `01 10 35`). Used by bridge:
+`protocol.py:request_preset_name` ← `app.py:_request_seqtrak_state` (all 11 at startup), `_select_next_track`,
+`_select_prev_track`, `handle_seqtrak_sysex` (device track change); decode `app.py:_decode_preset_name`.
+
+**Encoding (Yamaha 7-bit packing):** groups of 8 bytes = 1 high-bit byte + 7 data bytes. Bit `0x40 >> j`
+of the high-bit byte is bit 7 of data byte j. The name ends at the first decoded `00`.
 
 **Example:**
 ```
@@ -1423,9 +1417,13 @@ These appear to be synth/modulation parameters:
 | `41 ep` / `42 ep` | Sound element osc/amp/pitch, filter/EQ/LFO (e = element, p = part) — official |
 | `48 09` / `49 o9` | DX common / operator — official |
 | `50 eA xx` | SAMPLER sample (start/end/loop per pad) — official |
-| `70 xx xx` | Drum step data (tracks 0-6) |
-| `72 xx xx` | Sampler step data (track 10) |
-| `74 xx xx` | Synth/DX step data (tracks 7-9) |
+| `70 xx xx` | Drum step data (tracks 0-6): add `70 0t`, remove `70 2t`, read `70 4t`, per-step edit report `70 1t` |
+| `72 g 00` | Sampler/melodic **note add** (g = `00` SYNTH 1, `10` SYNTH 2, `20` DX, `30` SAMPLER) |
+| `74 g [index]` | Sampler/melodic **note remove** by index; `74 7g 00` = removal *report* from the device |
+| `75 g [index]` | Sampler/melodic **note read** (Parameter Request) |
+
+*(`72`/`74`/`75` rows corrected from code, 2026-10-12 (09fd543); previously "72 = sampler (track 10)",
+"74 = Synth/DX (tracks 7-9)". See "Step Sequencer Data".)*
 
 ---
 
@@ -1439,14 +1437,76 @@ These parameters are NOT in the official MIDI CC spec and require SysEx:
 4. **Pattern length** - `30 40 7A`
 5. **Swing** - `30 40 7C`
 6. **Track octave** - `30 5x 0C`
-7. **Step sequence data** - `70 xx` (drums), `72 xx` (sampler)
+7. **Step sequence data** - `70 xx` (drums), `72`/`74`/`75` (sampler + melodic note lists)
 8. **Pattern/variation select** - `30 5x 0F`
 9. **Track select** - `01 10 27`
-10. **Preset names** - `01 10 35`
+10. **Preset names** - `01 1p 35` (per track)
+11. **Master volume** - `00 00 00`
+12. **Record / sample record** - `01 10 21` / `01 10 22`
+13. **Sampler pad select** - `01 10 28`
+
+---
+
+## Messages used by the bridge (from code)
+
+Index of every Seqtrak message in `src/open_push/seqtrak/` as of 2026-10-12 (branch `integration`, 150927a +
+working tree). No other module under `src/open_push/` talks to the Seqtrak. Details are in the sections
+linked above; this table is the cross-check. → = bridge to Seqtrak, ← = Seqtrak to bridge, R = read with a
+Parameter Request.
+
+| Message | Dir | Status | Used by bridge |
+|---|---|---|---|
+| FA Start / FC Stop | → | ✅ | `app.py:handle_button`, `_launch_session_row`, `run` |
+| FA / FB / FC | ← | 🟡 | `app.py:handle_seqtrak_message` (playhead) |
+| Note on/off, ch 1–7 note 60 (+67) | → | 🟡 | `app.py:_handle_drum_pad`, `_process_note_repeat` |
+| Note on/off, ch 8–10 | → | 🟡 | `app.py:_handle_melodic_pad`, `_process_arpeggiator` |
+| Note on/off, ch 11 notes 60–66 | → | 🟡 | `app.py:_handle_sampler_pad` |
+| Sound CCs 5, 7, 10, 20, 21, 25–29, 65, 71, 73–75, 91, 94, 116–119 | → | 🟡 | `app.py:handle_encoder` (device mode) |
+| CC 7 volume | → | 🟡 | `app.py:handle_encoder` (mixer), `_adjust_drum_bus_volume` |
+| CC 23 mute / CC 24 solo (ch 1) | → | 🟡 | `app.py:_toggle_track_mute`, `_toggle_track_mute_simple`, `_toggle_track_solo`, `_toggle_drum_bus_mute` |
+| CC 0 / 32 + Program Change, MSB 63, ch 1–10 | → ← | ✅ | `app.py:_cycle_patch`; listen `handle_seqtrak_message` |
+| CC 0 / 32 + Program Change, MSB 62, ch 1–7 (sampler pads) | → | 🟡 | `app.py:_cycle_sampler_pad_preset` |
+| Parameter Request `F0 43 30 7F 1C 0C [addr] F7` | → | ✅ | `protocol.py:request_parameter` |
+| `00 00 00` speaker master volume | → ← R | ✅ | `app.py:handle_encoder`, `handle_seqtrak_sysex`, `_request_seqtrak_state` |
+| `01 10 17` project-load broadcast start | ← | 🟡 | `app.py:handle_seqtrak_sysex` → full re-read |
+| `01 10 18` 02/00 "3/6 variations" | → | ❓ | `app.py:_toggle_variation_mode` |
+| `01 10 19` UI mode (04 = Delete held) | ← | ✅ | `app.py:handle_seqtrak_sysex` → step re-read on release |
+| `01 10 20` play state | ← | ✅ | `app.py:handle_seqtrak_sysex` |
+| `01 10 21` record | → ← | ✅ ← / 🟡 → | `protocol.py:record` ← `app.py:handle_button`; `handle_seqtrak_sysex` |
+| `01 10 22` sample record | → ← | ✅ ← / 🟡 → | `protocol.py:sample_record` ← `app.py:handle_button`; `handle_seqtrak_sysex` |
+| `01 10 27` track select | → ← | ✅ | `app.py:_send_track_select`; `handle_seqtrak_sysex` |
+| `01 10 28` sampler pad select | → ← | 🟡 | `app.py:_sync_sampler_element`, `handle_button`; `handle_seqtrak_sysex` |
+| `01 10 2A` global variation | ← | 🟡 | `app.py:handle_seqtrak_sysex` |
+| `01 1p 35` preset name (110 B) | ← R | ✅ | `protocol.py:request_preset_name`; `app.py:handle_seqtrak_sysex`, `_decode_preset_name` |
+| `30 40 76` tempo | → ← R | ✅ | `app.py:handle_encoder`, `protocol.py:tap_tempo`; `handle_seqtrak_sysex` |
+| `30 40 7C` swing `01 [00–1C]` | → | 🟡 | `app.py:handle_encoder` |
+| `30 5p 0F` pattern select | → ← R | ✅ | `app.py:_adjust_variation`, `_launch_session_row`, delete menu; `handle_seqtrak_sysex` |
+| `30 5p 16–20` pattern 1–6 step count | → ← R | ✅ R / 🟡 → | `app.py:_adjust_bar_length`; `handle_seqtrak_sysex`, `_request_seqtrak_state` |
+| `70 0t 00` drum add / report | → ← | ✅ | `app.py:_toggle_step`; `handle_seqtrak_sysex` |
+| `70 2t 00` drum remove / report | → ← | ✅ | `app.py:_toggle_step`, `protocol.py:send_drum_delete` ← `_clear_variation_data`; `handle_seqtrak_sysex` |
+| `70 4t [step]` drum read | R | ✅ | `app.py:_request_drum_steps`, `handle_seqtrak_sysex` |
+| `72 30 00` sampler note add / report | → ← | ✅ | `protocol.py:add_note` ← `app.py:_toggle_sampler_step`; report → re-read |
+| `74 g [index] 00` note remove | → | ✅ (g = `30`; `00/10/20` via delete menu, SYNTH 2/DX 🟡) | `protocol.py:remove_note` ← `app.py:_toggle_sampler_step`, `_clear_variation_data` |
+| `74 73 00` removal report | ← | ✅ | `app.py:handle_seqtrak_sysex` → sampler re-read |
+| `75 g [index]` note read | R | ✅ | `app.py:_request_sampler_notes`, `_read_note_list_blocking`, `_handle_sampler_note_reply` |
+
+The bridge only listens for **sampler** note reports and replies (`72 30`, `74 73`, `75 30`); melodic
+(SYNTH/DX) reports are ignored, and melodic notes are only read by the delete menu.
+
+**Defined in `protocol.py` but never called by the app** (not evidence that they work):
+`continue_playback` (FB), `set_scale` `30 40 7E`, `set_key` `30 40 7F`, `set_track_octave` `30 5p 0C`,
+`select_all_variations`, `select_variation` (`01 10 28` + `01 10 2C`), `select_bank` (`01 18 30`),
+`set_track_pan` / `set_track_filter` / `set_track_reverb` / `set_track_delay` / `set_drum_pitch` /
+`set_arp_type` (CC helpers; device mode uses `send_track_cc` instead), constants `DISPLAY_MODE` `01 10 2E`,
+`REVERB_TYPE` `30 41 00`, `REVERB_ON` `30 41 46`, `DELAY_TYPE` `30 42 00`, `DELAY_ON` `30 42 47`,
+`MASTER_FX_1–4` `30 43–46 00`, and CC 102–115 (master / single / send FX params).
 
 ---
 
 ## Raw Capture Archive
+
+> Raw Dec 2025 captures, kept for reference. The byte annotations here predate the verified format —
+> use the Step Sequencer Data section above for meanings (e.g. sampler position is one 14-bit tick).
 
 ### Kick Drum - 16 Steps (for reference)
 ```
@@ -1491,13 +1551,15 @@ These parameters are NOT in the official MIDI CC spec and require SysEx:
 ## Still To Decode
 
 ### Completed
-- [x] Synth track step data - Uses command `74 73` (same format as sampler)
+- [x] Synth/sampler step data - note list: add `72 [g] 00`, read `75 [g] [i]`, remove `74 [g] [i] 00` (✅ 2026-10-12; `74 73` is only a removal report)
 - [x] Drum step delete - Command `70 [0x20+track] 00 [step]` (0x20 offset pattern)
-- [x] Sampler step delete - Command `72 50 00 [tick_hi] [tick_lo]` (0x30 + 0x20 = 0x50)
+- [x] Sampler step delete - `74 30 [index] 00` (✅ 2026-10-12; the old `72 50 00` never worked)
+- [x] Drum step bytes - `[note] [vel] [substep] [60+micro] [len 14-bit]` (micro + substep ✅ 2026-10-13)
+- [x] Live-recorded notes are not reported; project-load broadcast starts `01 10 17` (2026-10-13)
 - [x] Sound engine parameter structure (31 xx xx) - Identified 1x, 2x, 3x sub-ranges
 - [x] Effect parameter structure (41 xx xx) - Identified drum and synth track addressing
 - [x] Arpeggiator/motion parameters (50 xx xx) - Identified base addresses
-- [x] Track filter parameter (30 5x 16) - 2-byte values
+- [x] `30 5p 16…20` - **pattern 1–6 step counts** (not a filter; ✅ readable 2026-10-12)
 - [x] Effect type MSB/LSB codes - See "Effect Type Reference" section (70+ effect types documented)
 - [x] Arpeggio preset types - See "Arpeggio Presets Reference" section (16 presets)
 - [x] DX FM algorithms - See "DX Algorithm Chart" section (12 algorithms)
@@ -1510,6 +1572,9 @@ These parameters are NOT in the official MIDI CC spec and require SysEx:
 - [x] Choke groups — `30 5p 08` (official + captured, 2026-10-11)
 
 ### Remaining
+- [ ] Substep value → option mapping; probability (§6.6) per-step param; velocity on played-in drum notes
+- [ ] Where Parameter Locks (purple steps, §9.2) are stored
+- [ ] Whether `70 [10+t] [param] [step] [value]` works as a command
 - [ ] Pattern copy/paste SysEx commands
 - [ ] Load preset / load project commands from the app (needs MIDI Monitor spy mode)
 - [ ] Meaning of `01 1p 53–55`, `01 1p 5C–5E`, `01 1n 50–5B`, `01 10 1D–1F` (see `FUNCTIONALITY-MAP.md`)
@@ -1534,3 +1599,32 @@ This document was compiled from:
 - Live MIDI capture sessions using MIDI Monitor
 - `reference files/Yamaha/Seqtrak Data List/md/Seqtrak SysEX Data.md`
 - Experimentation with Seqtrak hardware
+- Bridge code audit 2026-10-12 (`src/open_push/seqtrak/app.py`, `protocol.py`) — see "Messages used by the bridge"
+
+---
+
+## Code comments that disagree with verified docs
+
+Found in the 2026-10-12 code audit. The docs win; these comments (not necessarily the behaviour) should be
+fixed in the code later.
+
+1. **Drum step add bytes** — `app.py:_toggle_step` (docstring + `data = [step, note, 0x64, 0x00, 0x78]  # step,
+   note, vel, gate, prob`) and the `70 [t] 00` branch comment in `app.py:handle_seqtrak_sysex`
+   (`[note] [vel] [gate] [prob]`) call the last two bytes gate and probability. Verified: they are a 14-bit
+   **length** in ticks, `00 78` = 120 = one step (`STEP-SEQUENCER.md`; the RE log: "the last byte is the note
+   length in ticks, not probability"). The bytes sent are right; only the labels are wrong.
+2. **Bar length "powers of 2 only"** — `app.py:_adjust_bar_length` docstring ("Hardware limitation: Only
+   supports powers of 2 (1, 2, 4, 8 bars)", from 3c088b7). Official Pattern n Step is any value 1–128 (user guide §5.2).
+   Powers of 2 are only what had been observed.
+3. **`01 10 18` = 3/6 variation mode** — `app.py:_toggle_variation_mode` docstring states `02` enables 6
+   variations. Unverified (❓ in the RE log); the observed meaning of `01 10 18` is device display state.
+4. **Variation via `01 10 28` + `01 10 2C`** — `protocol.py` (`PATTERN_VAR_A/B`, `select_variation`:
+   "Seqtrak uses paired messages for variation"). Captures show variations use `30 5p 0F` (+ `01 10 2A`),
+   and `01 10 28` is the sampler pad select. Dead code, but a trap if anyone calls it.
+5. **Preset name address** — `protocol.py` `Address.PRESET_NAME = 01 10 35` ("ASCII preset name (up to 16
+   chars)"). It is per track, `01 1p 35`, and 7-bit packed, not plain ASCII (the code that is actually used,
+   `request_preset_name` / `_decode_preset_name`, is correct).
+6. **Track octave range** — `protocol.py:set_track_octave` ("-3 to +2", `3D`–`42`). Official: −2…+2.
+7. **SysEx header labels** — `protocol.py` module docstring calls `7F` "Category (bulk/system)" and `1C`
+   "Sub-group". Official: `7F 1C` together is the **Group Number** (`midi-data-table.md`). (This doc's
+   "General SysEx Format" diagram has the same old labels.)
