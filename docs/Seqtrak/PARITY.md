@@ -40,6 +40,14 @@ Rows marked — (physical or automatic) aren't counted.
 
 ### BUGS — Push has the feature, but it misbehaves (fix these first)
 
+> **Status 2026-10-14 (code fixed, not yet tested on hardware):** 1 (`42d6679`); 2, 3, 5 (partly), 6, 7, 8,
+> 9, 10, 11 (key + scale; octave left alone — the Seqtrak's octave only shifts its own keys, guide §7.3) in the
+> KM-100 bug-fix commit. 4 is **not a bug**: the pad sound change already sends what the SEQTRAK app sends
+> (Bank MSB 62 on the pad's channel, capture 106-16). 5 now reads volume, pan, sends, EQ, drum pitch/attack/
+> decay, mono/poly and portamento back; cutoff/resonance, synth decay, arp and FM have no known 1:1 SysEx value.
+> New: the bridge waits for the Push and Seqtrak instead of exiting when one isn't plugged in.
+
+
 1. **Drum pattern delete leaves steps 65–128.** Delete menu loops steps 0–127 (`_clear_variation_data`,
    app.py:1232) but `send_drum_delete` silently drops any step > 63 (protocol.py:676). Also ❓ whether
    `70 2t` deletes act on the MIDI-selected variation or the one shown on the Seqtrak (the sampler/synth

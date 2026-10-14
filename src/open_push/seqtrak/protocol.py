@@ -154,6 +154,7 @@ class Address:
     PRESET_NAME = [0x01, 0x10, 0x35]    # ASCII preset name (up to 16 chars)
 
     # Scale/Key
+    PATTERN_SELECT_MODE = [0x30, 0x40, 0x79]  # 00 = 3 patterns, 01 = 6 patterns (app capture 2026-10-14)
     SCALE = [0x30, 0x40, 0x7E]          # 0-7
     KEY = [0x30, 0x40, 0x7F]            # 0x40-0x4B (C-B)
 
@@ -419,15 +420,30 @@ class SeqtrakProtocol:
         lsb = bpm & 0x7F
         self._send_sysex(Address.TEMPO, [msb, lsb])
 
-    def set_swing(self, amount):
-        """Set swing amount (0-28, even numbers only)."""
-        amount = max(0, min(28, amount))
-        amount = (amount // 2) * 2  # Force even
-        self._send_sysex(Address.SWING, [0x01, amount])
+    def set_swing(self, offset):
+        """Set swing as an offset in ticks, -58..+58 (0 = straight).
+
+        Sent as 128 + offset in a 7-bit pair (Data List default 01 00). Like the SEQTRAK app
+        (capture 112-01), also write it to the arpeggiator swing of SYNTH 1, SYNTH 2 and DX.
+        """
+        value = 128 + max(-58, min(58, offset))
+        data = [(value >> 7) & 0x7F, value & 0x7F]
+        self._send_sysex(Address.SWING, data)
+        for part in (7, 8, 9):
+            self._send_sysex([0x31, 0x50 + part, 0x16], data)
+
+    @staticmethod
+    def swing_percent(offset):
+        """The app's swing %: a 16th's offset in ticks against an 8th (240 ticks)."""
+        return round((120 + offset) * 100 / 240)
 
     # -------------------------------------------------------------------------
     # Scale/Key
     # -------------------------------------------------------------------------
+
+    def set_pattern_select_mode(self, six):
+        """3 or 6 patterns per track (SETTINGS > PATTERNS in the app): 30 40 79 00/01."""
+        self._send_sysex(Address.PATTERN_SELECT_MODE, [0x01 if six else 0x00])
 
     def set_scale(self, scale_type):
         """Set scale type (0-7, use Scale constants)."""

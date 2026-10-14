@@ -327,6 +327,49 @@ DEVICE_PARAMS_SAMPLER = [
     ],
 ]
 
+def sysex_address_for_cc(track, cc):
+    """The SysEx parameter a Sound Design CC sets, so the Push can read the real value.
+
+    From the SEQTRAK app click-through (APP-CLICKTHROUGH-P1.md) and the Data List; the CC and
+    SysEx values share one scale for these (e.g. pitch 40-88 = 0x28-0x58, 0x40 = centre).
+    Not listed (no known 1:1 SysEx value): filter cutoff/resonance (one combined LPF/HPF value
+    in SysEx), synth/sampler decay, arp type/gate/speed, the FM macros.
+    """
+    p = track - 1
+    kind = get_track_type(track)
+    table = {
+        7: [0x30, 0x50 + p, 0x00],    # volume
+        10: [0x30, 0x50 + p, 0x01],   # pan
+        91: [0x31, 0x10 + p, 0x19],   # reverb send
+        94: [0x31, 0x10 + p, 0x1A],   # delay send
+        20: [0x31, 0x10 + p, 0x4D],   # EQ high gain
+        21: [0x31, 0x10 + p, 0x48],   # EQ low gain
+    }
+    if kind == 'drum':
+        table.update({25: [0x31, 0x10 + p, 0x1C],   # pitch (note shift)
+                      73: [0x31, 0x10 + p, 0x2C],   # attack
+                      75: [0x31, 0x10 + p, 0x2D]})  # decay
+    elif kind in ('synth', 'dx'):
+        table.update({26: [0x31, 0x10 + p, 0x23],   # mono / poly / chord
+                      5: [0x31, 0x10 + p, 0x1F],    # portamento time
+                      65: [0x31, 0x10 + p, 0x1E]})  # portamento switch
+        # attack: SYNTH 31 1p 2C; DX's amp envelope is the carrier offset 31 19 01
+        table[73] = [0x31, 0x10 + p, 0x01 if kind == 'dx' else 0x2C]
+    return table.get(cc)
+
+
+# Value ranges of the Sound Design CCs that aren't 0-127 (user guide §18.3.1)
+CC_RANGES = {
+    10: (1, 127),   # pan
+    20: (40, 88),   # EQ high gain
+    21: (40, 88),   # EQ low gain
+    25: (40, 88),   # drum pitch
+    26: (0, 2),     # mono / poly / chord
+    27: (0, 16),    # arp type (0 = off)
+    29: (0, 9),     # arp speed
+    65: (0, 1),     # portamento switch
+}
+
 # Track type to parameter pages mapping
 DEVICE_PARAMS = {
     'drum': DEVICE_PARAMS_DRUM,
@@ -511,6 +554,9 @@ class SeqtrakBridge:
 
         # Track states (1-11)
         self.track_states = [MuteState.UNMUTED] * 11
+        self.track_muted = [False] * 11      # Seqtrak mute per track (30 5p 29)
+        self.solo_track = 0                  # the one soloed track, 0 = none (30 40 68)
+        self._drum_solo_saved_mutes = {}     # SYNTH/DX/SAMPLER mutes to restore after DRUM bus solo
 
         # Selected track for keyboard input (default SYNTH 1)
         self.keyboard_track = Track.SYNTH1
@@ -534,6 +580,10 @@ class SeqtrakBridge:
         self.scale_index = 1  # Minor
         self.scale_scroll_offset = 0
         self.root_note = 0  # C
+        # The Seqtrak project's 8 scale slots (30 4D [16*slot + 0..6] = pad notes) and the selected
+        # slot (30 40 7E). Push scales are matched to a slot by their intervals.
+        self.seqtrak_scale_slots = {}
+        self.seqtrak_scale_slot = None
         self.in_key_mode = True
 
         # Tempo (for display, synced from Seqtrak on startup)
@@ -553,7 +603,7 @@ class SeqtrakBridge:
         self.drum_bus_muted = False
         self.drum_bus_soloed = False
 
-        # Swing (0-28, even numbers only)
+        # Swing offset in ticks, -58..+58 (0 = straight; the app shows (120 + offset) / 240 as %)
         self.swing = 0
 
         # Accent mode (fixed velocity)
@@ -590,6 +640,14 @@ class SeqtrakBridge:
         # Device mode state
         self.device_page = 0  # 0-1 for different parameter pages
         self.device_params = {}  # Cache: {(track, param_name): value}
+        # SysEx address -> (track, CC), to fill that cache from the Seqtrak (read at start and
+        # whenever the Seqtrak reports a change, e.g. its own knobs)
+        self._cc_for_sysex = {}
+        for track in range(1, 12):
+            for cc in (7, 10, 91, 94, 20, 21, 25, 73, 75, 26, 5, 65):
+                addr = sysex_address_for_cc(track, cc)
+                if addr:
+                    self._cc_for_sysex[tuple(addr)] = (track, cc)
 
         # Session view state (clip-launcher style)
         self.session_mode = False
@@ -737,6 +795,18 @@ class SeqtrakBridge:
         addr = list(data[5:8])
         sysex_data = list(data[8:])
 
+        # A Sound Design value the Push shows (volume, pan, sends, EQ, pitch, ...): keep the
+        # Push's copy in step with the Seqtrak so the first encoder turn doesn't jump
+        param = self._cc_for_sysex.get(tuple(addr))
+        if param and sysex_data:
+            track, cc = param
+            self.device_params[(track, cc)] = sysex_data[0]
+            if cc == 7:
+                self.track_volumes[track - 1] = sysex_data[0]
+            if track == self.keyboard_track and self.current_mode in ('device', 'mixer'):
+                self.update_display()
+            return
+
         # Play State
         if addr == Address.PLAY_STATE and sysex_data:
             self.is_playing = (sysex_data[0] == 0x01)
@@ -805,6 +875,10 @@ class SeqtrakBridge:
             self._seqtrak_ui_mode = sysex_data[0]
 
         # Global variation indicator (Seqtrak variation buttons): 01 10 2A [0-5]
+        # 3 or 6 patterns per track: 30 40 79 00/01 (read at start, reported on change)
+        elif addr == Address.PATTERN_SELECT_MODE and sysex_data:
+            self._set_variation_mode(6 if sysex_data[0] else 3)
+
         elif addr == Address.GLOBAL_VARIATION and sysex_data:
             variation = sysex_data[0] + 1
             for track in range(1, 12):
@@ -873,6 +947,32 @@ class SeqtrakBridge:
                 self.patch_name = name
                 self.update_display()
             print(f"Seqtrak: {Track.NAMES.get(track, f'Track {track}')} preset '{name}'")
+
+        # Mute per track: 30 5p 29, 7D = muted, 00 = not (Data List; read at start, reported on change)
+        elif addr[0] == 0x30 and 0x50 <= addr[1] <= 0x5A and addr[2] == 0x29 and sysex_data:
+            self.track_muted[addr[1] - 0x50] = sysex_data[0] != 0
+            self._sync_track_states()
+            self._refresh_mute_solo_view()
+
+        # Solo: 30 40 68 = the soloed track 1-11, 0 = none
+        elif addr == [0x30, 0x40, 0x68] and sysex_data:
+            self.solo_track = sysex_data[0] if sysex_data[0] <= 11 else 0
+            self._sync_track_states()
+            self._refresh_mute_solo_view()
+
+        # Key 30 40 7F = 0x40 + semitone; scale 30 40 7E = project slot 0-7; slot pad notes 30 4D
+        elif addr == Address.KEY and sysex_data and 0x40 <= sysex_data[0] <= 0x4B:
+            self.root_note = sysex_data[0] - 0x40
+            self._follow_seqtrak_scale()
+        elif addr == Address.SCALE and sysex_data and sysex_data[0] <= 7:
+            self.seqtrak_scale_slot = sysex_data[0]
+            self._follow_seqtrak_scale()
+        elif addr[:2] == [0x30, 0x4D] and sysex_data and (addr[2] & 0x0F) <= 6:
+            self.seqtrak_scale_slots.setdefault(addr[2] >> 4, {})[addr[2] & 0x0F] = sysex_data[0]
+
+        # Swing: 128 + offset in ticks (7-bit pair)
+        elif addr == Address.SWING and len(sysex_data) >= 2:
+            self.swing = ((sysex_data[0] << 7) | sysex_data[1]) - 128
 
         # Tempo
         elif addr == Address.TEMPO and len(sysex_data) >= 2:
@@ -981,7 +1081,7 @@ class SeqtrakBridge:
             # Line 1: Track name, patch info, mode info, variation label
             self.set_lcd_segments(1, kb_track, self.patch_name or "", mode_info, "Variation")
             # Line 2: Step sequencer info, variation value
-            self.set_lcd_segments(2, f"Steps:{selected_drum}", page_info, f"{bars} Bar(s)", f"Var {variation}")
+            self.set_lcd_segments(2, f"Steps:{selected_drum}", page_info, self._pattern_length_label(), f"Var {variation}")
             # Line 3: Variation mode display
             self.set_lcd_segments(3, "", "", "", var_mode_str)
             # Line 4: BPM
@@ -998,7 +1098,7 @@ class SeqtrakBridge:
             # Line 1: Track name, mode labels, variation label
             self.set_lcd_segments(1, kb_track, "SAMPLER", "STEP", "Variation")
             # Line 2: Selected pad, step info, bar length, variation value
-            self.set_lcd_segments(2, f"Pad {pad_num}", page_info, f"{bars} Bar(s)", f"Var {variation}")
+            self.set_lcd_segments(2, f"Pad {pad_num}", page_info, self._pattern_length_label(), f"Var {variation}")
             # Line 3: Variation mode display
             self.set_lcd_segments(3, "", "", "", var_mode_str)
             # Line 4: BPM
@@ -1013,7 +1113,7 @@ class SeqtrakBridge:
             # Line 1: Track name, patch info, mode label, variation label
             self.set_lcd_segments(1, kb_track, self.patch_name or "", "MELODIC", "Variation")
             # Line 2: Scale, octave, bar length, variation value
-            self.set_lcd_segments(2, f"{root_name} {scale_name}", f"Oct {octave}", f"{bars} Bar(s)", f"Var {variation}")
+            self.set_lcd_segments(2, f"{root_name} {scale_name}", f"Oct {octave}", self._pattern_length_label(), f"Var {variation}")
             # Line 3: Variation mode display
             self.set_lcd_segments(3, "", "", "", var_mode_str)
             # Line 4: BPM
@@ -1140,7 +1240,7 @@ class SeqtrakBridge:
         self.set_lcd_segments(1, "DELETE MENU", "", "", f"{track_name} V{variation}")
 
         # Line 2: Delete options
-        self.set_lcd_segments(2, "[1] Current Var", "[2] All Vars (T)", "[3] All (Song)", "")
+        self.set_lcd_segments(2, "[1] Current Var", "[2] All Vars (T)", "[3] Cur Var AllT", "")
 
         # Line 3: Description
         self.set_lcd_segments(3, f"Delete V{variation}", f"Delete all 6", "Clear song", "")
@@ -1211,21 +1311,13 @@ class SeqtrakBridge:
         self.update_display()
 
     def _delete_all_variations_song(self):
-        """Level 3: Delete all variations for all tracks (clear song)."""
-        print("  Deleting all variations for all tracks...")
-
-        for track in range(1, 12):  # Tracks 1-11
-            track_name = Track.NAMES.get(track, f"T{track}")
-            print(f"    Clearing {track_name}...")
-
-            for variation in range(1, 7):  # Variations 1-6
-                self.protocol.select_track_variation(track, variation)
-                self._clear_variation_data(track, variation)
-
-            # Return the track to the variation it was on (not left on V6)
-            self.protocol.select_track_variation(track, self.track_variation.get(track, 1))
-
-        print("  ✓ Song cleared (all variations deleted)")
+        """Level 3: delete the current pattern on every track, like DELETE + [ALL] (guide §5.4)."""
+        print("  Deleting the current pattern on all tracks...")
+        for track in range(1, 12):
+            variation = self.track_variation.get(track, 1)
+            self.protocol.select_track_variation(track, variation)
+            self._clear_variation_data(track, variation)
+        print("  ✓ Current pattern deleted on all tracks")
         self._schedule_resync()
         self.delete_held = False
         self.update_display()
@@ -1672,10 +1764,56 @@ class SeqtrakBridge:
         self.update_grid()
 
     def _apply_scale_changes(self):
-        """Apply current scale settings to layout."""
+        """Apply current scale settings to layout, and send key and scale to the Seqtrak.
+
+        Key and scale only change the Seqtrak's own Synth keys and chords (guide §7.4, §7.5);
+        the Push pads already play the notes. The scale is sent only if one of the project's
+        8 scale slots has the same intervals.
+        """
         self.layout.set_scale(self.root_note, SCALE_NAMES[self.scale_index])
         self.layout.set_in_key_mode(self.in_key_mode)
         self.update_grid()
+        self.protocol.set_key_from_semitone(self.root_note)
+        slot = self._seqtrak_slot_for_scale(SCALE_NAMES[self.scale_index])
+        if slot is None:
+            print("  (not one of the Seqtrak project's 8 scales; Seqtrak scale unchanged)")
+        elif slot != self.seqtrak_scale_slot:
+            self.seqtrak_scale_slot = slot
+            self.protocol.set_scale(slot)
+
+    def _slot_intervals(self, slot):
+        notes = self.seqtrak_scale_slots.get(slot, {})
+        if len(notes) < 5 or 0 not in notes:
+            return None
+        return frozenset((notes[i] - notes[0]) % 12 for i in notes)
+
+    def _seqtrak_slot_for_scale(self, scale_name):
+        want = frozenset(SCALES[scale_name])
+        for slot in range(8):
+            if self._slot_intervals(slot) == want:
+                return slot
+        return None
+
+    def _push_scale_for_slot(self, slot):
+        have = self._slot_intervals(slot)
+        if have is None:
+            return None
+        if frozenset(SCALES[SCALE_NAMES[self.scale_index]]) == have:
+            return self.scale_index
+        for i, name in enumerate(SCALE_NAMES):
+            if frozenset(SCALES[name]) == have:
+                return i
+        return None
+
+    def _follow_seqtrak_scale(self):
+        """Show the Seqtrak's key and scale on the Push (when it is one the Push knows)."""
+        if self.seqtrak_scale_slot is not None:
+            index = self._push_scale_for_slot(self.seqtrak_scale_slot)
+            if index is not None:
+                self.scale_index = index
+        self.layout.set_scale(self.root_note, SCALE_NAMES[self.scale_index])
+        self.update_grid()
+        self.update_display()
 
     def _scroll_scale(self, direction):
         """Scroll through scale list."""
@@ -2439,7 +2577,7 @@ class SeqtrakBridge:
                 self.protocol.request_parameter(Address.TEMPO)
                 return
 
-            new_tempo = max(20, min(300, self.tempo + tempo_delta))
+            new_tempo = max(5, min(300, self.tempo + tempo_delta))
             if new_tempo != self.tempo:
                 self.tempo = new_tempo
                 self.protocol.set_tempo(self.tempo)
@@ -2448,13 +2586,13 @@ class SeqtrakBridge:
 
         # Swing encoder (CC 15)
         elif cc == 15:
-            # Swing range: 0-28, even numbers only
-            new_swing = max(0, min(28, self.swing + (delta * 2)))
+            # -58..+58 ticks; one click = 2 ticks (1 % in the app), like the app's arrows
+            new_swing = max(-58, min(58, self.swing + (delta * 2)))
             if new_swing != self.swing:
                 self.swing = new_swing
                 self.protocol.set_swing(self.swing)
                 self.update_display()
-                print(f"Swing: {self.swing}")
+                print(f"Swing: {self.swing:+d} ticks ({self.protocol.swing_percent(self.swing)}%)")
 
         # Session mode: CC 71-78 encoders set pattern for selected slot
         # Must be checked BEFORE device/mixer modes to block other encoder behavior
@@ -2522,7 +2660,8 @@ class SeqtrakBridge:
                     val_delta = value - 128
 
                 # Calculate new value with limits
-                new_val = max(0, min(127, current_val + val_delta))
+                low, high = CC_RANGES.get(param_cc, (0, 127))
+                new_val = max(low, min(high, current_val + val_delta))
 
                 if new_val != current_val:
                     self.device_params[cache_key] = new_val
@@ -2613,64 +2752,53 @@ class SeqtrakBridge:
 
         # Bar length control (CC 75)
         elif cc == 75:
-            self._adjust_bar_length(delta)
+            self._adjust_bar_length(delta, by_steps=True)
 
-    def _adjust_bar_length(self, delta):
-        """Adjust bar/loop length for current track.
+    def _adjust_bar_length(self, delta, by_steps=False):
+        """Change the current track's pattern length, like the Seqtrak (guide §5.2).
 
-        Uses SysEx to set the pattern step count on Seqtrak.
-        Address: 30 5[part] 16 where part = track - 1 (0-10)
-        Data: 2 bytes MSB/LSB, value = steps (16 per bar)
-
-        Hardware limitation: Only supports powers of 2 (1, 2, 4, 8 bars).
-        No support for 3, 5, 6, or 7 bars.
+        Bar length buttons: 1, 2, 4 or 8 bars (wrapping). Encoder: any length from 1 to 128
+        steps, one step per click, or one bar (16 steps) per click with Shift held.
         """
         track = self.keyboard_track
+        current = self._track_steps(track) or 16 * self.track_bar_length.get(track, 1)
+        if by_steps:
+            unit = 16 if self.shift_held else 1
+            if unit == 16:
+                # A bar at a time, landing on whole bars (24 steps -> up 32, down 16)
+                if delta > 0:
+                    steps = (current // 16 + delta) * 16
+                else:
+                    steps = ((current - 1) // 16 + 1 + delta) * 16
+                steps = max(16, min(128, steps))
+            else:
+                steps = max(1, min(128, current + delta))
+        else:
+            valid = [16, 32, 64, 128]
+            if delta > 0:
+                bigger = [v for v in valid if v > current]
+                steps = bigger[0] if bigger else valid[0]
+            else:
+                smaller = [v for v in valid if v < current]
+                steps = smaller[-1] if smaller else valid[-1]
+        if steps != current:
+            self._set_pattern_steps(track, steps)
 
-        # Get current bar length (from the Seqtrak's step count when it has been read)
-        current_bars = self._track_steps(track) // 16 or self.track_bar_length.get(track, 1)
+    def _pattern_length_label(self):
+        """'2 Bar(s)', or the step count when it isn't whole bars (e.g. '24 Steps')."""
+        steps = self._track_steps(self.keyboard_track) or 16 * self.track_bar_length.get(self.keyboard_track, 1)
+        return f"{steps // 16} Bar(s)" if steps % 16 == 0 else f"{steps} Steps"
 
-        # Valid bar lengths (powers of 2 only)
-        valid_bars = [1, 2, 4, 8]
-
-        # Find current index in valid_bars
-        try:
-            current_index = valid_bars.index(current_bars)
-        except ValueError:
-            # If somehow we have an invalid value, reset to 1 bar
-            current_index = 0
-            current_bars = 1
-
-        # Calculate new index
-        new_index = current_index + delta
-
-        # Wrap around (8 bars -> 1 bar, 1 bar -> 8 bars)
-        new_index = new_index % len(valid_bars)
-
-        new_bars = valid_bars[new_index]
-
-        # If no change, don't send anything
-        if new_bars == current_bars:
-            return
-
-        # Update local state
-        self.track_bar_length[track] = new_bars
-
-        # Address: 30 5[part] [16 + 2 * (variation - 1)] (pattern 1-6 step count)
-        part = track - 1  # Convert 1-11 to 0-10
+    def _set_pattern_steps(self, track, steps):
+        # Address: 30 5[part] [16 + 2 * (variation - 1)] (pattern 1-6 step count), 2 bytes
         variation = self.track_variation.get(track, 1)
-        addr = [0x30, 0x50 + part, 0x16 + 2 * (variation - 1)]
-
-        # Data: 2 bytes MSB/LSB, 16 steps per bar
-        steps = new_bars * 16
-        data = [steps >> 7, steps & 0x7F]
-
-        self.protocol.send_parameter(addr, data)
+        addr = [0x30, 0x50 + track - 1, 0x16 + 2 * (variation - 1)]
+        self.protocol.send_parameter(addr, [steps >> 7, steps & 0x7F])
         self.track_step_counts[(track, variation)] = steps
-
+        self.track_bar_length[track] = max(1, (steps + 15) // 16)
         self.update_display()
         self._update_bar_length_buttons()
-        print(f"  Bar Length: {new_bars} bar(s) ({steps} steps)")
+        print(f"  Pattern length: {steps} steps ({steps / 16:g} bars)")
 
     def _update_bar_length_buttons(self):
         """Update bar length button LEDs based on current bar count.
@@ -2711,24 +2839,13 @@ class SeqtrakBridge:
         print(f"  Variation: {new_var}/{max_var} for {Track.NAMES.get(track, f'Track {track}')}")
 
     def _toggle_variation_mode(self):
-        """Toggle between 3 and 6 variation modes.
+        """Toggle between 3 and 6 patterns per track (Seqtrak project setting 30 40 79)."""
+        self._set_variation_mode(6 if self.variation_mode == 3 else 3)
+        self.protocol.set_pattern_select_mode(self.variation_mode == 6)
+        print(f"  Variation Mode: {self.variation_mode} variations")
 
-        Sends SysEx to Seqtrak to enable/disable 6 variation mode.
-        Address: 01 10 18
-        Data: 02 = enable 6 variations, 00 = 3 variations (default)
-        """
-        # Toggle between 3 and 6
-        if self.variation_mode == 3:
-            self.variation_mode = 6
-            # Send SysEx to enable 6 variations
-            self.protocol.send_parameter([0x01, 0x10, 0x18], [0x02])
-            print("  Variation Mode: 6 variations enabled")
-        else:
-            self.variation_mode = 3
-            # Send SysEx to disable 6 variations (back to 3)
-            self.protocol.send_parameter([0x01, 0x10, 0x18], [0x00])
-            print("  Variation Mode: 3 variations (default)")
-
+    def _set_variation_mode(self, mode):
+        self.variation_mode = mode
         # Clamp current variations to new max
         for track in range(1, 12):
             if self.track_variation.get(track, 1) > self.variation_mode:
@@ -3320,6 +3437,18 @@ class SeqtrakBridge:
             self.protocol.request_parameter([0x30, 0x50 + track - 1, 0x0F])
         self.protocol.request_parameter(Address.TEMPO)
         self.protocol.request_parameter(Address.MASTER_VOLUME)
+        self.protocol.request_parameter(Address.PATTERN_SELECT_MODE)
+        self.protocol.request_parameter(Address.SWING)
+        self.protocol.request_parameter([0x30, 0x40, 0x68])
+        for addr in self._cc_for_sysex:
+            self.protocol.request_parameter(list(addr))
+        for slot in range(8):
+            for pad in range(7):
+                self.protocol.request_parameter([0x30, 0x4D, slot * 16 + pad])
+        self.protocol.request_parameter(Address.SCALE)
+        self.protocol.request_parameter(Address.KEY)
+        for track in range(1, 12):
+            self.protocol.request_parameter([0x30, 0x50 + track - 1, 0x29])
         for track in range(1, 12):
             for variation in range(6):
                 self.protocol.request_parameter([0x30, 0x50 + track - 1, 0x16 + 2 * variation])
@@ -3696,66 +3825,67 @@ class SeqtrakBridge:
             preset_name = get_preset_name_short(11, pad_info['bank_msb'], pad_info['bank_lsb'], pad_info['program'])
             print(f"[S] Pad{element + 1} (note {midi_note}): {preset_name}")
 
+    # Mute and solo. On the Seqtrak they are independent: any number of tracks can be muted
+    # (CC 23 / 30 5p 29), but only ONE track can be soloed (CC 24 value = track, 30 40 68;
+    # SEQTRAK app capture 110-02). Un-soloing brings the track's own mute back (guide §5.8.2).
+    # self.track_muted / self.solo_track hold that; self.track_states is derived for the LEDs.
+
+    def _refresh_mute_solo_view(self):
+        if self.current_mode == 'mixer':
+            self._update_mixer_button_leds()
+        else:
+            self.update_grid()
+
+    def _sync_track_states(self):
+        for i in range(11):
+            if self.solo_track == i + 1:
+                self.track_states[i] = MuteState.SOLO
+            else:
+                self.track_states[i] = MuteState.MUTED if self.track_muted[i] else MuteState.UNMUTED
+
+    def _set_mute(self, track, muted):
+        self.track_muted[track - 1] = muted
+        self.protocol.mute_track_cc(track, muted=muted)
+
+    def _set_solo(self, track):
+        """Solo one track (1-11), or none (0). Mutes are left alone."""
+        if self.drum_bus_soloed and track:
+            self._end_drum_bus_solo()
+        self.solo_track = track
+        self.protocol.solo_track_cc(track)
+
     def _toggle_track_mute(self, track):
         """Toggle track mute state: unmuted → muted → solo → unmuted."""
-        current = self.track_states[track - 1]
         track_name = Track.NAMES.get(track, f"Track {track}")
-
-        if current == MuteState.UNMUTED:
-            new_state = MuteState.MUTED
-            self.protocol.mute_track_cc(track, muted=True)
-        elif current == MuteState.MUTED:
-            new_state = MuteState.SOLO
-            self.protocol.mute_track_cc(track, muted=False)
-            self.protocol.solo_track_cc(track)
+        if self.solo_track == track:
+            self._set_solo(0)
+        elif self.track_muted[track - 1]:
+            self._set_mute(track, False)
+            self._set_solo(track)
         else:
-            new_state = MuteState.UNMUTED
-            self.protocol.solo_track_cc(0)
-            self.protocol.mute_track_cc(track, muted=False)
-
-        self.track_states[track - 1] = new_state
+            self._set_mute(track, True)
+        self._sync_track_states()
         self.update_grid()
-        print(f"{track_name}: {['UNMUTED', 'MUTED', 'SOLO'][new_state]}")
+        print(f"{track_name}: {['UNMUTED', 'MUTED', 'SOLO'][self.track_states[track - 1]]}")
 
     def _toggle_track_mute_simple(self, track):
-        """Toggle track mute state (simple: unmuted ↔ muted, clears solo)."""
-        current = self.track_states[track - 1]
+        """Toggle track mute (muting a soloed track also ends the solo)."""
         track_name = MIXER_TRACK_ABBREV.get(track, f"T{track}")
-
-        if current == MuteState.MUTED:
-            # Unmute
-            new_state = MuteState.UNMUTED
-            self.protocol.mute_track_cc(track, muted=False)
-        else:
-            # Mute (also clears solo)
-            new_state = MuteState.MUTED
-            if current == MuteState.SOLO:
-                self.protocol.solo_track_cc(0)  # Clear solo first
-            self.protocol.mute_track_cc(track, muted=True)
-
-        self.track_states[track - 1] = new_state
+        muted = not self.track_muted[track - 1]
+        if muted and self.solo_track == track:
+            self._set_solo(0)
+        self._set_mute(track, muted)
+        self._sync_track_states()
         self._update_mixer_button_leds()
-        print(f"{track_name}: {'MUTED' if new_state == MuteState.MUTED else 'UNMUTED'}")
+        print(f"{track_name}: {'MUTED' if muted else 'UNMUTED'}")
 
     def _toggle_track_solo(self, track):
-        """Toggle track solo state (clears mute if setting solo)."""
-        current = self.track_states[track - 1]
+        """Solo this track (un-soloing any other), or un-solo it; its own mute comes back."""
         track_name = MIXER_TRACK_ABBREV.get(track, f"T{track}")
-
-        if current == MuteState.SOLO:
-            # Unsolo
-            new_state = MuteState.UNMUTED
-            self.protocol.solo_track_cc(0)
-        else:
-            # Solo (clears mute)
-            new_state = MuteState.SOLO
-            if current == MuteState.MUTED:
-                self.protocol.mute_track_cc(track, muted=False)
-            self.protocol.solo_track_cc(track)
-
-        self.track_states[track - 1] = new_state
+        self._set_solo(0 if self.solo_track == track else track)
+        self._sync_track_states()
         self._update_mixer_button_leds()
-        print(f"{track_name}: {'SOLO' if new_state == MuteState.SOLO else 'UNMUTED'}")
+        print(f"{track_name}: {'SOLO' if self.solo_track == track else 'UNSOLO'}")
 
     def _adjust_drum_bus_volume(self, delta):
         """Adjust master drum level, scaling all drum track volumes.
@@ -3783,41 +3913,35 @@ class SeqtrakBridge:
     def _toggle_drum_bus_mute(self):
         """Mute/unmute all drum tracks together."""
         self.drum_bus_muted = not self.drum_bus_muted
-
         for track in DRUM_BUS_TRACKS:
-            if self.drum_bus_muted:
-                self.protocol.mute_track_cc(track, muted=True)
-                self.track_states[track - 1] = MuteState.MUTED
-            else:
-                self.protocol.mute_track_cc(track, muted=False)
-                self.track_states[track - 1] = MuteState.UNMUTED
-
-        # Clear solo if we're unmuting
-        if not self.drum_bus_muted:
-            self.drum_bus_soloed = False
-
+            self._set_mute(track, self.drum_bus_muted)
+        self._sync_track_states()
         self._update_mixer_button_leds()
         print(f"DRUM Bus: {'MUTED' if self.drum_bus_muted else 'UNMUTED'}")
 
     def _toggle_drum_bus_solo(self):
-        """Solo/unsolo all drum tracks together."""
-        self.drum_bus_soloed = not self.drum_bus_soloed
+        """Solo the drum tracks together.
 
+        The Seqtrak can only solo one track, so the bus solo mutes the other tracks
+        (SYNTH 1/2, DX, SAMPLER) and un-soloing gives them back their own mute.
+        """
         if self.drum_bus_soloed:
-            # Solo all drum tracks (clear mute first)
-            self.drum_bus_muted = False
-            for track in DRUM_BUS_TRACKS:
-                self.protocol.mute_track_cc(track, muted=False)
-                self.protocol.solo_track_cc(track)
-                self.track_states[track - 1] = MuteState.SOLO
+            self._end_drum_bus_solo()
         else:
-            # Unsolo all drum tracks
-            for track in DRUM_BUS_TRACKS:
-                self.protocol.solo_track_cc(0)
-                self.track_states[track - 1] = MuteState.UNMUTED
-
+            self._set_solo(0)
+            self._drum_solo_saved_mutes = {t: self.track_muted[t - 1] for t in range(8, 12)}
+            for track in range(8, 12):
+                self._set_mute(track, True)
+            self.drum_bus_soloed = True
+        self._sync_track_states()
         self._update_mixer_button_leds()
-        print(f"DRUM Bus: {'SOLO' if self.drum_bus_soloed else 'UNMUTED'}")
+        print(f"DRUM Bus: {'SOLO' if self.drum_bus_soloed else 'UNSOLO'}")
+
+    def _end_drum_bus_solo(self):
+        for track, muted in self._drum_solo_saved_mutes.items():
+            self._set_mute(track, muted)
+        self._drum_solo_saved_mutes = {}
+        self.drum_bus_soloed = False
 
     def _update_mixer_button_leds(self):
         """Update button LEDs for mixer mode mute/solo states.
@@ -4053,24 +4177,23 @@ class SeqtrakBridge:
         print("=" * 60)
         print()
 
-        # Find ports
+        # Find ports. On the headless Pi the service may start before the Push or the Seqtrak
+        # is plugged in (or switched on), so wait for both instead of exiting.
         print("Searching for MIDI ports...")
-        push_in_name, push_out_name = self.find_push_ports()
-        seqtrak_name = find_seqtrak_port()
-
-        if not push_out_name:
-            print("\nERROR: Could not find Ableton Push!")
-            print("\nAvailable MIDI outputs:")
-            for name in mido.get_output_names():
-                print(f"  - {name}")
-            return
-
-        if not seqtrak_name:
-            print("\nERROR: Could not find Seqtrak!")
-            print("\nAvailable MIDI outputs:")
-            for name in mido.get_output_names():
-                print(f"  - {name}")
-            return
+        reported = False
+        while True:
+            push_in_name, push_out_name = self.find_push_ports()
+            seqtrak_name = find_seqtrak_port()
+            if push_out_name and seqtrak_name:
+                break
+            if not reported:
+                missing = [n for n, ok in (("Ableton Push", push_out_name), ("Seqtrak", seqtrak_name)) if not ok]
+                print(f"\nWaiting for: {', '.join(missing)} (checking every 2 s)")
+                print("Available MIDI outputs:")
+                for name in mido.get_output_names():
+                    print(f"  - {name}")
+                reported = True
+            time.sleep(2)
 
         # Find Seqtrak input port (for receiving SysEx feedback)
         seqtrak_in_name = None
