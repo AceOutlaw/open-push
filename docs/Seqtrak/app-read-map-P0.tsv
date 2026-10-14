@@ -1,0 +1,1139 @@
+time	addr	reply	official_block	name	range	desc	default	app_pages_in_that_batch
+00:20:22.568	31 10 1C	40	31 1p 1C	Nt Shift	28  58	24  +24it	40	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.570	30 50 01	40	30 5p 01	Pan	01 - 7F	L63 ... C ... R63	40	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.573	30 50 00	64	30 5p 00	Volume	00 - 7F	0 - 127	64	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.575	31 10 2C	40	31 1p 2C	AEG Attack Time	00 - 7F	-64 - +63	40	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.577	31 10 2D	40	31 1p 2D	AEG Decay Time	00 - 7F	-64 - +63	40	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.580	31 30 03	02 00	31 3p 03	Insertion-B Parameter 1 MSB	00 - 7F	˶	02 00	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.582	31 30 05	00 10	31 3p 05	Insertion-B Parameter 2 MSB	00 - 7F	˶	00 10	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.584	31 10 19	00	31 1p 19	Reverb Send	00 - 7F	0 - 127	00	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.586	31 10 1A	00	31 1p 1A	Variation Send	00 - 7F	0 - 127	00	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.589	31 10 4D	40	31 1p 4D	2bandEQ High Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.591	31 10 48	40	31 1p 48	2bandEQ Low Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.593	01 10 30	00						MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.595	30 40 76	00 64	30 40 76	Tempo		5-300 BPM	120 (0x0078)	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.598	01 10 20	00						MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.617	30 45 00	0C 7C	30 4n 00	Master Effect Type MSB	00 - 7F	Refer to Effect Parameter List	Refer to Effect	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.627	01 12 50	18						MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.630	01 12 51	(no reply)						MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.632	01 12 52	(no reply)						MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.801	30 45 03	00 00	30 4n 03	Master Effect Parameter 1 MSB	00 - 7F	˶	Refer to Effect	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.803	30 45 05	00 08	30 4n 05	Master Effect Parameter 2 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.805	30 45 07	00 00	30 4n 07	Master Effect Parameter 3 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.807	30 45 09	00 64	30 4n 09	Master Effect Parameter 4 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.810	30 45 0B	00 00	30 4n 0B	Master Effect Parameter 5 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.812	30 45 0D	00 00	30 4n 0D	Master Effect Parameter 6 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.814	30 45 0F	00 7F	30 4n 0F	Master Effect Parameter 7 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.817	30 45 11	00 40	30 4n 11	Master Effect Parameter 8 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.819	30 45 15	00 7F	30 4n 15	Master Effect Parameter 10 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.821	30 45 17	00 00	30 4n 17	Master Effect Parameter 11 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.824	30 45 19	00 4A	30 4n 19	Master Effect Parameter 12 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.826	30 45 1B	00 00	30 4n 1B	Master Effect Parameter 13 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:22.828	30 45 1D	00 4F	30 4n 1D	Master Effect Parameter 14 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:24.931	01 10 56	00						MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:24.933	01 10 57	01						MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:24.936	01 10 58	04						MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:24.938	30 41 44	2E	30 41 44	Reverb Return	00 - 7F	0 - 127	2E	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:24.940	30 41 00	01 01	30 41 00	Reverb Type MSB	00 - 7F	Refer to Effect Parameter List	01 01	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:25.135	30 41 03	00 15	30 41 03	Reverb Parameter 1 MSB	00 - 7F	˶	init value for	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:25.137	30 41 05	00 0A	30 41 05	Reverb Parameter 2 MSB	00 - 7F	˶	init value for	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:25.139	30 41 07	00 08	30 41 07	Reverb Parameter 3 MSB	00 - 7F	˶	init value for	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:25.142	30 41 09	00 13	30 41 09	Reverb Parameter 4 MSB	00 - 7F	˶	init value for	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:25.144	30 41 0B	00 33	30 41 0B	Reverb Parameter 5 MSB	00 - 7F	˶	init value for	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:25.146	30 41 17	00 0B	30 41 17	Reverb Parameter 11 MSB	00 - 7F	˶	init value for	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:25.149	30 41 19	00 04	30 41 19	Reverb Parameter 11 LSB	00 - 7F	˶	Rev-X Hall / Basic	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:25.151	30 41 1B	00 39	30 41 1B	Reverb Parameter 13 MSB	00 - 7F	˶	init value for	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:25.153	30 41 1D	00 09	30 41 1D	Reverb Parameter 14 MSB	00 - 7F	˶	init value for	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:25.156	30 41 1F	00 40	30 41 1F	Reverb Parameter 15 MSB	00 - 7F	˶	init value for	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:27.267	30 46 47	01	30 4n 47	00 - 01	1	Master Effect ON/OFF	Off, On	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:27.270	30 46 00	08 30	30 4n 00	Master Effect Type MSB	00 - 7F	Refer to Effect Parameter List	Refer to Effect	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:27.467	30 46 03	00 5B	30 4n 03	Master Effect Parameter 1 MSB	00 - 7F	˶	Refer to Effect	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:27.469	30 46 05	00 08	30 4n 05	Master Effect Parameter 2 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:27.472	30 46 07	00 6A	30 4n 07	Master Effect Parameter 3 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:27.474	30 46 09	00 4D	30 4n 09	Master Effect Parameter 4 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:27.477	30 46 0B	00 0A	30 4n 0B	Master Effect Parameter 5 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:27.479	30 46 15	00 6D	30 4n 15	Master Effect Parameter 10 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:27.481	30 46 17	00 28	30 4n 17	Master Effect Parameter 11 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:27.484	30 46 19	00 2C	30 4n 19	Master Effect Parameter 12 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:27.486	30 46 1B	00 00	30 4n 1B	Master Effect Parameter 13 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:27.488	30 46 1D	00 00	30 4n 1D	Master Effect Parameter 14 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:27.491	30 46 1F	00 00	30 4n 1F	Master Effect Parameter 15 MSB	00 - 7F	˶	˶	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:41.315	30 47 00	40	30 47 00	EQ Gain 1	34 - 4C	-12 - +12[dB]	40	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:41.317	30 47 04	40	30 47 04	EQ Gain 2	34 - 4C	-12 - +12[dB]	40	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:41.320	30 47 08	40	30 47 08	EQ Gain 3	34 - 4C	-12 - +12[dB]	40	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:41.322	30 47 0C	40	30 47 0C	EQ Gain 4	34 - 4C	-12 - +12[dB]	40	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:41.324	30 47 10	40	30 47 10	EQ Gain 5	34 - 4C	-12 - +12[dB]	40	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:41.326	30 47 01	0C	30 47 01	EQ Frequency 1	04 - 28	32 - 2000[Hz]	0C	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:41.329	30 47 05	14	30 47 05	EQ Frequency 2	0E - 36	100 - 10.0[kHz]	14	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:41.331	30 47 09	1C	30 47 09	EQ Frequency 3	0E - 36	100 - 10.0[kHz]	1C	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:41.333	30 47 0D	2C	30 47 0D	EQ Frequency 4	0E - 36	100 - 10.0[kHz]	2C	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:41.335	30 47 11	34	30 47 11	EQ Frequency 5	1C - 3A	0.5 - 16.0[kHz]	34	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:41.338	30 47 02	07	30 47 02	EQ Q 1	01 - 78	0.1 - 12.0	07	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:41.340	30 47 06	07	30 47 06	EQ Q 2	01 - 78	0.1 - 12.0	07	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:41.342	30 47 0A	07	30 47 0A	EQ Q 3	01 - 78	0.1- 12.0	07	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:41.345	30 47 0E	07	30 47 0E	EQ Q 4	01 - 78	0.1 - 12.0	07	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:20:41.347	30 47 12	07	30 47 12	EQ Q 5	01 - 78	0.1 - 12.0	07	MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), CO
+00:21:05.991	01 11 56	00						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:05.993	01 11 57	01						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:05.995	01 11 58	02						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:05.998	30 42 44	60	30 42 44	00 - 7F	1	Variation Return	0 - 127	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:06.000	30 42 00	02 28	30 42 00	Variation Type MSB	00 02	Refer to Effect Parameter List	02 28	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:06.200	30 42 03	00 0A	30 42 03	Variation Parameter 1 MSB	00 - 7F	˶	init value for Delay	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:06.203	30 42 05	00 55	30 42 05	Variation Parameter 2 MSB	00 - 7F	˶	init value for Delay	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:06.205	30 42 07	00 0A	30 42 07	Variation Parameter 2 LSB	00 - 7F	˶	/ Cross Delay	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:06.207	30 42 09	00 41	30 42 09	Variation Parameter 4 MSB	00 - 7F	˶	init value for Delay	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:06.210	30 42 0B	00 46	30 42 0B	Variation Parameter 5 MSB	00 - 7F	˶	init value for Delay	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:06.212	30 42 15	00 00	30 42 15	Variation Parameter 10 MSB	00 - 7F	˶	init value for Delay	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:06.214	30 42 1B	00 16	30 42 1B	Variation Parameter 13 MSB	00 - 7F	˶	init value for Delay	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:06.216	30 42 1D	00 40	30 42 1D	Variation Parameter 14 MSB	00 - 7F	˶	init value for Delay	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:06.219	30 42 1F	00 2E	30 42 1F	Variation Parameter 15 MSB	00 - 7F	˶	init value for Delay	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:06.221	30 42 21	00 40	30 42 21	Variation Parameter 16 MSB	00 - 7F	˶	init value for Delay	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:19.800	30 43 00	01 12	30 4n 00	Master Effect Type MSB	00 - 7F	Refer to Effect Parameter List	Refer to Effect	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:19.824	01 10 50	09						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:19.826	01 10 51	00						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:19.828	01 10 52	04						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:20.005	30 43 03	00 05	30 4n 03	Master Effect Parameter 1 MSB	00 - 7F	˶	Refer to Effect	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:20.007	30 43 05	00 07	30 4n 05	Master Effect Parameter 2 MSB	00 - 7F	˶	˶	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:20.009	30 43 07	00 00	30 4n 07	Master Effect Parameter 3 MSB	00 - 7F	˶	˶	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:20.012	30 43 09	00 04	30 4n 09	Master Effect Parameter 4 MSB	00 - 7F	˶	˶	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:20.014	30 43 0B	00 38	30 4n 0B	Master Effect Parameter 5 MSB	00 - 7F	˶	˶	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:20.016	30 43 15	00 01	30 4n 15	Master Effect Parameter 10 MSB	00 - 7F	˶	˶	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:20.019	30 43 17	00 00	30 4n 17	Master Effect Parameter 11 MSB	00 - 7F	˶	˶	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:20.021	30 43 19	00 02	30 4n 19	Master Effect Parameter 12 MSB	00 - 7F	˶	˶	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:20.024	30 43 1B	00 3C	30 4n 1B	Master Effect Parameter 13 MSB	00 - 7F	˶	˶	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:20.026	30 43 1D	00 07	30 4n 1D	Master Effect Parameter 14 MSB	00 - 7F	˶	˶	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:20.028	30 43 1F	00 40	30 4n 1F	Master Effect Parameter 15 MSB	00 - 7F	˶	˶	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:33.221	30 44 00	0C 28	30 4n 00	Master Effect Type MSB	00 - 7F	Refer to Effect Parameter List	Refer to Effect	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:33.235	01 11 50	01						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:33.237	01 11 51	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:33.240	01 11 52	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:33.400	30 44 03	00 03	30 4n 03	Master Effect Parameter 1 MSB	00 - 7F	˶	Refer to Effect	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:33.403	30 44 05	00 00	30 4n 05	Master Effect Parameter 2 MSB	00 - 7F	˶	˶	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:33.405	30 44 07	00 26	30 4n 07	Master Effect Parameter 3 MSB	00 - 7F	˶	˶	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:33.407	30 44 09	00 40	30 4n 09	Master Effect Parameter 4 MSB	00 - 7F	˶	˶	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:21:33.410	30 44 15	00 01	30 4n 15	Master Effect Parameter 10 MSB	00 - 7F	˶	˶	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.000	01 10 3C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.595	31 10 22	01	31 1p 22	Key Assign Mode	00 - 01	Single, Multi	01	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.597	41 00 0A	00	41 ep 0A	Alternate Group	00 - 7F	0=off, 1 - 127	00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.599	41 10 0A	00	41 ep 0A	Alternate Group	00 - 7F	0=off, 1 - 127	00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.602	41 20 0A	00	41 ep 0A	Alternate Group	00 - 7F	0=off, 1 - 127	00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.604	41 30 0A	00	41 ep 0A	Alternate Group	00 - 7F	0=off, 1 - 127	00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.606	41 40 0A	00	41 ep 0A	Alternate Group	00 - 7F	0=off, 1 - 127	00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.608	41 50 0A	00	41 ep 0A	Alternate Group	00 - 7F	0=off, 1 - 127	00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.611	41 60 0A	00	41 ep 0A	Alternate Group	00 - 7F	0=off, 1 - 127	00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.613	41 70 0A	00	41 ep 0A	Alternate Group	00 - 7F	0=off, 1 - 127	00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.620	30 50 0F	00	30 5p 0F	Pattern Select	00 - 05	1 - 6	00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.622	31 10 23	01	31 1p 23	Mono/Poly Mode	00 - 02	Mono, Poly, Chord	01	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.629	31 00 67	00	31 0p 67	reserved			00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.636	31 20 00	07 10	31 2p 00	Insertion-A Te MSB	00 - 7F	Refer to Effect Parameter List	00 00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.638	31 20 43	7F	31 2p 43	Side Chain Part	00 - 0A, 10,	0:part1, …, 10:part11, 16:A/D, 17:Master, 127: Off	7F	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.640	30 40 79	00	30 40 79	Pattern Select Mode		Normal, Advanced	Normal	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.643	01 10 35	00 54 53 5F 52 4E 42 5F 00 6B 69 63 6B 5F 72 6E 00 62 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.653	01 10 53	09						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.655	01 10 54	00						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.657	01 10 55	02						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.659	01 10 5C	00						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.662	01 10 5D	50						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.664	01 10 5E	7F						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.834	31 20 03	00 50	31 2p 03	Insertion-A Parameter 1 MSB	00 - 7F	˶	00 00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.837	31 20 05	00 00	31 2p 05	Insertion-A Parameter 2 MSB	00 - 7F	˶	00 00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.839	31 20 07	00 3C	31 2p 07	Insertion-A Parameter3 MSB	00 - 7F	˶	00 00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.841	31 20 09	00 34	31 2p 09	Insertion-A Parameter4 MSB	00 - 7F	˶	00 00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:07.844	31 20 15	00 01	31 2p 15	Insertion-A Parameter 10 MSB	00 - 7F	˶	00 00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:14.913	00 00 20	64	00 00 20	Pad Velocity	01 - 7F	1 - 127	64	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:14.993	01 10 36	00						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:14.995	30 50 16	00 20	30 5p 16	Pattern 1 Step MSB	00 - 01	1 - 128	00 10	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:14.998	70 40 00	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.000	70 60 00	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.002	70 50 00	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.018	70 40 01	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.020	70 60 01	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.022	70 50 01	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.034	70 40 02	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.036	70 60 02	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.039	70 50 02	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.051	70 40 03	3C 64 00 3C 00 7A						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.053	70 60 03	00						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.055	70 50 03	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.067	70 40 04	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.070	70 60 04	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.072	70 50 04	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.084	70 40 05	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.087	70 60 05	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.089	70 50 05	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.101	70 40 06	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.103	70 60 06	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.106	70 50 06	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.118	70 40 07	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.120	70 60 07	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.122	70 50 07	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.134	70 40 08	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.137	70 60 08	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.139	70 50 08	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.151	70 40 09	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.154	70 60 09	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.156	70 50 09	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.168	70 40 0A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.170	70 60 0A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.172	70 50 0A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.185	70 40 0B	3C 64 02 3C 01 06						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.187	70 60 0B	00						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.189	70 50 0B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.201	70 40 0C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.203	70 60 0C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.206	70 50 0C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.217	70 40 0D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.220	70 60 0D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.222	70 50 0D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.235	70 40 0E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.237	70 60 0E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.239	70 50 0E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.251	70 40 0F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.254	70 60 0F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.256	70 50 0F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.268	70 40 10	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.270	70 60 10	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.273	70 50 10	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.285	70 40 11	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.287	70 60 11	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.289	70 50 11	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.301	70 40 12	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.304	70 60 12	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.306	70 50 12	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.321	70 40 13	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.324	70 60 13	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.326	70 50 13	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.335	70 40 14	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.337	70 60 14	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.339	70 50 14	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.351	70 40 15	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.354	70 60 15	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.356	70 50 15	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.368	70 40 16	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.370	70 60 16	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.372	70 50 16	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.384	70 40 17	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.386	70 60 17	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.389	70 50 17	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.401	70 40 18	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.404	70 60 18	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.406	70 50 18	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.418	70 40 19	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.420	70 60 19	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.422	70 50 19	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.435	70 40 1A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.437	70 60 1A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.440	70 50 1A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.452	70 40 1B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.454	70 60 1B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.456	70 50 1B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.468	70 40 1C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.470	70 60 1C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.473	70 50 1C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.485	70 40 1D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.487	70 60 1D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.490	70 50 1D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.502	70 40 1E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.504	70 60 1E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.506	70 50 1E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.518	70 40 1F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.520	70 60 1F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.523	70 50 1F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.535	70 40 20	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.537	70 60 20	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.540	70 50 20	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.552	70 40 21	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.554	70 60 21	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.556	70 50 21	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.568	70 40 22	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.570	70 60 22	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.573	70 50 22	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.585	70 40 23	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.587	70 60 23	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.590	70 50 23	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.602	70 40 24	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.604	70 60 24	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.606	70 50 24	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.618	70 40 25	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.620	70 60 25	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.623	70 50 25	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.634	70 40 26	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.636	70 60 26	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.639	70 50 26	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.652	70 40 27	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.654	70 60 27	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.656	70 50 27	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.668	70 40 28	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.671	70 60 28	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.673	70 50 28	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.685	70 40 29	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.687	70 60 29	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.689	70 50 29	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.701	70 40 2A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.704	70 60 2A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.706	70 50 2A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.718	70 40 2B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.720	70 60 2B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.722	70 50 2B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.735	70 40 2C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.737	70 60 2C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.740	70 50 2C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.752	70 40 2D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.754	70 60 2D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.756	70 50 2D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.768	70 40 2E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.770	70 60 2E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.772	70 50 2E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.785	70 40 2F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.788	70 60 2F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.790	70 50 2F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.802	70 40 30	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.804	70 60 30	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.806	70 50 30	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.818	70 40 31	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.821	70 60 31	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.823	70 50 31	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.835	70 40 32	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.838	70 60 32	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.840	70 50 32	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.852	70 40 33	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.854	70 60 33	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.856	70 50 33	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.869	70 40 34	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.871	70 60 34	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.873	70 50 34	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.885	70 40 35	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.888	70 60 35	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.890	70 50 35	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.902	70 40 36	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.904	70 60 36	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.907	70 50 36	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.919	70 40 37	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.921	70 60 37	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.923	70 50 37	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.936	70 40 38	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.938	70 60 38	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.940	70 50 38	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.952	70 40 39	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.954	70 60 39	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.957	70 50 39	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.968	70 40 3A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.970	70 60 3A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.972	70 50 3A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.986	70 40 3B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.988	70 60 3B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:15.990	70 50 3B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.002	70 40 3C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.004	70 60 3C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.007	70 50 3C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.018	70 40 3D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.020	70 60 3D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.022	70 50 3D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.036	70 40 3E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.038	70 60 3E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.040	70 50 3E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.052	70 40 3F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.054	70 60 3F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.057	70 50 3F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.069	70 40 40	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.071	70 60 40	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.074	70 50 40	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.085	70 40 41	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.088	70 60 41	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.090	70 50 41	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.102	70 40 42	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.104	70 60 42	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.106	70 50 42	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.119	70 40 43	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.121	70 60 43	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.124	70 50 43	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.135	70 40 44	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.137	70 60 44	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.139	70 50 44	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.152	70 40 45	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.154	70 60 45	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.157	70 50 45	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.169	70 40 46	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.171	70 60 46	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.173	70 50 46	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.185	70 40 47	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.188	70 60 47	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.190	70 50 47	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.202	70 40 48	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.204	70 60 48	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.207	70 50 48	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.218	70 40 49	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.220	70 60 49	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.222	70 50 49	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.235	70 40 4A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.238	70 60 4A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.240	70 50 4A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.252	70 40 4B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.254	70 60 4B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.257	70 50 4B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.269	70 40 4C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.271	70 60 4C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.273	70 50 4C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.286	70 40 4D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.288	70 60 4D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.290	70 50 4D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.302	70 40 4E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.304	70 60 4E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.307	70 50 4E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.319	70 40 4F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.321	70 60 4F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.323	70 50 4F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.336	70 40 50	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.338	70 60 50	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.340	70 50 50	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.352	70 40 51	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.354	70 60 51	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.356	70 50 51	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.369	70 40 52	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.371	70 60 52	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.373	70 50 52	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.385	70 40 53	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.387	70 60 53	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.390	70 50 53	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.402	70 40 54	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.405	70 60 54	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.407	70 50 54	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.418	70 40 55	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.421	70 60 55	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.423	70 50 55	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.436	70 40 56	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.438	70 60 56	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.440	70 50 56	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.452	70 40 57	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.454	70 60 57	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.457	70 50 57	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.469	70 40 58	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.471	70 60 58	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.474	70 50 58	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.486	70 40 59	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.488	70 60 59	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.490	70 50 59	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.502	70 40 5A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.505	70 60 5A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.507	70 50 5A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.519	70 40 5B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.521	70 60 5B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.524	70 50 5B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.536	70 40 5C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.538	70 60 5C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.540	70 50 5C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.552	70 40 5D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.555	70 60 5D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.557	70 50 5D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.569	70 40 5E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.571	70 60 5E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.574	70 50 5E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.586	70 40 5F	3C 64 00 3C 00 78						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.588	70 60 5F	00						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.590	70 50 5F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.602	70 40 60	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.605	70 60 60	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.607	70 50 60	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.619	70 40 61	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.622	70 60 61	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.624	70 50 61	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.636	70 40 62	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.638	70 60 62	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.640	70 50 62	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.653	70 40 63	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.655	70 60 63	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.657	70 50 63	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.669	70 40 64	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.671	70 60 64	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.673	70 50 64	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.686	70 40 65	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.688	70 60 65	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.690	70 50 65	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.702	70 40 66	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.704	70 60 66	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.706	70 50 66	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.719	70 40 67	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.722	70 60 67	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.724	70 50 67	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.735	70 40 68	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.737	70 60 68	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.740	70 50 68	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.753	70 40 69	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.755	70 60 69	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.757	70 50 69	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.769	70 40 6A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.771	70 60 6A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.774	70 50 6A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.786	70 40 6B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.788	70 60 6B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.791	70 50 6B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.803	70 40 6C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.805	70 60 6C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.807	70 50 6C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.819	70 40 6D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.822	70 60 6D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.824	70 50 6D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.836	70 40 6E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.838	70 60 6E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.841	70 50 6E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.853	70 40 6F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.855	70 60 6F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.857	70 50 6F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.869	70 40 70	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.872	70 60 70	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.874	70 50 70	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.886	70 40 71	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.888	70 60 71	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.891	70 50 71	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.903	70 40 72	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.905	70 60 72	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.907	70 50 72	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.919	70 40 73	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.921	70 60 73	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.923	70 50 73	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.936	70 40 74	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.938	70 60 74	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.941	70 50 74	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.953	70 40 75	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.955	70 60 75	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.957	70 50 75	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.969	70 40 76	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.971	70 60 76	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.974	70 50 76	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.986	70 40 77	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.989	70 60 77	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:16.991	70 50 77	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.003	70 40 78	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.005	70 60 78	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.007	70 50 78	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.019	70 40 79	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.021	70 60 79	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.024	70 50 79	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.036	70 40 7A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.038	70 60 7A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.041	70 50 7A	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.053	70 40 7B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.055	70 60 7B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.057	70 50 7B	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.070	70 40 7C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.072	70 60 7C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.074	70 50 7C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.086	70 40 7D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.088	70 60 7D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.091	70 50 7D	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.102	70 40 7E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.104	70 60 7E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.106	70 50 7E	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.120	70 40 7F	3C 64 00 3C 00 78						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.122	70 60 7F	00						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:17.124	70 50 7F	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:23.526	01 10 33	20 51						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:23.702	01 10 00	00						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:29.443	31 10 46	00 66	31 1p 46	2bandEQ Low Frequency MSB	00 - 01	63.0 - 18.0k	00 66	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:29.448	31 10 4B	01 10	31 1p 4B	2bandEQ High Frequency MSB	00 - 01	63.0 - 18.0k	01 10	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:34.585	31 40 0C	00	31 4p 0C	LFO Box1 Depth	00 - 7F	0 - 127	00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:34.588	31 40 0B	42	31 4p 0B	LFO Box1 Destination	00 - 44	0 - 68	40	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:34.590	31 40 04	00	31 4p 04	LFO Tempo Sync	00 - 01	Off, On	00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:34.592	31 40 03	0B	31 4p 03	LFO Tempo Speed	05 - 18	5 - 24	0B	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:34.595	31 40 01	00	31 4p 01	LFO Wave	00 - 0C	Triangle, Triangle+, Saw Up, Saw Down,	00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:34.597	31 40 05	00	31 4p 05	LFO Delay Time	00 - 7F	0 - 127	00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:34.599	31 40 02	2D	31 4p 02	LFO Speed	00 - 3F	0 - 63	20	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:36.940	01 19 53	09						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:36.943	01 19 54	00						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:36.945	01 19 55	02						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:46.951	01 11 3C	(no reply)						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:47.503	31 11 1C	40	31 1p 1C	Nt Shift	28  58	24  +24it	40	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:47.505	30 51 01	40	30 5p 01	Pan	01 - 7F	L63 ... C ... R63	40	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:47.508	30 51 00	64	30 5p 00	Volume	00 - 7F	0 - 127	64	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:47.510	31 11 2C	40	31 1p 2C	AEG Attack Time	00 - 7F	-64 - +63	40	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:47.512	31 11 2D	40	31 1p 2D	AEG Decay Time	00 - 7F	-64 - +63	40	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:47.515	31 31 03	02 00	31 3p 03	Insertion-B Parameter 1 MSB	00 - 7F	˶	02 00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:47.517	31 31 05	00 10	31 3p 05	Insertion-B Parameter 2 MSB	00 - 7F	˶	00 10	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:47.519	31 11 19	00	31 1p 19	Reverb Send	00 - 7F	0 - 127	00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:47.521	31 11 1A	00	31 1p 1A	Variation Send	00 - 7F	0 - 127	00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:47.524	31 11 4D	40	31 1p 4D	2bandEQ High Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:47.526	31 11 48	40	31 1p 48	2bandEQ Low Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:47.528	01 11 30	00						SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:47.554	31 21 00	07 10	31 2p 00	Insertion-A Te MSB	00 - 7F	Refer to Effect Parameter List	00 00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:47.750	31 21 03	00 50	31 2p 03	Insertion-A Parameter 1 MSB	00 - 7F	˶	00 00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:47.753	31 21 05	00 00	31 2p 05	Insertion-A Parameter 2 MSB	00 - 7F	˶	00 00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:47.755	31 21 07	00 3C	31 2p 07	Insertion-A Parameter3 MSB	00 - 7F	˶	00 00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:47.757	31 21 09	00 34	31 2p 09	Insertion-A Parameter4 MSB	00 - 7F	˶	00 00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:47.760	31 21 15	00 01	31 2p 15	Insertion-A Parameter 10 MSB	00 - 7F	˶	00 00	SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-dow
+00:22:50.133	01 12 3C	(no reply)						selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:50.681	31 12 1C	40	31 1p 1C	Nt Shift	28  58	24  +24it	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:50.683	30 52 01	40	30 5p 01	Pan	01 - 7F	L63 ... C ... R63	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:50.685	30 52 00	64	30 5p 00	Volume	00 - 7F	0 - 127	64	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:50.687	31 12 2C	40	31 1p 2C	AEG Attack Time	00 - 7F	-64 - +63	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:50.690	31 12 2D	40	31 1p 2D	AEG Decay Time	00 - 7F	-64 - +63	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:50.692	31 32 03	02 00	31 3p 03	Insertion-B Parameter 1 MSB	00 - 7F	˶	02 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:50.694	31 32 05	00 10	31 3p 05	Insertion-B Parameter 2 MSB	00 - 7F	˶	00 10	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:50.696	31 12 19	00	31 1p 19	Reverb Send	00 - 7F	0 - 127	00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:50.699	31 12 1A	00	31 1p 1A	Variation Send	00 - 7F	0 - 127	00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:50.701	31 12 4D	40	31 1p 4D	2bandEQ High Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:50.703	31 12 48	40	31 1p 48	2bandEQ Low Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:50.705	01 12 30	00						selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:50.728	31 22 00	07 10	31 2p 00	Insertion-A Te MSB	00 - 7F	Refer to Effect Parameter List	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:50.917	31 22 03	00 50	31 2p 03	Insertion-A Parameter 1 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:50.920	31 22 05	00 00	31 2p 05	Insertion-A Parameter 2 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:50.922	31 22 07	00 3C	31 2p 07	Insertion-A Parameter3 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:50.924	31 22 09	00 34	31 2p 09	Insertion-A Parameter4 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:50.927	31 22 15	00 01	31 2p 15	Insertion-A Parameter 10 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:53.334	01 13 3C	(no reply)						selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:53.885	31 13 1C	40	31 1p 1C	Nt Shift	28  58	24  +24it	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:53.888	30 53 01	40	30 5p 01	Pan	01 - 7F	L63 ... C ... R63	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:53.890	30 53 00	64	30 5p 00	Volume	00 - 7F	0 - 127	64	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:53.892	31 13 2C	40	31 1p 2C	AEG Attack Time	00 - 7F	-64 - +63	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:53.894	31 13 2D	40	31 1p 2D	AEG Decay Time	00 - 7F	-64 - +63	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:53.897	31 33 03	02 00	31 3p 03	Insertion-B Parameter 1 MSB	00 - 7F	˶	02 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:53.899	31 33 05	00 10	31 3p 05	Insertion-B Parameter 2 MSB	00 - 7F	˶	00 10	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:53.901	31 13 19	00	31 1p 19	Reverb Send	00 - 7F	0 - 127	00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:53.903	31 13 1A	00	31 1p 1A	Variation Send	00 - 7F	0 - 127	00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:53.906	31 13 4D	40	31 1p 4D	2bandEQ High Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:53.908	31 13 48	40	31 1p 48	2bandEQ Low Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:53.910	01 13 30	00						selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:53.937	31 23 00	07 10	31 2p 00	Insertion-A Te MSB	00 - 7F	Refer to Effect Parameter List	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:54.118	31 23 03	00 50	31 2p 03	Insertion-A Parameter 1 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:54.120	31 23 05	00 00	31 2p 05	Insertion-A Parameter 2 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:54.122	31 23 07	00 3C	31 2p 07	Insertion-A Parameter3 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:54.125	31 23 09	00 34	31 2p 09	Insertion-A Parameter4 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:54.127	31 23 15	00 01	31 2p 15	Insertion-A Parameter 10 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:56.518	01 14 3C	(no reply)						selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:57.071	31 14 1C	40	31 1p 1C	Nt Shift	28  58	24  +24it	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:57.074	30 54 01	40	30 5p 01	Pan	01 - 7F	L63 ... C ... R63	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:57.076	30 54 00	64	30 5p 00	Volume	00 - 7F	0 - 127	64	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:57.078	31 14 2C	40	31 1p 2C	AEG Attack Time	00 - 7F	-64 - +63	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:57.080	31 14 2D	40	31 1p 2D	AEG Decay Time	00 - 7F	-64 - +63	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:57.083	31 34 03	02 00	31 3p 03	Insertion-B Parameter 1 MSB	00 - 7F	˶	02 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:57.085	31 34 05	00 10	31 3p 05	Insertion-B Parameter 2 MSB	00 - 7F	˶	00 10	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:57.087	31 14 19	00	31 1p 19	Reverb Send	00 - 7F	0 - 127	00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:57.090	31 14 1A	00	31 1p 1A	Variation Send	00 - 7F	0 - 127	00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:57.092	31 14 4D	40	31 1p 4D	2bandEQ High Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:57.094	31 14 48	40	31 1p 48	2bandEQ Low Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:57.096	01 14 30	00						selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:57.123	31 24 00	07 10	31 2p 00	Insertion-A Te MSB	00 - 7F	Refer to Effect Parameter List	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:57.320	31 24 03	00 50	31 2p 03	Insertion-A Parameter 1 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:57.322	31 24 05	00 00	31 2p 05	Insertion-A Parameter 2 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:57.324	31 24 07	00 3C	31 2p 07	Insertion-A Parameter3 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:57.327	31 24 09	00 34	31 2p 09	Insertion-A Parameter4 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:57.329	31 24 15	00 01	31 2p 15	Insertion-A Parameter 10 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:22:59.701	01 15 3C	(no reply)						selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:00.254	31 15 1C	40	31 1p 1C	Nt Shift	28  58	24  +24it	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:00.256	30 55 01	40	30 5p 01	Pan	01 - 7F	L63 ... C ... R63	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:00.258	30 55 00	64	30 5p 00	Volume	00 - 7F	0 - 127	64	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:00.261	31 15 2C	40	31 1p 2C	AEG Attack Time	00 - 7F	-64 - +63	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:00.263	31 15 2D	40	31 1p 2D	AEG Decay Time	00 - 7F	-64 - +63	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:00.265	31 35 03	02 00	31 3p 03	Insertion-B Parameter 1 MSB	00 - 7F	˶	02 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:00.268	31 35 05	00 10	31 3p 05	Insertion-B Parameter 2 MSB	00 - 7F	˶	00 10	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:00.270	31 15 19	00	31 1p 19	Reverb Send	00 - 7F	0 - 127	00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:00.272	31 15 1A	00	31 1p 1A	Variation Send	00 - 7F	0 - 127	00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:00.274	31 15 4D	40	31 1p 4D	2bandEQ High Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:00.277	31 15 48	40	31 1p 48	2bandEQ Low Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:00.279	01 15 30	00						selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:00.305	31 25 00	07 10	31 2p 00	Insertion-A Te MSB	00 - 7F	Refer to Effect Parameter List	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:00.501	31 25 03	00 50	31 2p 03	Insertion-A Parameter 1 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:00.504	31 25 05	00 00	31 2p 05	Insertion-A Parameter 2 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:00.506	31 25 07	00 3C	31 2p 07	Insertion-A Parameter3 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:00.508	31 25 09	00 34	31 2p 09	Insertion-A Parameter4 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:00.511	31 25 15	00 01	31 2p 15	Insertion-A Parameter 10 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:02.891	01 16 3C	(no reply)						selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:03.435	31 16 1C	40	31 1p 1C	Nt Shift	28  58	24  +24it	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:03.437	30 56 01	40	30 5p 01	Pan	01 - 7F	L63 ... C ... R63	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:03.439	30 56 00	64	30 5p 00	Volume	00 - 7F	0 - 127	64	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:03.442	31 16 2C	40	31 1p 2C	AEG Attack Time	00 - 7F	-64 - +63	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:03.444	31 16 2D	40	31 1p 2D	AEG Decay Time	00 - 7F	-64 - +63	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:03.446	31 36 03	02 00	31 3p 03	Insertion-B Parameter 1 MSB	00 - 7F	˶	02 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:03.448	31 36 05	00 10	31 3p 05	Insertion-B Parameter 2 MSB	00 - 7F	˶	00 10	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:03.451	31 16 19	00	31 1p 19	Reverb Send	00 - 7F	0 - 127	00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:03.453	31 16 1A	00	31 1p 1A	Variation Send	00 - 7F	0 - 127	00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:03.455	31 16 4D	40	31 1p 4D	2bandEQ High Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:03.458	31 16 48	40	31 1p 48	2bandEQ Low Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:03.460	01 16 30	00						selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:03.486	31 26 00	07 10	31 2p 00	Insertion-A Te MSB	00 - 7F	Refer to Effect Parameter List	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:03.685	31 26 03	00 50	31 2p 03	Insertion-A Parameter 1 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:03.687	31 26 05	00 00	31 2p 05	Insertion-A Parameter 2 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:03.690	31 26 07	00 3C	31 2p 07	Insertion-A Parameter3 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:03.692	31 26 09	00 34	31 2p 09	Insertion-A Parameter4 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:03.694	31 26 15	00 01	31 2p 15	Insertion-A Parameter 10 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.142	31 17 23	00	31 1p 23	Mono/Poly Mode	00 - 02	Mono, Poly, Chord	01	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.144	30 57 01	40	30 5p 01	Pan	01 - 7F	L63 ... C ... R63	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.146	30 57 00	64	30 5p 00	Volume	00 - 7F	0 - 127	64	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.148	31 17 2C	40	31 1p 2C	AEG Attack Time	00 - 7F	-64 - +63	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.150	31 17 00	40	31 1p 00	AEG Decay/Release Offset	00 - 7F	-64 - +63	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.153	31 37 03	00 5A	31 3p 03	Insertion-B Parameter 1 MSB	00 - 7F	˶	02 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.155	31 37 05	00 00	31 3p 05	Insertion-B Parameter 2 MSB	00 - 7F	˶	00 10	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.157	31 17 19	00	31 1p 19	Reverb Send	00 - 7F	0 - 127	00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.160	31 17 1A	00	31 1p 1A	Variation Send	00 - 7F	0 - 127	00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.162	31 17 4D	40	31 1p 4D	2bandEQ High Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.164	31 17 48	40	31 1p 48	2bandEQ Low Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.166	31 17 1F	06	31 1p 1F	Portamento Time	00 - 7F	0 - 127	40	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.169	31 57 00	00	31 5p 00	ARP Template	00 - 0F	Off, Up, Up 2Oct, Down, Down 2Oct,	00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.171	31 57 14	00 64	31 5p 14	ARP Gate Time Rate MSB	00 - 01	0 - 200[%]	00 64	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.173	31 57 08	03	31 5p 08	ARP Unit Multiply	00 - 09	50%, 66%, 75%, 100%, 133%,	03	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.176	01 17 30	00						selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.201	30 57 0F	00	30 5p 0F	Pattern Select	00 - 05	1 - 6	00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.210	31 07 67	00	31 0p 67	reserved			00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.217	31 27 00	07 10	31 2p 00	Insertion-A Te MSB	00 - 7F	Refer to Effect Parameter List	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.219	31 27 43	7F	31 2p 43	Side Chain Part	00 - 0A, 10,	0:part1, …, 10:part11, 16:A/D, 17:Master, 127: Off	7F	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.224	01 17 35	00 4C 4F 2D 46 49 20 53 00 4F 55 4C 20 31 20 42 00 41 53 53 20 30 31 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00						selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.233	01 17 53	09						selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.235	01 17 54	00						selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.237	01 17 55	02						selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.240	01 17 5C	00						selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.242	01 17 5D	50						selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.244	01 17 5E	7F						selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.419	31 27 03	00 50	31 2p 03	Insertion-A Parameter 1 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.421	31 27 05	00 00	31 2p 05	Insertion-A Parameter 2 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.424	31 27 07	00 3C	31 2p 07	Insertion-A Parameter3 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.426	31 27 09	00 34	31 2p 09	Insertion-A Parameter4 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:15.428	31 27 15	00 01	31 2p 15	Insertion-A Parameter 10 MSB	00 - 7F	˶	00 00	selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 sh
+00:23:22.348	30 57 16	00 10	30 5p 16	Pattern 1 Step MSB	00 - 01	1 - 128	00 10	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:22.351	30 57 18	00 10	30 5p 18	Pattern 2 Step MSB	00 - 01	˶	00 10	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:22.353	30 57 1A	00 10	30 5p 1A	Pattern 3 Step MSB	00 - 01	˶	00 10	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:22.355	30 57 1C	00 10	30 5p 1C	Pattern 4 Step MSB	00 - 01	˶	00 10	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:22.358	30 57 1E	00 10	30 5p 1E	Pattern 5 Step MSB	00 - 01	˶	00 10	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:22.360	30 57 20	00 10	30 5p 20	Pattern 6 Step MSB	00 - 01	˶	00 10	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:22.364	01 10 21	00						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:22.434	75 00 00	(no reply)						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:25.161	31 17 46	00 66	31 1p 46	2bandEQ Low Frequency MSB	00 - 01	63.0 - 18.0k	00 66	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:25.166	31 17 4B	01 10	31 1p 4B	2bandEQ High Frequency MSB	00 - 01	63.0 - 18.0k	01 10	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:32.588	31 17 1E	00	31 1p 1E	Portamento Switch	00 - 01	Off, On	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:35.408	31 57 0D	00	31 5p 0D	ARP Key Mode	00 - 04	Sort, Thru, Direct, Sort+Drct, Thru+Drct	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:35.410	31 57 1E	00 00	31 5p 1E	ARP Type MSB	00 - 00	Up, Down, Random, Up Down 1, Up Down 2,	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:35.417	31 57 1C	40	31 5p 1C	ARP Octave Range	3D - 43	-3 - 0 - +3	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.225	30 40 7E	00	30 40 7E	Scale		Scale 1-8	0	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.227	30 40 7F	40	30 40 7F	Key		0-11 (C to B)	0 (C)	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.230	30 67 00	3C	30 6p 00	Pad 1 Chord Note 1 of Scale 1	00, 24 - 60	0:off, 24 - 60:C1 ... C6		SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.232	30 67 01	3F	30 6p 01	Pd 1 Chd Nt 2 f Sl 1	00 24  60	0ff 24  60C1  C6		SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.234	30 67 02	43	30 6p 02	Pad 1 Chord Note 3 of Scale 1	00, 24 - 60	0:off, 24 - 60:C1 ... C6		SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.236	30 67 03	46	30 6p 03	Pad 1 Chord Note 4 of Scale 1	00, 24 - 60	0:off, 24 - 60:C1 ... C6		SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.239	30 67 04	3E	30 6p 04	Pad 2 Chord Note 1 of Scale 1	00, 24 - 60	0:off, 24 - 60:C1 ... C6		SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.241	30 67 05	41	30 6p 05	Pad 2 Chord Note 2 of Scale 1	00, 24 - 60	0:off, 24 - 60:C1 ... C6		SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.243	30 67 06	44	30 6p 06	Pad 2 Chord Note 3 of Scale 1	00, 24 - 60	0:off, 24 - 60:C1 ... C6		SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.245	30 67 07	48	30 6p 07	Pad 2 Chord Note 4 of Scale 1	00, 24 - 60	0:off, 24 - 60:C1 ... C6		SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.248	30 67 08	3F						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.250	30 67 09	43						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.252	30 67 0A	46						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.255	30 67 0B	4A						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.257	30 67 0C	41						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.259	30 67 0D	44						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.261	30 67 0E	48						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.264	30 67 0F	4B						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.266	30 67 10	43						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.268	30 67 11	46						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.271	30 67 12	4A						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.273	30 67 13	4D						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.275	30 67 14	44						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.277	30 67 15	48						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.280	30 67 16	4B						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.282	30 67 17	4F						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.284	30 67 18	46						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.287	30 67 19	4A						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.289	30 67 1A	4D						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:38.291	30 67 1B	50						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.838	31 18 23	01	31 1p 23	Mono/Poly Mode	00 - 02	Mono, Poly, Chord	01	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.840	30 58 01	40	30 5p 01	Pan	01 - 7F	L63 ... C ... R63	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.843	30 58 00	64	30 5p 00	Volume	00 - 7F	0 - 127	64	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.845	31 18 2C	40	31 1p 2C	AEG Attack Time	00 - 7F	-64 - +63	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.847	31 18 00	40	31 1p 00	AEG Decay/Release Offset	00 - 7F	-64 - +63	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.849	31 38 03	02 00	31 3p 03	Insertion-B Parameter 1 MSB	00 - 7F	˶	02 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.852	31 38 05	00 10	31 3p 05	Insertion-B Parameter 2 MSB	00 - 7F	˶	00 10	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.854	31 18 19	38	31 1p 19	Reverb Send	00 - 7F	0 - 127	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.856	31 18 1A	00	31 1p 1A	Variation Send	00 - 7F	0 - 127	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.859	31 18 4D	40	31 1p 4D	2bandEQ High Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.861	31 18 48	40	31 1p 48	2bandEQ Low Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.863	31 18 1F	00	31 1p 1F	Portamento Time	00 - 7F	0 - 127	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.865	31 58 00	00	31 5p 00	ARP Template	00 - 0F	Off, Up, Up 2Oct, Down, Down 2Oct,	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.868	31 58 14	00 64	31 5p 14	ARP Gate Time Rate MSB	00 - 01	0 - 200[%]	00 64	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.870	31 58 08	03	31 5p 08	ARP Unit Multiply	00 - 09	50%, 66%, 75%, 100%, 133%,	03	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.872	01 18 30	00						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.885	30 58 0F	00	30 5p 0F	Pattern Select	00 - 05	1 - 6	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.894	31 08 67	05	31 0p 67	reserved			00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.901	31 28 00	05 20	31 2p 00	Insertion-A Te MSB	00 - 7F	Refer to Effect Parameter List	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.903	31 28 43	7F	31 2p 43	Side Chain Part	00 - 0A, 10,	0:part1, …, 10:part11, 16:A/D, 17:Master, 127: Off	7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.908	01 18 35	00 52 6F 75 6E 64 20 53 00 61 77 20 50 68 61 73 00 65 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.918	01 18 53	01						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.920	01 18 54	00						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.922	01 18 55	03						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.925	01 18 5C	6F						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.927	01 18 5D	4F						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:48.929	01 18 5E	43						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:49.100	31 28 03	00 0E	31 2p 03	Insertion-A Parameter 1 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:49.103	31 28 05	00 6F	31 2p 05	Insertion-A Parameter 2 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:49.105	31 28 07	00 4A	31 2p 07	Insertion-A Parameter3 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:49.107	31 28 09	00 61	31 2p 09	Insertion-A Parameter4 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:49.110	31 28 0B	00 00	31 2p 0B	Insertion-A Parameter5 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:49.112	31 28 0D	00 16	31 2p 0D	Insertion-A Parameter6 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:49.114	31 28 0F	00 40	31 2p 0F	Insertion-A Parameter7 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:49.117	31 28 11	00 30	31 2p 11	Insertion-A Parameter8 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:49.119	31 28 13	00 40	31 2p 13	Insertion-A Parameter9 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:49.121	31 28 15	00 40	31 2p 15	Insertion-A Parameter 10 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:49.124	31 28 17	00 06	31 2p 17	Insertion-A Parameter 11 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:49.126	31 28 19	00 01	31 2p 19	Insertion-A Parameter 12 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.155	30 59 00	64	30 5p 00	Volume	00 - 7F	0 - 127	64	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.157	30 59 01	40	30 5p 01	Pan	01 - 7F	L63 ... C ... R63	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.160	30 59 0F	00	30 5p 0F	Pattern Select	00 - 05	1 - 6	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.162	31 19 23	01	31 1p 23	Mono/Poly Mode	00 - 02	Mono, Poly, Chord	01	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.164	31 39 03	02 00	31 3p 03	Insertion-B Parameter 1 MSB	00 - 7F	˶	02 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.166	31 39 05	00 10	31 3p 05	Insertion-B Parameter 2 MSB	00 - 7F	˶	00 10	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.169	31 09 67	01	31 0p 67	reserved			00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.171	31 19 01	40	31 1p 01	Carrier Attack Offset	00 - 7F	-64 - +63	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.173	31 19 02	40	31 1p 02	Carrier Decay Offset	00 - 7F	-64 - +63	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.176	31 29 00	03 00	31 2p 00	Insertion-A Te MSB	00 - 7F	Refer to Effect Parameter List	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.178	31 29 43	7F	31 2p 43	Side Chain Part	00 - 0A, 10,	0:part1, …, 10:part11, 16:A/D, 17:Master, 127: Off	7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.182	01 19 35	00 46 4D 20 4D 65 74 61 00 6C 6C 69 63 20 4C 65 00 61 64 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.201	31 19 19	00	31 1p 19	Reverb Send	00 - 7F	0 - 127	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.203	31 19 1A	00	31 1p 1A	Variation Send	00 - 7F	0 - 127	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.205	31 19 4D	40	31 1p 4D	2bandEQ High Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.207	31 19 48	40	31 1p 48	2bandEQ Low Gain	28 - 58	40 - 64 - 88 (-12.00 - +12.00[dB])	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.210	31 19 1F	12	31 1p 1F	Portamento Time	00 - 7F	0 - 127	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.212	31 59 00	00	31 5p 00	ARP Template	00 - 0F	Off, Up, Up 2Oct, Down, Down 2Oct,	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.214	31 59 14	00 64	31 5p 14	ARP Gate Time Rate MSB	00 - 01	0 - 200[%]	00 64	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.216	31 59 08	03	31 5p 08	ARP Unit Multiply	00 - 09	50%, 66%, 75%, 100%, 133%,	03	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.219	48 09 00	02	48 09 00	Algorithm	00 - 0B	1 - 12	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.221	31 19 03	40	31 1p 03	Mod Amount Offset	00 - 7F	-64 - +63	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.223	31 19 04	40	31 1p 04	Freq Ratio Offset	00 - 7F	-64 - +63	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.226	31 19 05	40	31 1p 05	Feedback Offset	00 - 7F	-64 - +63	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.228	01 19 30	00						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.245	01 19 5C	1F						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.247	01 19 5D	05						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.249	01 19 5E	36						SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.417	31 29 03	00 05	31 2p 03	Insertion-A Parameter 1 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.419	31 29 07	00 36	31 2p 07	Insertion-A Parameter3 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.422	31 29 09	00 49	31 2p 09	Insertion-A Parameter4 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.424	31 29 0B	00 63	31 2p 0B	Insertion-A Parameter5 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.426	31 29 0D	00 16	31 2p 0D	Insertion-A Parameter6 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.429	31 29 0F	00 40	31 2p 0F	Insertion-A Parameter7 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.431	31 29 11	00 2E	31 2p 11	Insertion-A Parameter8 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.434	31 29 13	00 42	31 2p 13	Insertion-A Parameter9 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.436	31 29 15	00 1F	31 2p 15	Insertion-A Parameter 10 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.438	31 29 17	00 22	31 2p 17	Insertion-A Parameter 11 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.441	31 29 19	00 40	31 2p 19	Insertion-A Parameter 12 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.443	31 29 1B	00 06	31 2p 1B	Insertion-A Parameter 13 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:52.446	31 29 1F	00 01	31 2p 1F	Insertion-A Parameter 15 MSB	00 - 7F	˶	00 00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.369	49 09 00	01	49 o9 00	ON/OFF	00 - 01	Off, On	01	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.371	49 09 0A	00	49 o9 0A	EG Keyboard Rate Scaling	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.373	49 09 13	7F	49 o9 13	Level Output Level	00 - 7F		64	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.376	49 09 12	1E	49 o9 12	Level Velocity Sensitivity	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.378	49 09 14	1D	49 o9 14	Level Feedback Level	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.380	49 09 15	00	49 o9 15	Level Feedback Type	00 - 01	0:SAW, 1:SQUARE	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.382	49 09 19	00	49 o9 19	Freq. Mode	00 - 01	0:RATIO, 1:FIXED	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.385	49 09 1A	00	49 o9 1A	Freq. Coarse	00 - 1F		01	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.387	49 09 1B	00	49 o9 1B	Freq. Fine	00 - 63		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.389	49 09 1C	40	49 o9 1C	Freq. Detune	00 - 7F	-64 - 0 - +63 (0 - 64 - 127)	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.392	49 09 02	7F	49 o9 02	EG Rate 1	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.394	49 09 03	7F	49 o9 03	EG Rate 2	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.396	49 09 04	42	49 o9 04	EG Rate 3	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.398	49 09 05	3F	49 o9 05	EG Rate 4	00 - 7F		64	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.401	49 09 06	7F	49 o9 06	EG Level 1	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.403	49 09 07	7F	49 o9 07	EG Level 2	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.405	49 09 08	7F	49 o9 08	EG Level 3	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.407	49 09 09	00	49 o9 09	EG Level 4	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.410	49 09 0C	00	49 o9 0C	Keyboard Level Scaling Left Depth	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.412	49 09 0E	00	49 o9 0E	Keyboard Level Scaling Left Curve	00 - 03	0: -LIN, 1: -EXP, 2: +EXP, 3: +LIN	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.414	49 09 0D	00	49 o9 0D	Keyboard Level Scaling Right Depth	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.417	49 09 0F	03	49 o9 0F	Keyboard Level Scaling Right Curve	00 - 03	0: -LIN, 1: -EXP, 2: +EXP, 3: +LIN	03	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.419	49 19 00	01	49 o9 00	ON/OFF	00 - 01	Off, On	01	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.421	49 19 0A	00	49 o9 0A	EG Keyboard Rate Scaling	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.423	49 19 13	55	49 o9 13	Level Output Level	00 - 7F		64	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.426	49 19 12	1E	49 o9 12	Level Velocity Sensitivity	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.428	49 19 14	00	49 o9 14	Level Feedback Level	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.430	49 19 15	00	49 o9 15	Level Feedback Type	00 - 01	0:SAW, 1:SQUARE	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.432	49 19 19	00	49 o9 19	Freq. Mode	00 - 01	0:RATIO, 1:FIXED	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.435	49 19 1A	01	49 o9 1A	Freq. Coarse	00 - 1F		01	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.437	49 19 1B	00	49 o9 1B	Freq. Fine	00 - 63		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.439	49 19 1C	40	49 o9 1C	Freq. Detune	00 - 7F	-64 - 0 - +63 (0 - 64 - 127)	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.442	49 19 02	7F	49 o9 02	EG Rate 1	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.444	49 19 03	7F	49 o9 03	EG Rate 2	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.446	49 19 04	42	49 o9 04	EG Rate 3	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.448	49 19 05	2A	49 o9 05	EG Rate 4	00 - 7F		64	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.451	49 19 06	7F	49 o9 06	EG Level 1	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.453	49 19 07	7F	49 o9 07	EG Level 2	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.455	49 19 08	7F	49 o9 08	EG Level 3	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.458	49 19 09	00	49 o9 09	EG Level 4	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.460	49 19 0C	00	49 o9 0C	Keyboard Level Scaling Left Depth	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.462	49 19 0E	00	49 o9 0E	Keyboard Level Scaling Left Curve	00 - 03	0: -LIN, 1: -EXP, 2: +EXP, 3: +LIN	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.464	49 19 0D	00	49 o9 0D	Keyboard Level Scaling Right Depth	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.467	49 19 0F	03	49 o9 0F	Keyboard Level Scaling Right Curve	00 - 03	0: -LIN, 1: -EXP, 2: +EXP, 3: +LIN	03	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.469	49 29 00	01	49 o9 00	ON/OFF	00 - 01	Off, On	01	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.471	49 29 0A	00	49 o9 0A	EG Keyboard Rate Scaling	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.474	49 29 13	59	49 o9 13	Level Output Level	00 - 7F		64	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.476	49 29 12	02	49 o9 12	Level Velocity Sensitivity	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.478	49 29 14	57	49 o9 14	Level Feedback Level	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.481	49 29 15	00	49 o9 15	Level Feedback Type	00 - 01	0:SAW, 1:SQUARE	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.483	49 29 19	00	49 o9 19	Freq. Mode	00 - 01	0:RATIO, 1:FIXED	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.485	49 29 1A	08	49 o9 1A	Freq. Coarse	00 - 1F		01	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.487	49 29 1B	00	49 o9 1B	Freq. Fine	00 - 63		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.490	49 29 1C	40	49 o9 1C	Freq. Detune	00 - 7F	-64 - 0 - +63 (0 - 64 - 127)	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.492	49 29 02	7F	49 o9 02	EG Rate 1	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.494	49 29 03	7F	49 o9 03	EG Rate 2	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.497	49 29 04	0A	49 o9 04	EG Rate 3	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.499	49 29 05	0A	49 o9 05	EG Rate 4	00 - 7F		64	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.501	49 29 06	7F	49 o9 06	EG Level 1	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.503	49 29 07	7F	49 o9 07	EG Level 2	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.506	49 29 08	3B	49 o9 08	EG Level 3	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.508	49 29 09	00	49 o9 09	EG Level 4	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.510	49 29 0C	00	49 o9 0C	Keyboard Level Scaling Left Depth	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.513	49 29 0E	00	49 o9 0E	Keyboard Level Scaling Left Curve	00 - 03	0: -LIN, 1: -EXP, 2: +EXP, 3: +LIN	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.515	49 29 0D	00	49 o9 0D	Keyboard Level Scaling Right Depth	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.517	49 29 0F	03	49 o9 0F	Keyboard Level Scaling Right Curve	00 - 03	0: -LIN, 1: -EXP, 2: +EXP, 3: +LIN	03	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.520	49 39 00	01	49 o9 00	ON/OFF	00 - 01	Off, On	01	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.522	49 39 0A	00	49 o9 0A	EG Keyboard Rate Scaling	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.524	49 39 13	28	49 o9 13	Level Output Level	00 - 7F		64	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.526	49 39 12	1E	49 o9 12	Level Velocity Sensitivity	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.529	49 39 14	5A	49 o9 14	Level Feedback Level	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.531	49 39 15	00	49 o9 15	Level Feedback Type	00 - 01	0:SAW, 1:SQUARE	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.533	49 39 19	00	49 o9 19	Freq. Mode	00 - 01	0:RATIO, 1:FIXED	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.536	49 39 1A	02	49 o9 1A	Freq. Coarse	00 - 1F		01	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.538	49 39 1B	00	49 o9 1B	Freq. Fine	00 - 63		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.540	49 39 1C	40	49 o9 1C	Freq. Detune	00 - 7F	-64 - 0 - +63 (0 - 64 - 127)	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.542	49 39 02	7F	49 o9 02	EG Rate 1	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.545	49 39 03	7F	49 o9 03	EG Rate 2	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.547	49 39 04	7F	49 o9 04	EG Rate 3	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.550	49 39 05	44	49 o9 05	EG Rate 4	00 - 7F		64	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.552	49 39 06	7F	49 o9 06	EG Level 1	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.555	49 39 07	7F	49 o9 07	EG Level 2	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.557	49 39 08	7F	49 o9 08	EG Level 3	00 - 7F		7F	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.559	49 39 09	00	49 o9 09	EG Level 4	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.561	49 39 0C	00	49 o9 0C	Keyboard Level Scaling Left Depth	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.564	49 39 0E	00	49 o9 0E	Keyboard Level Scaling Left Curve	00 - 03	0: -LIN, 1: -EXP, 2: +EXP, 3: +LIN	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.566	49 39 0D	00	49 o9 0D	Keyboard Level Scaling Right Depth	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:23:58.569	49 39 0F	03	49 o9 0F	Keyboard Level Scaling Right Curve	00 - 03	0: -LIN, 1: -EXP, 2: +EXP, 3: +LIN	03	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:34.957	49 09 18	01	49 o9 18	PEG ON/OFF	00 - 01	Off, On	01	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:34.959	49 19 18	01	49 o9 18	PEG ON/OFF	00 - 01	Off, On	01	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:34.961	49 29 18	01	49 o9 18	PEG ON/OFF	00 - 01	Off, On	01	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:34.964	49 39 18	01	49 o9 18	PEG ON/OFF	00 - 01	Off, On	01	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:34.966	48 09 0A	40	48 09 0A	PEG Rate 1	00 - 7F	0 - 127	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:34.968	48 09 0B	40	48 09 0B	PEG Rate 2	00 - 7F	0 - 127	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:34.971	48 09 0C	40	48 09 0C	PEG Rate 3	00 - 7F	0 - 127	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:34.973	48 09 0D	40	48 09 0D	PEG Rate 4	00 - 7F	0 - 127	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:34.975	48 09 0E	40	48 09 0E	PEG Level 1	10 - 70	-48 - 0 - 48 (16 - 64 - 112) +/- 4Oct	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:34.977	48 09 0F	40	48 09 0F	PEG Level 2	10 - 70	-48 - 0 - 48 (16 - 64 - 112) +/- 4Oct	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:34.980	48 09 10	40	48 09 10	PEG Level 3	10 - 70	-48 - 0 - 48 (16 - 64 - 112) +/- 4Oct	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:34.982	48 09 11	40	48 09 11	PEG Level 4	10 - 70	-48 - 0 - 48 (16 - 64 - 112) +/- 4Oct	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:37.783	49 09 17	01	49 o9 17	LFO PMD ON/OFF	00 - 01	Off, On	01	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:37.785	49 09 11	00	49 o9 11	LFO AMD Depth	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:37.787	49 19 17	01	49 o9 17	LFO PMD ON/OFF	00 - 01	Off, On	01	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:37.790	49 19 11	00	49 o9 11	LFO AMD Depth	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:37.792	49 29 17	01	49 o9 17	LFO PMD ON/OFF	00 - 01	Off, On	01	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:37.794	49 29 11	00	49 o9 11	LFO AMD Depth	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:37.796	49 39 17	01	49 o9 17	LFO PMD ON/OFF	00 - 01	Off, On	01	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:37.799	49 39 11	00	49 o9 11	LFO AMD Depth	00 - 7F		00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:37.801	48 09 04	00	48 09 04	LFO Wave	00 - 06	0:Sin, 1:Tri, 2:Saw-Up, 3:Saw-Down,	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:37.803	48 09 06	1E	48 09 06	LFO Delay	00 - 7F	0 - 127	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:37.806	48 09 05	1B	48 09 05	LFO Speed	00 - 7F	0 - 127	40	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:24:37.808	48 09 07	06	48 09 07	LFO PMD	00 - 7F	0 - 127	00	SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHO
+00:25:00.950	41 0A 4F	40	41 ep 4F	Coarse Tune	28 - 58	-24 - +24	40	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.952	41 0A 0B	40	41 ep 0B	Pan	01 - 7F	L63 ... C ... R63	40	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.954	41 0A 2E	64	41 ep 2E	Element Level	00 - 7F	0 - 127	64	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.956	41 0A 33	00	41 ep 33	AEG Attack Time	00 - 7F	0 - 127	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.959	41 0A 35	7F	41 ep 35	AEG Decay 2 Time	00 - 7F	0 - 127	40	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.961	31 3A 03	02 00	31 3p 03	Insertion-B Parameter 1 MSB	00 - 7F	˶	02 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.963	31 3A 05	00 10	31 3p 05	Insertion-B Parameter 2 MSB	00 - 7F	˶	00 10	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.965	31 1A 19	00	31 1p 19	Reverb Send	00 - 7F	0 - 127	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.968	31 1A 1A	00	31 1p 1A	Variation Send	00 - 7F	0 - 127	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.970	42 0A 39	40						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.972	42 0A 36	40						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.975	50 0A 66	00 00 00 00	50 eA 66	Start Point	00 00 00 00 -	0x00000000 - 0x00FFFFFF	00 00 00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.977	50 0A 6A	00 01 26 5F	50 eA 6A	End Point	00 00 00 00,	0x00000000, 0x0000000F - 0x00FFFFFF	00 00 00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.979	50 0A 5F	00	50 eA 5F	Loop On/Off	00 - 01	Off, On	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.981	50 0A 60	00 01 26 5F	50 eA 60	Loop Length	00 00 00 00 -	0x00000050 - 0x00FFFFFF	00 00 00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.984	41 0A 5E	01 00	41 ep 5E	PEG Attack Level MSB	00 - 01	˶	01 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.986	41 0A 58	28	41 ep 58	PEG Attack Time	00 - 7F	0 - 127	28	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.988	41 0A 60	01 00	41 ep 60	PEG Decay 1 Level MSB	00 - 01	˶	01 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.990	41 0A 59	40	41 ep 59	PEG Decay 1 Time	00 - 7F	0 - 127	40	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:00.993	01 1A 30	00						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.011	30 5A 0F	00	30 5p 0F	Pattern Select	00 - 05	1 - 6	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.013	30 5A 01	40	30 5p 01	Pan	01 - 7F	L63 ... C ... R63	40	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.015	30 5A 00	64	30 5p 00	Volume	00 - 7F	0 - 127	64	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.020	00 00 19	02	00 00 19	Sampling Source	00 - 02	Resampling, Mic/Line In, USB Audio In	01	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.022	00 00 1C	01	00 00 1C	Auto Normalize	00 - 01	Off, On	01	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.024	31 2A 00	0D 28	31 2p 00	Insertion-A Te MSB	00 - 7F	Refer to Effect Parameter List	00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.027	31 2A 43	7F	31 2p 43	Side Chain Part	00 - 0A, 10,	0:part1, …, 10:part11, 16:A/D, 17:Master, 127: Off	7F	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.029	01 1A 53	09						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.031	01 1A 54	00						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.033	01 1A 55	08						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.036	01 1A 5C	00						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.038	01 1A 5D	18						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.040	01 1A 5E	55						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.043	01 10 28	00						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.240	31 2A 03	01 38	31 2p 03	Insertion-A Parameter 1 MSB	00 - 7F	˶	00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.243	31 2A 05	00 00	31 2p 05	Insertion-A Parameter 2 MSB	00 - 7F	˶	00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.245	31 2A 07	00 00	31 2p 07	Insertion-A Parameter3 MSB	00 - 7F	˶	00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.247	31 2A 09	02 7B	31 2p 09	Insertion-A Parameter4 MSB	00 - 7F	˶	00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.250	31 2A 0B	00 34	31 2p 0B	Insertion-A Parameter5 MSB	00 - 7F	˶	00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.252	31 2A 13	00 50	31 2p 13	Insertion-A Parameter9 MSB	00 - 7F	˶	00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.254	31 2A 15	00 01	31 2p 15	Insertion-A Parameter 10 MSB	00 - 7F	˶	00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.256	31 2A 17	00 4F	31 2p 17	Insertion-A Parameter 11 MSB	00 - 7F	˶	00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.258	31 2A 19	00 00	31 2p 19	Insertion-A Parameter 12 MSB	00 - 7F	˶	00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.261	31 2A 1B	00 00	31 2p 1B	Insertion-A Parameter 13 MSB	00 - 7F	˶	00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.263	31 2A 1D	00 00	31 2p 1D	Insertion-A Parameter 14 MSB	00 - 7F	˶	00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.266	31 2A 1F	00 00	31 2p 1F	Insertion-A Parameter 15 MSB	00 - 7F	˶	00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:01.268	31 2A 21	00 00	31 2p 21	Insertion-A Parameter 16 MSB	00 - 7F	˶	00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:13.657	30 5A 16	00 20	30 5p 16	Pattern 1 Step MSB	00 - 01	1 - 128	00 10	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:13.659	30 5A 18	00 10	30 5p 18	Pattern 2 Step MSB	00 - 01	˶	00 10	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:13.661	30 5A 1A	00 10	30 5p 1A	Pattern 3 Step MSB	00 - 01	˶	00 10	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:13.663	30 5A 1C	00 10	30 5p 1C	Pattern 4 Step MSB	00 - 01	˶	00 10	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:13.666	30 5A 1E	00 10	30 5p 1E	Pattern 5 Step MSB	00 - 01	˶	00 10	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:13.668	30 5A 20	00 10	30 5p 20	Pattern 6 Step MSB	00 - 01	˶	00 10	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:13.751	75 30 00	(no reply)						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:16.404	30 50 29	00	30 5p 29	Mute	00,7D	0:off, 125:on	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:16.409	30 51 29	00	30 5p 29	Mute	00,7D	0:off, 125:on	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:16.413	30 52 29	00	30 5p 29	Mute	00,7D	0:off, 125:on	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:16.418	30 53 29	00	30 5p 29	Mute	00,7D	0:off, 125:on	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:16.423	30 54 29	00	30 5p 29	Mute	00,7D	0:off, 125:on	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:16.427	30 55 29	00	30 5p 29	Mute	00,7D	0:off, 125:on	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:16.432	30 56 29	00	30 5p 29	Mute	00,7D	0:off, 125:on	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:16.436	30 57 29	00	30 5p 29	Mute	00,7D	0:off, 125:on	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:16.441	30 58 29	00	30 5p 29	Mute	00,7D	0:off, 125:on	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:16.445	30 59 29	00	30 5p 29	Mute	00,7D	0:off, 125:on	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:16.450	30 5A 29	00	30 5p 29	Mute	00,7D	0:off, 125:on	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:16.454	30 40 68	00	30 40 68	Solo Track		Off, Track 1-11	Off	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:23.489	41 1A 2E	64	41 ep 2E	Element Level	00 - 7F	0 - 127	64	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:23.491	41 2A 2E	64	41 ep 2E	Element Level	00 - 7F	0 - 127	64	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:23.493	41 3A 2E	64	41 ep 2E	Element Level	00 - 7F	0 - 127	64	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:23.496	41 4A 2E	64	41 ep 2E	Element Level	00 - 7F	0 - 127	64	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:23.498	41 5A 2E	64	41 ep 2E	Element Level	00 - 7F	0 - 127	64	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:23.500	41 6A 2E	64	41 ep 2E	Element Level	00 - 7F	0 - 127	64	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:23.502	30 40 63	00	30 40 63	Sampler Element Mute		bit6-0: element7-1 mute	0	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:29.104	30 51 0F	00	30 5p 0F	Pattern Select	00 - 05	1 - 6	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:29.106	30 52 0F	00	30 5p 0F	Pattern Select	00 - 05	1 - 6	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:29.109	30 53 0F	00	30 5p 0F	Pattern Select	00 - 05	1 - 6	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:29.111	30 54 0F	00	30 5p 0F	Pattern Select	00 - 05	1 - 6	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:29.113	30 55 0F	00	30 5p 0F	Pattern Select	00 - 05	1 - 6	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:29.115	30 56 0F	00	30 5p 0F	Pattern Select	00 - 05	1 - 6	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:36.362	30 59 0C	40	30 5p 0C	Octave	3E - 42	-2 - 0 - +2	40	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.211	71 10 04	00						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.213	71 10 06	00						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.215	71 50 00	00						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.217	01 10 17	00						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.220	71 40 00	00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.222	71 40 01	00 00 01 01 01 01 01 01 01 01 01 01 01 00 00 00 00 00 00 00 00 00 00 00 00 00						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.224	71 40 02	00 00 02 02 02 02 02 02 02 02 02 02 02 00 00 00 00 00 00 00 00 00 00 00 00 00						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.227	71 40 03	(no reply)						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.229	71 40 04	(no reply)						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.231	71 40 05	(no reply)						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.233	71 40 06	(no reply)						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.236	71 40 07	(no reply)						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.238	71 40 08	(no reply)						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.240	71 40 09	(no reply)						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.242	71 40 0A	(no reply)						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.245	71 40 0B	(no reply)						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.247	71 40 0C	(no reply)						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.249	71 40 0D	(no reply)						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.252	71 40 0E	(no reply)						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:39.254	71 40 0F	(no reply)						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.218	30 4D 00	3C	30 4D 00	Scale 1 Note of Pad 1	24 - 60	C1 ... C6		select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.220	30 4D 01	3E	30 4D 01	Scale 1 Note of Pad 2	24 - 60	C1 ... C6		select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.222	30 4D 02	3F	30 4D 02	Scale 1 Note of Pad 3	24 - 60	C1 ... C6		select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.225	30 4D 03	41	30 4D 03	Scale 1 Note of Pad 4	24 - 60	C1  C6		select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.227	30 4D 04	43	30 4D 04	24 - 60	1	Scale 1 Note of Pad 5	...	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.229	30 4D 05	44	30 4D 05	Scale 1 Note of Pad 6	24 - 60	C1 ... C6		select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.231	30 4D 06	46	30 4D 06	Scale 1 Note of Pad 7	24 - 60	C1 ... C6		select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.233	30 4D 10	3C						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.236	30 4D 11	3E	30 4n 11	Master Effect Parameter 8 MSB	00 - 7F	˶	˶	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.238	30 4D 12	40						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.240	30 4D 13	41	30 4n 13	Master Effect Parameter 9 MSB	00 - 7F	˶	˶	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.243	30 4D 14	43						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.245	30 4D 15	45	30 4n 15	Master Effect Parameter 10 MSB	00 - 7F	˶	˶	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.247	30 4D 16	47						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.249	30 4D 20	3C						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.252	30 4D 21	3F	30 4n 21	Master Effect Parameter 16 MSB	00 - 7F	˶	˶	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.254	30 4D 22	41						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.256	30 4D 23	43	30 4n 23	Master Effect Parameter 17 MSB	00 - 7F	˶	˶	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.259	30 4D 24	46						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.261	30 4D 25	48	30 4n 25	Master Effect Parameter 18 MSB	00 - 7F	˶	˶	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.263	30 4D 26	4B						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.265	30 4D 30	3C						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.268	30 4D 31	3E	30 4n 31	Master Effect Parameter 24 MSB	00 - 7F	˶	˶	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.270	30 4D 32	40						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.272	30 4D 33	43	30 4n 33	reserved			00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.275	30 4D 34	45						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.277	30 4D 35	48	30 4n 35	reserved			00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.279	30 4D 36	4A						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.281	30 4D 40	3C						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.284	30 4D 41	3E	30 4n 41	reserved			00 00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.286	30 4D 42	40						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.288	30 4D 43	42	30 4n 43	Side Chain Part	00 - 0A, 10,	0:Part1, 1:Part2, …, 10:Part11, 16:A/D,	7F	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.291	30 4D 44	43	30 4n 44	reserved	,	,	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.293	30 4D 45	45	30 4n 45	reserved	,	,	00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.295	30 4D 46	47	30 4n 46	reserved			00	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.298	30 4D 50	3C						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.300	30 4D 51	3E						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.303	30 4D 52	3F						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.305	30 4D 53	41						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.307	30 4D 54	43						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.310	30 4D 55	45						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.312	30 4D 56	46						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.314	30 4D 60	3C						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.317	30 4D 61	3E						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.319	30 4D 62	40						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.321	30 4D 63	41						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.324	30 4D 64	43						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.326	30 4D 65	45						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.328	30 4D 66	46						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.331	30 4D 70	3C						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.333	30 4D 71	3D						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.336	30 4D 72	3F						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.338	30 4D 73	41						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.340	30 4D 74	43						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.343	30 4D 75	44						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.345	30 4D 76	46						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.349	30 40 7C	01 2C	30 40 7C	Swing Offset		-58 to +58	0	select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:25:48.359	01 10 16	00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00						select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLE
+00:26:01.621	30 53 08	00	30 5p 08	Group Number	00 - 7F	Off, Group1, ..., Group127	00	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:01.623	30 54 08	00	30 5p 08	Group Number	00 - 7F	Off, Group1, ..., Group127	00	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:01.625	30 55 08	00	30 5p 08	Group Number	00 - 7F	Off, Group1, ..., Group127	00	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:01.628	30 56 08	00	30 5p 08	Group Number	00 - 7F	Off, Group1, ..., Group127	00	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:09.708	00 00 1F	03	00 00 1F	Record Quantize Value	00 - 05	Off, 60, 80, 120, 160, 240	03	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:09.710	00 00 1E	00	00 00 1E	Project Resume Auto Trigger	00 - 01	Off, On	00	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:09.712	00 00 1D	00	00 00 1D	Project Resume Switch	00 - 01	Off, On	01	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:09.715	00 00 21	01	00 00 21	Sound Design Mode	00 - 01	Normal, Advanced	00	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:09.717	00 00 1B	01	00 00 1B	Sampling Count In	00 - 01	Off, On	01	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:09.719	30 40 7A	00 10	30 40 7A	Pattern Master Step		1-128	16 (0x0010)	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:09.722	30 4B 06	02	30 4B 06	A/D Part Insertion FX Switch	02 - 03	Bit0:Insertion A Off/On, Bit1:Insertion B Off/On,	02	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:09.724	30 4B 16	00	30 4B 16	A/D Part Output Select	00 - 01, 7D	0:MainL&R, 1:Direct Out, 125:Off	00	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:09.726	30 4C 16	00	30 4C 16	USB Part Output Select	00 - 01, 7D	0:MainL&R, 1:Direct Out, 125:Off	00	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:17.421	00 00 2D	00	00 00 2D	Midi Clock Out	00 - 01	Off, On	01	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:17.423	00 00 2A	01	00 00 2A	00 - 01	1	Midi Sync	Internal, MIDI(Auto)	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:17.425	00 00 2B	01	00 00 2B	Transmit Sequencer Control	00 - 01	Off, On	01	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:17.428	00 00 0A	01	00 00 0A	Legacy MIDI Transmit Channel Message	00 - 01	Off, On	01	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:17.430	00 00 0B	70	00 00 0B	Transmit Control Change	00 - 70	bit 5:BS Off, On	00	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:17.432	00 00 0C	01	00 00 0C	Legacy MIDI Transmit System Exclusive Message	00 - 01	Off, On	00	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:17.434	00 00 22	03	00 00 22	Legacy MIDI Thru	00 - 03	Off, Channel, Realtime, Both	00	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:17.437	00 00 0E	01	00 00 0E	USB MIDI Transmit Channel Message	00 - 01	Off, On	01	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:17.439	00 00 0F	70	00 00 0F	USB MIDI	00 - 70	bit 6:CC Off, On	00	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:17.441	00 00 10	01	00 00 10	USB MIDI Transmit System Exclusive Message	00 - 01	Off, On	00	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:17.443	00 00 23	03	00 00 23	USB To Host MIDI Thru	00 - 03	Off, Channel, Realtime, Both	03	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:17.446	00 00 12	01	00 00 12	Bluetooth MIDI Transmit Channel Message	00 - 01	Off, On	01	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:17.448	00 00 13	70	00 00 13	Transmit Control Change	00 - 70	bit 5:BS Off, On	00	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:17.450	00 00 14	01	00 00 14	Bluetooth MIDI Transmit System Exclusive Message	00 - 01	Off, On	00	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:17.453	00 00 24	03	00 00 24	Bluetooth MIDI Thru	00 - 03	Off, Channel, Realtime, Both	03	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:35.553	01 00 00	01 02 01 03						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:40.402	00 61 02	00						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:40.418	00 60 01	00						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:40.437	01 10 01	00						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:41.363	01 00 04	01						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:41.365	01 10 15	07						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:41.377	01 10 11	01 04						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:41.379	01 10 13	03 7E						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:41.382	01 10 0D	0B 29						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:41.384	01 10 0F	0C 70						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:41.386	01 10 0B	06 66						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:41.388	01 10 09	0F 19						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:41.658	01 17 3C	(no reply)						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:41.660	01 18 3C	(no reply)						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:41.663	01 19 3C	(no reply)						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:26:41.665	01 1A 3C	(no reply)						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:27:43.458	00 00 00	7F	00 00 00	Speaker Master Volume	00 - 7F	0 - 127	64	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:27:43.460	00 00 01	5C	00 00 01	Headphone Master Volume	00 - 7F	0 - 127	20	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:27:43.462	00 00 18	01	00 00 18	Analog Audio Output Gain	00 - 03	00:-6dB, 01:+0dB, 02:+6dB, 03:+12dB	01	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:27:43.464	00 00 15	00	00 00 15	USB Audio Output Gain	00 - 03	00:-6dB, 01:+0dB, 02:+6dB, 03:+12dB	00	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:27:43.467	00 00 2F	01	00 00 2F	Pattern Select Sensitivity	01 - 03	1, 2, 3	01	SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:27:43.469	01 10 03	04						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:27:43.471	01 10 07	00						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:27:43.476	00 60 00	00						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:27:43.488	00 60 06	55 53						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:27:53.025	01 10 27	00						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:27:53.222	01 10 2E	06						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A
+00:27:53.224	01 10 18	15						SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>A

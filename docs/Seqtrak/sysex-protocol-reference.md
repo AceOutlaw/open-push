@@ -13,6 +13,12 @@ Complete MIDI protocol documentation for Yamaha Seqtrak, combining official Yama
 >   `reference files/Yamaha/User Guide/SEQTRAK_user_guide_En_D0.txt` (local only) — cite its § numbers.
 > - **Official parameter addresses:** `docs/Seqtrak/midi-data-table.md` and the Data List PDFs.
 > - **How things were found + lessons:** `docs/Seqtrak/REVERSE-ENGINEERING-LOG-2026-10.md`.
+> - **What the official SEQTRAK app reads and writes** (1,138 addresses with the device's replies, sound-name
+>   read, sound-list bulk dump, extra drum step tables): `docs/Seqtrak/APP-CLICKTHROUGH-P0.md` + `app-read-map-P0.tsv`.
+> - **The command behind every app control** (effects, sends, EQ, arp, chords, key/scale, swing, mute/solo,
+>   DX, LFO, MIDI settings, step substep/probability): `docs/Seqtrak/APP-CLICKTHROUGH-P1.md` (📱 = sent by the
+>   official app; still to be verified by readback). Corrections from it: Key `30 40 7F` = `0x40` + semitone;
+>   Swing `30 40 7C` = 128 + tick offset; Mute `30 5p 29` on = `7D`; 3/6 patterns = `30 40 79`.
 > - A message the Seqtrak *sends* may only be a report; never assume it works as a command until tested.
 
 ---
@@ -876,6 +882,7 @@ when unknown), `app.py:_read_note_list_blocking`.
 |---------|------|-------|
 | `00 00 00` | 00-7F | ✅ **Speaker Master Volume** (official), default `0x64` = 100 (corrected from code + midi-data-table, 2026-10-12; previously read "default 64"). Sent by the volume buttons, preceded by `01 10 2E 09` (volume display mode). Readable with a Parameter Request |
 | `00 00 01` | 00-7F | **Headphone Master Volume** (official), default 32 (`0x20`) |
+| `30 40 66` | 00-7F | ✅ **Project Volume** (official "Volume", default 127) = the app's MASTER > Overview VOLUME slider (captured 2026-10-14, `APP-CLICKTHROUGH-P0.md`). Separate from the speaker volume above |
 
 Step size per button press not yet confirmed (only 0–2 observed).
 

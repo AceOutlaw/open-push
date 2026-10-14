@@ -162,9 +162,9 @@ F0 43 30 7F 1C 0C [addr_h] [addr_m] [addr_l] F7
 | 76 | 2 | Tempo | 5-300 BPM | 120 (0x0078) |
 | 79 | 1 | Pattern Select Mode | Normal, Advanced | Normal |
 | 7A | 2 | Pattern Master Step | 1-128 | 16 (0x0010) |
-| 7C | 2 | Swing Offset | -58 to +58 | 0 |
+| 7C | 2 | Swing Offset | -58 to +58 ticks, sent as 128 + offset (7-bit pair; `01 00` = 0). App shows (120 + offset)/240 as % | `01 00` |
 | 7E | 1 | Scale | Scale 1-8 | 0 |
-| 7F | 1 | Key | 0-11 (C to B) | 0 (C) |
+| 7F | 1 | Key | `40`-`4B` = C to B (Data List range 40-4B; corrected 2026-10-14, app capture agrees) | `40` (C) |
 
 ---
 

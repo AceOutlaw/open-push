@@ -97,7 +97,14 @@ and note number match, send `74 [g] [index] 00`.
   edit as **`70 [10+t] 03 [step] [value]`** with the same values. ❓ Value → option mapping (guide options:
   none, ×2, ×3 8th-triplet, ×3 16th-triplet, ×4) not yet matched to what was chosen on each step.
 - So the device's per-step edit report is `70 [10+t] [param] [step] [value]`: param `00` = micro timing,
-  `03` = substep. ❓ Probability (§6.6) probably another param — not yet captured.
+  `03` = substep, `04` = probability.
+- 📱 **The SEQTRAK app sends these same messages to edit a step** (2026-10-14 click-through, block 104-03,
+  `APP-CLICKTHROUGH-P1.md`), so they are commands, not only reports. Readback after a Push write not yet done.
+  - Substep values: `00` none · `01` ×2 · `04` ×3 8th triplet · `02` ×3 16th triplet · `03` ×4
+    (so the SNARE steps above were ×3 16th, ×3 8th, ×3 16th, ×2).
+  - Probability `70 [10+t] 04 [step] [v]`: `00` = 100 %, `01` = 87 %, `04` = 49 %, `07` = 10 % (8 levels).
+  - ❓ The app also reads `70 [50+t] [step]` (never answered) and `70 [60+t] [step]` (`00` on every set step) —
+    probability may be stored in `70 6t`; check by reading it after setting a probability.
 - So the full drum readback is **`[note] [vel] [substep] [60+micro] [len_hi] [len_lo]`**.
 - ❓ Velocity byte read `64` (100) on every note so far; soft/hard Push pad hits not yet tested.
 - 📖 **Purple step keys = Parameter Lock** (user guide §9.2, p. 64). The guide also says a VOLUME

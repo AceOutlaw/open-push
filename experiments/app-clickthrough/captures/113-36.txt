@@ -1,0 +1,4 @@
+# 113-36  skai 01:00:10-01:00:29 EDT
+# OUT = sent to SEQTRAK by any Mac app (MIDI Monitor spy), IN = sent by SEQTRAK
+01:00:13.229 OUT F0 43 10 7F 1C 0C 49 09 0F 01 F7
+01:00:16.549 OUT F0 43 10 7F 1C 0C 49 09 0F 00 F7

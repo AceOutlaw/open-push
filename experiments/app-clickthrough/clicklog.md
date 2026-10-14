@@ -1,0 +1,306 @@
+# SEQTRAK app click-through log
+
+One line per app action (local time). Correlate with MIDI Monitor spy capture.
+
+- 00:17:46 | PRE (no block) | ~00:05 DRUMS tab got clicked by a background-click test; 00:16-00:17 nav: SETTINGS tab, BPM/metronome popup opened+closed (no value changed), SETTINGS>MIDI, HOME. Device Connection screen not reachable (Wispr Flow overlay blocks clicks there)
+- 00:17:46 | P0-PROBE | wrote READY
+- 00:18:01 | PRE (no block) | nav: HOME > GUI EDITOR, MASTER tab
+- 00:18:10 | P0-PROBE | HOLD: after clicking MASTER tab (00:18) app showed 'YOUR SEQTRAK IS DISCONNECTED'. No probe actions done. Checking Device Connection screen.
+- 00:19:32 | PRE (no block) | 00:19 app reconnected; HOME > DEVICE CONNECTION shows 'CONNECTED: SEQTRAK' (wired icon = USB); back > GUI EDITOR > MASTER
+- 00:19:32 | P0-PROBE | wrote READY
+- 00:19:44 | P0-PROBE | MASTER > Overview > VOLUME | drag down (127 -> ~100) | shown: 98 (action ~3 s before this line)
+- 00:19:54 | P0-PROBE | MASTER > Overview > VOLUME | drag up (98 -> 127) | shown: 127 (action ~1 s before this line)
+- 00:19:57 | P0-PROBE | wrote DONE
+- 00:20:17 | P0-NAV | wrote READY
+- 00:20:18 | P0-NAV | batch start: MASTER sub-pages EFFECT, SEND, COMP & EQ (each ~3 s apart)
+- 00:20:56 | P0-NAV | done ~00:20:20-00:20:45: MASTER>EFFECT (opened on EFFECT 2), MASTER>SEND (SEND 1 REVERB), MASTER>COMP&EQ (COMP), COMP page-down x2 (page 2; 2nd press no-op), 5 BAND EQ
+- 00:20:56 | P0-NAV | batch start: SEND>DELAY, SEND pages, EFFECT>MASTER EFFECT/EFFECT 1/EFFECT 2 + pages
+- 00:22:06 | P0-NAV | done ~00:21:00-00:22:00: SEND>REVERB page-down x2, SEND 2 DELAY, DELAY page-down x2, EFFECT>MASTER EFFECT, page-down x2, EFFECT 1, page-down x2 (single page), EFFECT 2, page-down x3 (pages 2,3)
+- 00:22:06 | P0-NAV | next: DRUMS tab
+- 00:22:43 | P0-NAV | done ~00:22:10-00:22:40 (KICK selected): DRUMS tab, PATTERN detail, pattern-editor NEXT (page 2), SOUND (browser), SOUND DESIGN (EQ/SEND), LFO, EFFECT
+- 00:22:43 | P0-NAV | batch start: track select SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (3 s apart)
+- 00:23:14 | P0-NAV | done ~00:22:50-00:23:15: selected SNARE, CLAP, HAT1, HAT2, PERC1, PERC2, KICK (EFFECT view; same AMP SIMULATOR 2 shown for KICK and PERC2 -> drum effect may be shared)
+- 00:23:14 | P0-NAV | next: SYNTHS / SAMPLER tab
+- 00:25:00 | P0-NAV | done ~00:23:20-00:24:40: SYNTHS/SAMPLER tab (SYNTH 1), PATTERN detail, SOUND DESIGN (EQ SEND), PORTAMENTO, ARP, CHORD, EFFECT; select SYNTH 2; select DX; DX SOUND DESIGN (OPERATORS OP1), op-next x3 (OP2,OP3,OP4), EG editor open+close, KSC editor open+close, ALGORITHM, PITCH EG, LFO
+- 00:25:00 | P0-NAV | next: select SAMPLER + its pages
+- 00:25:47 | P0-NAV | done ~00:24:50-00:25:45: select SAMPLER, SAMPLER SOUND DESIGN, SAMPLER PATTERN, PERFORM tab (MIXER), PERFORM>SAMPLER, >SEND, >PATTERN, >PAD/KEY (shows DX), >SONG
+- 00:25:47 | P0-NAV | next: SETTINGS > ADVANCED, MIDI>ADVANCED, scales gear, drum choke gear
+- 00:28:16 | P0-NAV | done ~00:25:50-00:27:50: SETTINGS tab (PROJECT), SCALES editor open+close, DRUM CHOKE editor open+close, SETTINGS>ADVANCED, >MIDI, MIDI ADVANCED (MIDI CABLE), USB, BLUETOOTH; HOME, PROJECT/SOUND MANAGER (PROJECTS, SOUNDS), HOME, VISUALIZER (loads ~8 s, warning closed, scene dialog closed, exit confirmed YES = discard visualizer scene only), HOME>SETTINGS (APP), HARDWARE, back, GUI EDITOR (SETTINGS)
+- 00:28:19 | P0-NAV | wrote DONE
+- 00:29:03 | P0 | block list drafted in PLAN.md section 5; HOLD for Ace review
+- 00:33:19 | PRE (no block) | Ace: skip review, continue through GUI. Nav DRUMS > KICK > SOUND DESIGN > LFO
+- 00:34:01 | 113-01 | KICK LFO DEPTH: drag 0->22, typed 127, 0, 64, 0 (~3 s apart)
+- 00:34:35 | 113-02 | KICK LFO DELAY: typed 127, 64, 1, 0
+- 00:36:32 | 113-03 | KICK LFO DESTINATION (10 options; list order: FX: OVERDRIVE, FX: AMP TYPE, FX: LPF CUTOFF FREQUENCY, FX: OUTPUT LEVEL, FX: DRY/WET BALANCE, FILTER: LPF/HPF CUTOFF FREQUENCY [original], FILTER: RESONANCE, SOUND: LEVEL, SOUND: PITCH, SOUND: PAN; FX entries follow the loaded effect AMP SIMULATOR 2). Selected in order: FX LPF CUTOFF, FX OUTPUT LEVEL, FX DRY/WET, FILTER CUTOFF, FILTER RESONANCE, SOUND LEVEL, SOUND PITCH, SOUND PAN, FX OVERDRIVE, FX AMP TYPE, FILTER CUTOFF (restore)
+- 00:36:51 | 113-04 | KICK LFO TEMPO SYNC: on (SPEED shows 1/4 picker), off (SPEED 45)
+- 00:37:19 | 113-05 | KICK LFO SPEED (sync off): typed 63, 0, 32, 45
+- 00:39:12 | 113-05b | KICK LFO SPEED (sync on): TEMPO SYNC on, then picker in grid order: 1/16, 1/8 Tri, 1/16 Dot, 1/8, 1/4 Tri, 1/8 Dot, 1/4 [orig], 1/2 Tri, 1/4 Dot, 1/2, Whole Tri, 1/2 Dot, 1/4x4, 1/4x5, 1/4x6, 1/4x7, 1/4x8, 1/4x16, 1/4x32, 1/4x64, restore 1/4; close; TEMPO SYNC off (SPEED 45)
+- 00:40:20 | 113-06 | KICK LFO SHAPE (12, grid order): TRIANGLE[orig, 1st] -> TRIANGLE(2nd, small), SAW UP, SAW DOWN, SQUARE 1/4, SQUARE 1/3, SQUARE, SQUARE 2/3, SQUARE 3/4, TRAPEZOID, S/H 1, S/H 2, restore TRIANGLE(1st); close
+- 00:40:47 | PRE (no block) | nav SYNTHS/SAMPLER > SYNTH 1 > SOUND DESIGN > LFO (orig: DEPTH 0, DELAY 0, DEST LEVEL, SYNC off, SPEED 57, SHAPE S/H 1)
+- 00:41:07 | 113-07 | SYNTH 1 LFO DEPTH: typed 127, 64, 1, 0
+- 00:41:35 | 113-08 | SYNTH 1 LFO DELAY: typed 127, 64, 1, 0 (verify: screen afterwards showed DEPTH field still focused)
+- 00:41:48 | NOTE | typed fields re-send their value when they lose focus: in 113-08 each 'DEPTH 0C 00' line is the previously focused DEPTH field re-committing, not a DELAY change
+- 00:42:48 | 113-09 | SYNTH 1 LFO DESTINATION (same 10-item list as KICK): FX OVERDRIVE, FX AMP TYPE, FX LPF CUTOFF, FX OUTPUT LEVEL, FX DRY/WET, FILTER CUTOFF, FILTER RESONANCE, SOUND PITCH, SOUND PAN, restore SOUND LEVEL; close
+- 00:43:32 | 113-10 | SYNTH 1 LFO TEMPO SYNC on; synced SPEED (orig 1/16): 1/8, 1/4, 1/4x64, restore 1/16; close; TEMPO SYNC off (SPEED 57)
+- 00:44:19 | 113-11 | SYNTH 1 LFO SPEED (sync off): typed 63, (two keystroke sets lost - no focus), 0, 32, 57
+- 00:44:55 | 113-12 | SYNTH 1 LFO SHAPE (orig S/H 1): TRIANGLE(1st), SAW UP, S/H 2, restore S/H 1; close
+- 00:45:14 | PRE (no block) | nav SETTINGS > PROJECT > DRUM CHOKE editor (HAT off, PERC off)
+- 00:45:27 | 113-13 | DRUM CHOKE HAT (HAT1-HAT2): on, off
+- 00:45:47 | 113-14 | DRUM CHOKE PERC (PERC1-PERC2): on, off
+- 00:46:11 | PRE (no block) | nav SYNTHS/SAMPLER > DX > SOUND DESIGN > ALGORITHM (orig tile 3, reading order L->R, top->bottom)
+- 00:46:58 | 113-20 | DX ALGORITHM (orig 3): 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, restore 3
+- 00:47:14 | PRE (no block) | nav DX > OPERATORS (OP1: ON, MODE RATIO). Knobs here have no number fields; using drags
+- 00:47:27 | 113-21 | DX OP1 ON/OFF: off, on
+- 00:48:08 | 113-22 | DX OP1 MODE: 3 clicks (RATIO->FIXED->...); screen ended on RATIO (0.5-31.99) so one click may not have registered; capture is the truth
+- 00:49:29 | 113-23 | DX OP1 FREQ (RATIO, orig 0.5): drag to min 0.5, steps up 4.5, 8.5, ... 31.99 (max), then down 14.23, 0.5
+- 00:50:25 | 113-24 | DX OP1 DETUNE (orig 0): drag to -64 (min), steps up -48 ... 0 ... +63 (max), back to 0
+- 00:51:27 | 113-25 | DX OP1 LEVEL (orig 127): 111, 62, 13, 0(min), ~13, 51, ..., 127 (max = orig)
+- 00:52:08 | 113-26 | DX OP1 VEL.S (orig ~30): 46, 0 (min), 78, 127 (max), 78, 29 (restored to 29, orig was ~30)
+- 00:52:48 | 113-27 | DX OP1 FEEDBACK (bipolar -127..+127, orig ~-29): 3, -127 (min), 27, 127 (max), ..., -30
+- 00:53:30 | 113-28 | DX OP1 KSC.R (orig 0): 16, 0 (min), 78, 127 (max), 28, 0
+- 00:53:47 | PRE (no block) | opened DX OP1 EG editor
+- 00:54:22 | 113-29a | DX OP1 EG ATTACK TIME (orig 0): 16, 0, 106, 127, 0
+- 00:54:53 | 113-29b | DX OP1 EG ATTACK LEVEL (orig 127): 111, 0, 106, 127
+- 00:55:41 | 113-29c | DX OP1 EG DECAY1 TIME (orig ~2): 18, 0, 127, (22), 0 - left at 0
+- 00:56:09 | 113-29d | DX OP1 EG DECAY1 LEVEL (orig 127): 111, 0, 127
+- 00:56:47 | 113-29e | DX OP1 EG DECAY2 TIME (orig 61): 77, 0, 127, 92, 61
+- 00:57:14 | 113-29f | DX OP1 EG DECAY2 LEVEL (orig 127): 111, 0, 127
+- 00:57:52 | 113-29g | DX OP1 EG RELEASE TIME (orig 64): 80, 0, 127, 63 (restored 63)
+- 00:58:32 | 113-29h | DX OP1 EG RELEASE LEVEL (orig 0): 16, 0, 127, 22, 0
+- 00:58:51 | PRE (no block) | closed EG, opened DX OP1 KSC editor
+- 00:59:15 | 113-33 | DX OP1 KSC L DEPTH (orig -127): -95, ..., +127 (max), ..., -127 (min = orig)
+- 00:59:34 | 113-34 | DX OP1 KSC L MODE: EXP, LIN
+- 01:00:02 | 113-35 | DX OP1 KSC R DEPTH (orig -127): -95, ..., +93, ..., -127
+- 01:00:24 | 113-36 | DX OP1 KSC R MODE: EXP, LIN
+- 01:00:39 | PRE (no block) | closed KSC; OP > (now OP2)
+- 01:00:49 | 113-37a | DX OP2 LEVEL (orig 85): 69, 85
+- 01:01:03 | PRE (no block) | OP > (now OP3)
+- 01:01:15 | 113-37b | DX OP3 LEVEL (orig ~89): 73, back up ~89
+- 01:01:29 | PRE (no block) | OP > (now OP4)
+- 01:01:44 | 113-37c | DX OP4 LEVEL (orig 40): 24, 40
+- 01:01:59 | PRE (no block) | nav DX > PITCH EG (orig LEVEL1-4 = 0, TIME1-4 ~mid, OP1-4 ON)
+- 01:02:28 | 113-40 | DX PITCH EG LEVEL1 (orig 0): +24, +48 (max), -48 (min), 0
+- 01:02:47 | 113-41 | DX PITCH EG LEVEL2 (orig 0): +24, 0
+- 01:03:05 | 113-42 | DX PITCH EG LEVEL3 (orig 0): +24, 0
+- 01:03:25 | 113-43 | DX PITCH EG LEVEL4 (orig 0): +24, 0
+- 01:04:07 | 113-44 | DX PITCH EG TIME1 (orig 63): 79, 127, 0, 61, 63
+- 01:04:25 | 113-45 | DX PITCH EG TIME2 (orig 63): 79, 63
+- 01:04:44 | 113-46 | DX PITCH EG TIME3 (orig 63): 79, 63
+- 01:05:12 | 113-47 | DX PITCH EG TIME4 (orig 64): 80, 75, 64
+- 01:05:53 | 113-48 | DX PITCH EG OP switches: OP1 off/on, OP2 off/on, OP3 off/on, OP4 off/on
+- 01:06:09 | PRE (no block) | nav DX > LFO (orig DELAY 30, SPEED 13, PMD 6, WAVE SINE, PMD per-op ON x4, AMD per-op 0 x4)
+- 01:06:30 | 113-50 | DX LFO DELAY (orig 30): typed 127, 0, 64, 30
+- 01:06:57 | 113-51 | DX LFO SPEED (orig 13): typed 63, 0, 32, 13
+- 01:07:24 | 113-52 | DX LFO PMD (orig 6): typed 127, 0, 64, 6 - verify; screen showed SPEED field focused afterwards
+- 01:07:36 | NOTE | 113-52: the '48 09 05 1A' lines are the SPEED field re-committing on blur (SPEED 13 is sent as 1A=26: app scales 0-63 display to 0-127)
+- 01:08:18 | 113-53 | DX LFO WAVE (7, orig SINE): TRIANGLE, SAW UP, SAW DOWN, SQUARE, S/HB, S/H, restore SINE; close
+- 01:09:38 | 113-54 | DX LFO PMD per-op: first click opened PMD popup (extra clicks hit empty popup area), then OP1 off/on, OP2 off/on, OP3 off/on, OP4 off/on; close
+- 01:10:35 | 113-55 | DX LFO AMD per-op popup: OP1 0->127->~64->0, OP2 0->~67->0, OP3 0->~67->0, OP4 0->67->0
+- 01:11:04 | PRE (no block) | nav MASTER > EFFECT > MASTER EFFECT, opened CATEGORY/TYPE picker (orig REVERB / SPX ROOM). Categories: FILTER, REVERB, DELAY, COMP, DISTORTION, MODULATION, DUCKER, OTHER
+- 01:11:30 | 108-01a | MASTER EFFECT TYPE, cat FILTER: CONTROL FILTER, VCM MINI FILTER, LP HP FILTER
+- 01:12:06 | 108-01b | MASTER EFFECT TYPE, cat REVERB: SPX HALL, SPX STAGE, EARLY REFLECTION, GATED REVERB, REVERSE REVERB, SPX ROOM (orig)
+- 01:13:10 | 108-01c | MASTER EFFECT TYPE, cat DELAY (9): CROSS DELAY, TEMPO CROSS DELAY, TEMPO DELAY MONO, TEMPO DELAY STEREO, CONTROL DELAY, DELAY LR STEREO, DELAY LCR, ANALOG DELAY RETRO, ANALOG DELAY MODERN
+- 01:13:50 | 108-01d | MASTER EFFECT TYPE, cat COMP (6): VCM COMP 376, CLASSIC COMPRESSOR, MULTI BAND COMP, UNI COMP DOWN, UNI COMP UP, PARALLEL COMP
+- 01:15:32 | 108-01e | MASTER EFFECT TYPE, cat DISTORTION (17): AMP SIMULATOR 1, AMP SIMULATOR 2, COMP DISTORTION, COMP DISTORTION DELAY, US COMBO, JAZZ COMBO, US HIGH GAIN, BRITISH LEAD, MULTI FX, SMALL STEREO, BRITISH COMBO, BRITISH LEGEND, LO FI, NOISY, DIGITAL TURNTABLE, BIT CRUSHER, WAVE FOLDER
+- 01:18:12 | 108-01f | MASTER EFFECT TYPE, cat MODULATION (26, list order): G CHORUS, 2 MODULATOR, SPX CHORUS, SYMPHONIC, ENSEMBLE DETUNE, VCM FLANGER, CLASSIC FLANGER, TEMPO FLANGER, CONTROL FLANGER, VCM PHASER MONO, VCM PHASER STEREO, TEMPO PHASER, DYNAMIC PHASER, CONTROL PHASER, AUTO PAN, TREMOLO, VCM AUTO WAH, VCM TOUCH WAH, VCM PEDAL WAH, RING MODULATOR, DYNAMIC RING MODULATOR, SPIRALIZER P, SPIRALIZER F, TEMPO SPIRALIZER P, TEMPO SPIRALIZER F, TECH MODULATION. (session dropped once mid-block around CONTROL FLANGER..TREMOLO; those 8 clicks did run)
+- 01:18:55 | 108-01g | MASTER EFFECT TYPE, cat DUCKER (5): VCM COMP 376, CLASSIC COMPRESSOR, MULTI BAND COMP, UNI COMP DOWN, UNI COMP UP
+- 01:21:13 | 108-01h | MASTER EFFECT TYPE, cat OTHER (21): ROTARY SPEAKER 1, ROTARY SPEAKER 2, DYNAMIC FILTER, AUTO SYNTH, ISOLATOR, SLICE, VINYL BREAK, BEAT REPEAT, VCM EQ 501, PRESENCE, HARMONIC ENHANCER, STEREOPHONIC OPTIMIZER, TALKING MODULATOR, VCM MINI BOOSTER, DAMPER RESONANCE, PITCH CHANGE, NOISE GATE COMP EQ; then restore REVERB > SPX ROOM (params now at SPX ROOM defaults: 0.8s, 10, 25.3ms, 32Hz, 5.6kHz, D24>W); close
+- 01:22:07 | 108-03a | MASTER EFFECT (SPX ROOM) P1 REVERB TIME: top 30.0s, bottom 0.3s, (typed field not editable), small drag -> 1.3s
+- 01:22:54 | 108-03b | MASTER EFFECT P1 DIFFUSION: 0 (min), 10 (max), 5
+- 01:23:22 | 108-03c | MASTER EFFECT P1 INITIAL DELAY: 99.3ms (max), (bottom drag missed), 50.5ms
+- 01:24:03 | 108-03d | MASTER EFFECT P1 HPF CUTOFF: 8.0kHz (max), 20Hz (min), 70Hz
+- 01:25:02 | 108-03e | MASTER EFFECT P1 LPF CUTOFF: 20.0kHz (max), 1.0kHz (min), 5.6kHz (restored)
+- 01:25:55 | 108-03f | MASTER EFFECT P1 DRY/WET: D<W63 (top, full wet), D63>W (bottom, full dry), D25>W (restored ~D24>W)
+- 01:26:12 | PRE (no block) | MASTER EFFECT page-down to P2 (REVERB DELAY 8.0ms, DENSITY 3, ER/REV E=R, FB HIGH DAMP 0.7, FB LEVEL 31.0)
+- 01:27:08 | 108-03g | MASTER EFFECT P2 REVERB DELAY: 99.3ms (max), 0.1ms (min), 8.0ms (restored)
+- 01:27:46 | 108-03h | MASTER EFFECT P2 DENSITY: 4 (max), 0 (min), 3 (restored)
+- 01:28:28 | 108-03i | MASTER EFFECT P2 ER/REV BALANCE: E<R63 (top), E<R2, E63>R (bottom), E<R1 (~orig E=R)
+- 01:29:09 | 108-03j | MASTER EFFECT P2 FEEDBACK HIGH DAMP: 1 (max), 0.1 (min), 0.7 (restored)
+- 01:30:07 | 108-03k | MASTER EFFECT P2 FEEDBACK LEVEL: 63.0 (max), 0.0 (min), 32.0 (~orig 31.0)
+- 01:30:25 | PRE (no block) | MASTER > EFFECT > EFFECT 1, opened picker (orig FILTER / CONTROL FILTER). EFFECT 1 has 6 categories: FILTER, REVERB, DELAY, DISTORTION, MODULATION, OTHER
+- 01:31:47 | 108-10a | EFFECT 1 TYPE (6 cats, short lists): FILTER: VCM MINI FILTER, CONTROL FILTER; REVERB: SPX HALL; DELAY: TEMPO CROSS DELAY, ANALOG DELAY RETRO; DISTORTION: BIT CRUSHER; MODULATION: TEMPO FLANGER, TEMPO PHASER; OTHER: VINYL BREAK, BEAT REPEAT; restore FILTER/CONTROL FILTER (params now: HPF, 0, 38, 0dB, D<W63)
+- 01:32:39 | 108-11a | EFFECT 1 (CONTROL FILTER) FILTER TYPE slider: BPF (top), LPF(12dB) (bottom), HPF (restored); intermediate steps passed during drags
+- 01:33:04 | 108-11b | EFFECT 1 CUTOFF FREQUENCY CONTROL: 127 (top), 0 (bottom = orig)
+- 01:33:55 | 108-11c | EFFECT 1 RESONANCE: top (127), bottom (0), ~40 (orig 38). NOTE: on-screen readouts lag one step behind drags; capture values are the truth
+- 01:34:21 | 108-11d | EFFECT 1 FILTER OUTPUT LEVEL: top, bottom, back to 0dB
+- 01:35:00 | 108-11e | EFFECT 1 DRY/WET: attempts bottom/top (check capture)
+- 01:35:17 | NOTE | The app's screen often doesn't redraw after drags (stale readouts), but the drags DO send - 108-11e shows full 01..7F sweeps. Trust capture values over the logged readouts in 108-03/108-11.
+- 01:35:28 | PRE (no block) | MASTER > EFFECT > EFFECT 2, picker open (orig OTHER / BEAT REPEAT)
+- 01:36:24 | 108-20a | EFFECT 2 TYPE: OTHER: VINYL BREAK; FILTER: CONTROL FILTER, VCM MINI FILTER; REVERB: SPX HALL; DELAY: TEMPO CROSS DELAY, ANALOG DELAY RETRO; DISTORTION: BIT CRUSHER; MODULATION: TEMPO FLANGER, TEMPO PHASER; restore OTHER/BEAT REPEAT
+- 01:36:43 | 108-21a | EFFECT 2 (BEAT REPEAT) P1 REPEAT: top, bottom (OFF = orig)
+- 01:37:07 | 108-21b | EFFECT 2 P1 LENGTH: top, bottom, back to 1/4
+- 01:37:27 | 108-21c | EFFECT 2 P1 FREEZE: top (ON), bottom (OFF = orig)
+- 01:37:48 | 108-21d | EFFECT 2 P1 GATE TIME: bottom, top (100% = orig)
+- 01:38:07 | 108-21e | EFFECT 2 P1 ATTACK TIME: top, bottom (0% = orig)
+- 01:38:30 | 108-21f | EFFECT 2 P1 RELEASE TIME: top, bottom (0% = orig); then page-down to P2
+- 01:38:50 | 108-21g | EFFECT 2 P2 PLAY SPEED: bottom, top (1.0 = orig)
+- 01:39:13 | 108-21h | EFFECT 2 P2 PITCH SWEEP: top, bottom, back to 0
+- 01:39:33 | 108-21i | EFFECT 2 P2 DRY/WET: bottom, top (D<W63 = orig)
+- 01:39:52 | 108-21j | EFFECT 2 P2 FILTER TYPE: top, bottom (THRU = orig)
+- 01:40:15 | 108-21k | EFFECT 2 P2 CUTOFF: top, bottom, back to ~1kHz
+- 01:40:37 | 108-21l | EFFECT 2 P2 RESONANCE: top, bottom (0 = orig); page-down to P3
+- 01:41:03 | 108-21m | EFFECT 2 P3 OUTPUT LEVEL: top, bottom, back to 0dB
+- 01:41:20 | PRE (no block) | MASTER > SEND > SEND 1 REVERB, opened REVERB TYPE picker (orig R3 HALL)
+- 01:42:46 | 108-30 | SEND 1 REVERB TYPE (12, orig R3 HALL): HD HALL, HD ROOM, HD PLATE, REV X HALL, REV X ROOM, R3 ROOM, R3 PLATE, SPX HALL, SPX ROOM, SPX STAGE, SPACE SIMULATOR, restore R3 HALL; close
+- 01:43:23 | 108-31 | SEND 1 REVERB RETURN VOL (orig 46): 30, 0, ..., 127, ..., 45
+- 01:43:46 | 108-32a | SEND REVERB P1 REVERB TIME: top, bottom, back ~2.4s
+- 01:44:07 | 108-32b | SEND REVERB P1 DIFFUSION: bottom, top (10 = orig)
+- 01:44:30 | 108-32c | SEND REVERB P1 INITIAL DELAY: top, bottom, back up a little (~orig 12.7ms)
+- 01:44:53 | 108-32d | SEND REVERB P1 HPF CUTOFF: top, bottom, back ~180Hz
+- 01:45:16 | 108-32e | SEND REVERB P1 LPF CUTOFF: top, bottom, back ~7.0kHz
+- 01:45:43 | 108-32f | SEND REVERB P1 REVERB DELAY: top, bottom, up a little (~orig 17.4ms); page-down P2
+- 01:46:03 | 108-32g | SEND REVERB P2 DENSITY: bottom, top (4 = orig)
+- 01:46:26 | 108-32h | SEND REVERB P2 ER/REV BALANCE: top, bottom, back ~E7>R
+- 01:46:51 | 108-32i | SEND REVERB P2 FEEDBACK HIGH DAMP: top, bottom, back ~0.9
+- 01:47:14 | 108-32j | SEND REVERB P2 FEEDBACK LEVEL: top, bottom, back ~31.0
+- 01:47:31 | PRE (no block) | SEND 2 DELAY, opened DELAY TYPE picker (orig TEMPO DELAY STEREO)
+- 01:48:19 | 108-40 | SEND 2 DELAY TYPE (9, orig TEMPO DELAY STEREO): CROSS DELAY, TEMPO CROSS DELAY, TEMPO DELAY MONO, CONTROL DELAY, DELAY LR STEREO, DELAY LCR, ANALOG DELAY RETRO, ANALOG DELAY MODERN, restore TEMPO DELAY STEREO; close
+- 01:48:54 | 108-41 | SEND 2 DELAY RETURN VOL (orig 76): 60, 0, ..., 127, 75
+- 01:49:18 | 108-42a | SEND DELAY P1 DELAY TIME: top, bottom, back ~8th.
+- 01:49:41 | 108-42b | SEND DELAY P1 FEEDBACK LEVEL: top, bottom, back ~42.0
+- 01:50:01 | 108-42c | SEND DELAY P1 FEEDBACK HIGH DAMP: bottom, top (1 = orig)
+- 01:50:25 | 108-42d | SEND DELAY P1 L/R DIFFUSION: top, bottom, back ~1ms
+- 01:50:48 | 108-42e | SEND DELAY P1 LAG: top, bottom, back ~6ms
+- 01:51:15 | 108-42f | SEND DELAY P1 EQ LOW FREQUENCY: top, bottom, back ~250Hz; page-down P2
+- 01:51:39 | 108-42g | SEND DELAY P2 EQ LOW GAIN: top, bottom, back 0dB
+- 01:52:03 | 108-42h | SEND DELAY P2 EQ HIGH FREQUENCY: top, bottom, back ~4.0kHz
+- 01:52:27 | 108-42i | SEND DELAY P2 EQ HIGH GAIN: top, bottom, back 0dB
+- 01:52:45 | PRE (no block) | MASTER > COMP & EQ > COMP (orig UNI COMP DOWN, ON)
+- 01:53:23 | 108-50 | COMP TYPE (6, orig UNI COMP DOWN): VCM COMP 376, CLASSIC COMPRESSOR, MULTI BAND COMP, UNI COMP UP, PARALLEL COMP, restore UNI COMP DOWN; close
+- 01:53:42 | 108-51 | COMP ON/OFF: off, on
+- 01:54:05 | 108-52a | COMP P1 THRESHOLD: top, bottom, back ~-14.5dB
+- 01:54:26 | 108-52b | COMP P1 KNEE: bottom, top (8 = orig)
+- 01:54:49 | 108-52c | COMP P1 ATTACK: top, bottom, back ~18.1ms
+- 01:55:13 | 108-52d | COMP P1 RELEASE: top, bottom, back ~135.5ms
+- 01:55:37 | 108-52e | COMP P1 RATIO: top, bottom, up a little (~orig 1.50)
+- 01:56:02 | 108-52f | COMP P1 DRY/WET: top, bottom, back ~D<W45; page-down P2
+- 01:56:25 | 108-52g | COMP P2 OUTPUT LEVEL: top, bottom, back 0dB
+- 01:56:49 | 108-52h | COMP P2 MAKE UP GAIN: top, bottom, back ~2dB
+- 01:57:10 | 108-52i | COMP P2 POST-COMP HPF: top, bottom (Off = orig)
+- 01:57:30 | 108-52j | COMP P2 CLIPPER: top, bottom (OFF = orig)
+- 01:57:54 | 108-52k | COMP P2 CLIPPER SOURCE: top, bottom (DRY+WET = orig)
+- 01:58:27 | NOTE | 108-52k also contains the click on '5 BAND EQ' sub-tab (40 OUT, probably EQ readback). EQ fields are typeable.
+- 01:58:27 | 108-60a | EQ band 1 GAIN: typed +12, -12, 0
+- 01:58:51 | 108-60b | EQ band 1 FREQ: typed 20 -> shows 32Hz (min), 20000 -> 2.0kHz (max), 80
+- 01:59:16 | 108-60c | EQ band 1 Q: typed 0.1 (min), 20 -> 12.0 (max), 0.7
+- 02:00:04 | 108-60d | EQ band 2 (3 params in one block, in order): GAIN +12, -12, 0; FREQ 20->min, 20000->10.0kHz max, 200; Q 0.1, 12, 0.7
+- 02:00:50 | 108-60e | EQ band 3 (GAIN, FREQ, Q in one block): GAIN +12, -12, 0; FREQ min, 10.0kHz max, 500; Q 0.1, 12, 0.7
+- 02:01:37 | 108-60f | EQ band 4 (GAIN, FREQ, Q in one block): GAIN +12, -12, 0; FREQ min, 10.0kHz max, 3.2k; Q 0.1, 12, 0.7
+- 02:02:25 | 108-60g | EQ band 5 (GAIN, FREQ, Q in one block): GAIN +12, -12, 0; FREQ min, 16.0kHz max, 8.0k; Q 0.1, 12, 0.7
+- 02:02:57 | 108-60h | EQ band 4 FREQ restore: typed 3200 (ignored - field wants '3.2k'), then 3.2k OK
+- 02:03:04 | NOTE | EQ FREQ fields: plain Hz typed >999 is ignored; use '3.2k' style
+- 02:03:24 | PRE (no block) | DRUMS > KICK > EFFECT, picker open (orig DISTORTION / AMP SIMULATOR 2; full 8-category catalog like master)
+- 02:04:30 | 108-70 | KICK track EFFECT TYPE (one per category): DISTORTION: AMP SIMULATOR 1, COMP DISTORTION; FILTER: CONTROL FILTER; REVERB: 1st (SPX HALL?); DELAY: 1st (CROSS DELAY); COMP: 1st (VCM COMP 376); MODULATION: 1st visible; DUCKER: 1st; OTHER: ROTARY SPEAKER 1; restore DISTORTION/AMP SIMULATOR 2 (params now preset defaults: 35, OFF, 8.0kHz, 52, D30>W)
+- 02:04:54 | 108-71a | KICK track EFFECT (AMP SIM 2) OVERDRIVE: top, bottom, back ~35
+- 02:05:15 | 108-71b | KICK track EFFECT AMP TYPE: top, bottom (OFF = orig)
+- 02:05:38 | 108-71c | KICK track EFFECT LPF CUTOFF: top, bottom, back ~8.0kHz
+- 02:06:02 | 108-71d | KICK track EFFECT OUTPUT LEVEL: top, bottom, back ~52
+- 02:06:26 | 108-71e | KICK track EFFECT DRY/WET: top, bottom, back ~D30>W
+- 02:06:42 | PRE (no block) | selected PERC2: its effect shows 80/OFF/20.0kHz/52/D63>W while KICK now has 35/OFF/8.0kHz/52/D30>W -> track effects are per track, not shared
+- 02:07:00 | 108-72 | PERC2 track EFFECT (AMP SIM 2) OVERDRIVE: top, bottom, back ~80
+- 02:07:18 | PRE (no block) | SYNTHS/SAMPLER > SYNTH 1 > EFFECT (AMP SIM 2, OVERDRIVE 80)
+- 02:07:35 | 108-73a | SYNTH 1 track EFFECT (AMP SIM 2) OVERDRIVE: top, bottom, back ~80
+- 02:07:52 | PRE (no block) | selected DX (overview: effect G CHORUS, DRY/WET D33>W slider)
+- 02:08:10 | 108-73b | DX overview track EFFECT (G CHORUS) DRY/WET slider: top, bottom, back
+- 02:08:26 | PRE (no block) | selected SAMPLER (overview effect WAVE FOLDER, DRY/WET D63>W)
+- 02:08:41 | 108-73c | SAMPLER overview track EFFECT (WAVE FOLDER) DRY/WET slider: top, bottom (D63>W = orig)
+- 02:09:35 | 108-74 | SAMPLER effect MAP popup (FX sliders 1 FX LEVEL / 2 HIGH PASS / 3 REPEATER): slider 1 DRY/WET -> FOLD -> DRY/WET; slider 2 FOLD -> LFO DEPTH -> FOLD; close
+- 02:10:02 | PRE (no block) | DRUMS > KICK overview (PITCH 0, CHOKE off, PAN C, VOLUME ~110, ATTACK 0, DECAY 0, FILTER mid icon, FREQ/RES 0.00)
+- 02:10:28 | 107-01 | KICK PITCH (orig 0): +15, +24 (max), -13, -24 (min), 0
+- 02:10:50 | 107-06 | KICK CHOKE: on, off
+- 02:11:30 | 107-02 | KICK PAN (orig C): R60, R63 (max), ... L63/L64 (min), L2 (~C)
+- 02:12:03 | 107-03 | KICK VOLUME (orig 100): 84, 0, ..., 127, 101
+- 02:12:43 | 107-04 | KICK ATTACK field: typed 127 -> +63, -127 -> 0?, 0, -64 -> 0?, 0
+- 02:13:09 | 107-05 | KICK DECAY field: typed 127 -> +63, -64, 0
+- 02:13:34 | 107-07 | KICK FILTER type icons: LPF (left, freq 457.6Hz), HPF (right, 437.9Hz), THRU (middle, orig)
+- 02:14:01 | 107-08 | KICK FILTER FREQ (LPF selected first): typed 20000 -> 19.41kHz (max), 20 -> 20.10Hz (min), 1000 -> 981Hz
+- 02:14:30 | 107-09 | KICK FILTER RES (LPF): typed 50 -> 41.63dB (max), -50 -> -6.00dB (min), 0 -> ?; then FILTER THRU restored
+- 02:14:48 | PRE (no block) | KICK > SOUND DESIGN > EQ SEND
+- 02:15:05 | 107-10 | KICK EQ GAIN LOW: typed +12, -12, 0
+- 02:15:28 | 107-11 | KICK EQ GAIN HIGH: typed +12, -12, 0
+- 02:16:07 | 107-12 | KICK EQ FREQ LOW: typed 18k (ignored), 63 -> 63.00Hz (min), 300, 18000 -> 18.00kHz (max), 300
+- 02:16:30 | 107-13 | KICK EQ FREQ HIGH: typed 18000 -> 18kHz (max), 63 -> 63Hz (min), 1000 -> 1.00kHz (orig)
+- 02:16:54 | 107-14 | KICK SEND 1 (reverb): typed 127, 64, 0
+- 02:17:21 | 107-15 | KICK SEND 2 (delay): typed 127, 64, 0
+- 02:17:42 | PRE (no block) | SYNTHS/SAMPLER > SYNTH 1 overview (TYPE MONO, CHORD off, ATTACK 0, DECAY 0, FILTER LPF 178.60Hz, RES -6.00dB)
+- 02:17:55 | 107-20 | SYNTH 1 TYPE MONO/POLY: POLY, MONO
+- 02:18:14 | 107-21 | SYNTH 1 CHORD (overview toggle): on, off
+- 02:18:42 | 107-22 | SYNTH 1 PAN +16 then back; VOLUME -16 then back (two params in this block, PAN first)
+- 02:19:18 | 107-23 | SYNTH 1 ATTACK typed 63, -64, 0 then DECAY typed 63, -64, 0 (two params, ATTACK first)
+- 02:19:49 | 107-24 | SYNTH 1 FILTER FREQ typed 20000 (max), 20 (min), 178.6; then RES typed 50 (max), -6 (orig)
+- 02:20:06 | PRE (no block) | SYNTH 1 > SOUND DESIGN > PORTAMENTO (OFF, TIME 6)
+- 02:20:19 | 107-25 | SYNTH 1 PORTAMENTO ON/OFF: on, off
+- 02:20:44 | 107-26 | SYNTH 1 PORTAMENTO TIME: typed 127, 0, 6
+- 02:21:03 | PRE (no block) | SAMPLER > SOUND DESIGN (FILTER THRU, SEND1 0, SEND2 0)
+- 02:21:34 | 107-30a | SAMPLER FILTER: LPF, FREQ typed 20000, 20; RES typed 50, -6; HPF; THRU (orig)
+- 02:22:04 | 107-30b | SAMPLER SEND 1 typed 127, 0; SEND 2 typed 127, 0 (two params)
+- 02:22:25 | 107-31a | GUIDE panel WAVEFORM knob (SAMPLER selected): drag up ~82px, back down ~82px
+- 02:22:46 | 107-31b | GUIDE panel PITCH knob (SAMPLER): drag up 92px, back down 92px
+- 02:23:00 | NOTE | 107-31a GUIDE WAVEFORM knob drag sent nothing; GUIDE PITCH sends (107-31b). GUIDE PAN/VOLUME skipped (same params as overview PAN/VOLUME).
+- 02:23:11 | PRE (no block) | PERFORM > MIXER (all faders ~100)
+- 02:23:28 | 109-01a | PERFORM MIXER KICK fader: top, bottom, back ~100
+- 02:23:53 | 109-01b | PERFORM MIXER SYNTH1 fader: top, bottom, back ~100
+- 02:24:20 | 110-01 | PERFORM MIXER MUTE: KICK on, off; SYNTH1 on, off
+- 02:24:46 | 110-02 | PERFORM MIXER SOLO: KICK on, off; SYNTH1 on, off
+- 02:25:01 | PRE (no block) | PERFORM > SAMPLER (SAMPLE 1-7 faders ~100)
+- 02:25:17 | 109-03a | PERFORM SAMPLER SAMPLE 1 fader: top, bottom, back ~100
+- 02:25:45 | 109-03b | PERFORM SAMPLER: SAMPLE 2 fader top then back; then SAMPLE 1 MUTE on, off (two controls)
+- 02:26:01 | PRE (no block) | PERFORM > SEND (SEND1 view; KICK..SAMPLER send faders, SYNTH2 ~64, others 0)
+- 02:26:15 | 109-02a | PERFORM SEND (SEND1 view) KICK fader: top, bottom (0 = orig)
+- 02:26:48 | 109-02b | PERFORM SEND: view toggle -> SEND2, KICK SEND2 fader top, bottom; view toggle -> SEND1
+- 02:27:08 | PRE (no block) | HOME > SETTINGS > HARDWARE (SPEAKER vol ~110, SPEAKER/PHONES 0dB, USB AUDIO -6dB, KNOB FAST, AUTO POWER OFF 30 Min)
+- 02:27:22 | 109-04 | HARDWARE MASTER VOLUME SPEAKER knob: down ~16, back up ~16
+- 02:27:48 | 109-05a | HARDWARE OUTPUT GAIN SPEAKER/PHONES: -6dB, +6dB, +12dB, 0dB (orig)
+- 02:28:15 | 109-05b | HARDWARE OUTPUT GAIN USB AUDIO: 0dB, +6dB, +12dB, -6dB (orig)
+- 02:28:39 | 112-13a | HARDWARE KNOB SENSITIVITY: NORMAL, SLOW, FAST (orig)
+- 02:29:29 | 112-13b | HARDWARE AUTO POWER OFF: 5, 10, 15, 60, 120 Min, Off, 30 Min (orig); close
+- 02:29:54 | PRE (no block) | SYNTH 1 > SOUND DESIGN > ARP (ARP off, MODE ARP, TYPE UP, SPEED 100%, GATE 100%, OCTAVE 0)
+- 02:30:06 | 105-01 | SYNTH 1 ARP: on, off
+- 02:30:26 | 105-02 | SYNTH 1 ARP MODE: +DIRECT, ARP
+- 02:31:45 | 105-03 | SYNTH 1 ARP TYPE (orig UP): DOWN, RANDOM, UP DOWN 1, UP DOWN 2, SLAP & POP, UNISON, RHYTHM 1, RHYTHM 2, restore UP. List showed 9 items and would not scroll (guide says arp type 0-16, so more may exist off-screen)
+- 02:32:33 | 105-04 | SYNTH 1 ARP SPEED (10, orig 100%): 25, 33, 37, 50, 66, 75, 133, 150, 200, restore 100; close
+- 02:32:57 | 105-05 | SYNTH 1 ARP GATE: typed 200, 0, 100
+- 02:33:23 | 105-06 | SYNTH 1 ARP OCTAVE: typed 3, -3, 0; then click on empty area (600,300) to unfocus
+- 02:33:39 | NOTE | 105-06: '31 57 14 00 64' lines are the GATE field (100) re-committing on blur, not OCTAVE. PRE (no block): SYNTH 1 > CHORD page (CHORD MODE off)
+- 02:33:53 | 105-07 | SYNTH 1 CHORD MODE (chord page toggle): on, off
+- 02:35:16 | 105-08 | CHORD PACK picker: MINOR PACK 1 -> 3 -> 2 (restored), popup closed
+- 02:35:37 | 105-09 | Chord pad taps: pad1 (row1 col1) then pad4 (row2 col1)
+- 02:36:37 | 105-10 | SETTINGS KEY: C -> C# D D# E F F# G G# A A# B -> C (restored), 1s apart
+- 02:37:09 | 105-11 | SETTINGS SCALE: MINOR -> MAJOR, MIN PENT, MAJ PENT, LYDIAN, DORIAN, MIXOLYDIAN, PHRYGIAN -> MINOR (restored). Only 8 scales listed
+- 02:38:18 | 105-12 | SCALES IN PROJECT slot8: PHRYGIAN -> LOCRIAN -> HARMONIC MINOR -> MINOR BLUES -> PHRYGIAN DOMINANT -> MELODIC MINOR -> PHRYGIAN (restored). Scale list has 18: MINOR,MAJOR,MIN PENT,MAJ PENT,LYDIAN,DORIAN,MIXOLYDIAN,PHRYGIAN,LOCRIAN,HARM MIN,MEL MIN,HARM MAJ,MAJ BLUES,MIN BLUES,WHOLE TONE,HUNGARIAN MIN,PHRYGIAN DOM,OKINAWA(last visible)
+- 02:38:59 | 105-13 | ADVANCED LIVE REC (INPUT) QUANTIZATION: 1/16 -> 1/32, 1/16T, 1/8T, 1/8, OFF -> 1/16 (restored). KM-105 done
+- 02:39:46 | 106-01 | SAMPLER pads select: 2,3,4,5,6,7 -> 1 (restored), 2s apart
+- 02:40:03 | 106-02 | NORMALIZE ON -> OFF -> ON (restored)
+- 02:40:44 | NOTE 106-02 INVALID: view had silently switched to SAMPLE 2 edit page (pad tap opens sample edit?), normalize clicks landed on sample-length area. Redone in 106-03.
+- 02:40:44 | 106-03 | NORMALIZE redo: ON -> OFF -> ON (restored)
+- 02:41:12 | 106-04 | SAMPLING SOURCE: USB -> MIC/LINE IN -> RESAMPLING -> USB (restored)
+- 02:41:56 | 106-05 | SAMPLER track SOUND DESIGN: filter type LPF -> HPF -> off(restored); SEND1 REVERB knob 0 -> ~+8 -> 0; SEND2 DELAY 0 -> ~+8 -> 0 (all restored to 0 by overshoot drag)
+- 02:42:44 | 106-06 | SAMPLE 1 edit (tap selected pad opens it): START drag right then back to 0; END drag left then back to max; LOOP point drag right then back to 0; LOOP OFF button toggled twice
+- 02:42:58 | NOTE 106-06 CORRECTION: only START and END drags ran; LOOP drag + LOOP OFF toggle were aborted (user interrupt). 106-07 ARMED, nothing clicked.
+- 02:43:33 | 104-01 | KICK pattern 1 editor: step 2 on -> off
+- 02:43:52 | 104-02 | KICK step 4 micro-timing slider: center -> right -> center
+- 02:45:01 | 104-03 | KICK step 4 detail popup (drag on step's slider opens it): MICRO TIMING right/left/center, drag to 44, back to ~0 (display shows -1, maybe stale); SUBSTEP 2,3(8th),3(16th),4 -> 1; PROBABILITY 10,49,87 -> 100%
+- 02:45:42 | 104-04 | KICK pattern BARS typed 2->1->2, STEPS typed 32->16->32; NEXT x2, BACK x2 (page nav)
+- 02:47:03 | 104-05 | SYNTH1 pattern 2 piano roll EDIT: added C3 note at step 1; click/double-click/right-click did not remove it (note left in pattern 2 - scratch project); editor closed/reopened
+- 02:47:32 | 103-01 | SYNTH1 PATTERN buttons: 2 -> 1,3,4,5,6 -> 2 (restored)
+- 02:48:16 | 103-02 | PERFORM PATTERN grid: KICK->3, HAT2->5, SAMPLER->6, then KICK/HAT2/SAMPLER ->1 (restored)
+- 02:49:02 | 103-03 | KICK pattern editor: COPY pattern 1, select pattern 6 (was 1 bar/16 steps, step1 only), PASTE -> now 2 bars/32 steps copy of P1; reselect pattern 1
+- 02:50:01 | 103-04 | SETTINGS PATTERNS toggle: click1 (no visible change), click2 -> 6, click3 -> 3 (restored). Also SCALE was showing PHRYGIAN (slot-8 restore in 105-12 apparently set active scale) -> set MINOR
+- 02:50:37 | 103-05 | ADVANCED LAUNCH QUANTIZE typed: 16 -> 1 -> 4 -> 32 -> 16 (restored)
+- 02:51:32 | 103-06 | PERC2 TYPE DRUM->DRUMKIT: confirm dialog 'pattern created in current track type will be deleted' -> CANCEL (skipped: pattern deletion is on never-touch list). Capture = cancel only
+- 02:52:42 | 111-01 | SONG: + added scene 1; loop button x2; tapped scene 1 -> scene popup (pattern grid + solo/mute per track); clicked KICK pat2 -> app jumped to DRUMS/KICK (pattern 2 selected); later clicks (262,552)x2 (262,506)x2 landed on DRUMS page (pan/volume area, maybe nothing); KICK pattern 1 reselected. Scene 1 left in song
+- 02:53:12 | 111-02 | TOP BAR BPM field (click selects text, typeable): 100 -> 120 -> 60.5 -> 100 (restored). [ID reuse: this is KM-112 BPM]
+- 02:53:24 | NOTE 111-02: typing '60.5' in BPM showed 300 (dot ignored -> 605 clamped to max 300?)
+- 02:54:01 | 112-01 | SETTINGS SWING popup arrows: 68 -> up x2 (70) -> down x4 (66) -> up x2 -> 68 (restored)
+- 02:54:24 | 112-02 | BPM popup arrows: 100 up x2 -> 102, down x3 -> 99, up -> 100 (restored)
+- 02:55:14 | 112-03 | METRONOME (in BPM popup): CLICK SOUND on->off; VOLUME knob drag down ~-8 then up ~+6 (not exactly restored); beat button 2 then 1 (beats/accent? no visible change); CLICK TYPE A->B,C,D,E->A
+- 02:55:55 | 112-04 | ADVANCED toggles each x2 (2s apart), in order: ADV SOUND DESIGN, NOISE GATE, COUNT-IN MIDI REC, MASTER FX (MIC/LINE), MASTER FX (USB)
+- 02:56:36 | 112-05 | INPUT VELOCITY popup slider: drag down, drag up, typed 100 (restored)
+- 02:56:57 | 112-06 | PLAYBACK MODE AFTER PROJECT SWITCH: OFF -> MANUAL -> AUTO -> OFF (restored)
+- 02:57:35 | 112-07 | MIDI COMMON: CLOCK SEND off->on->off; CLOCK SYNC toggle x2 (restored); ADVANCED START/STOP SEND on->off->on
+- 02:58:28 | 112-08 | MIDI ADVANCED port=MIDI CABLE, each x2 in order: CH MSG SEND, CC, BANK SELECT, PROGRAM CHANGE, SYSEX SEND, THRU
+- 02:59:18 | 112-09 | MIDI ADVANCED port=BLUETOOTH, each x2 in order: CH MSG SEND, CC, BANK SELECT, PROGRAM CHANGE, SYSEX SEND, THRU
+- 03:00:04 | 112-10 | MIDI ADVANCED port=USB, each x2 in order: CC, BANK SELECT, PROGRAM CHANGE, THRU, CH MSG SEND (1s), SYSEX SEND (1s, restored immediately)
+- 03:00:25 | 112-11 | TRANSPORT: Play (3s) -> Stop
+- 03:01:15 | 102-01 | SETTINGS PROJECT name: popup (empty grid + text field). Typed TEST+Enter -> popup closed, name still blank; 2nd double-click landed on main page near SCALES gear + Delete/Return keys. Rename appears not to apply
+- 03:01:46 | 102-02 | HOME > PROJECT/SOUND MANAGER view only: SOUNDS tab (opened on SHAKER/TAMBOURINE list), PROJECTS tab, back HOME. Nothing changed.
