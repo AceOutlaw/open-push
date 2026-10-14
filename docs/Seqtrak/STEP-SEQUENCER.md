@@ -67,14 +67,17 @@ Request (`F0 43 30 7F 1C 0C [H] [M] [L] F7`, the device replies with a Parameter
 To remove "pad p, step s": read `75 [g] 00, 01, …` until an empty reply, find the note whose position
 and note number match, send `74 [g] [index] 00`.
 
-### Project load / delete (seen 2026-10-13, Pi capture)
+### Project load / delete / switch
 - Deleting the project on the device (user guide §4.4: [PROJECT↑]+[DELETE]+Drum key; leaves one KICK
   step) made the Seqtrak broadcast the whole project: `01 10 17 00`, `01 10 27/1E/1A/1B/1C`,
-  `01 1p 31 00` per track, master FX `30 43…46`, `31 2x`, `01 1p 30`, … ending `01 10 00 00`.
-  No step data is in the burst. ⚠️ `01 10 17` is **not** "project loaded": the 2026-10-14 song-mode capture
-  showed it is the Song mode state (`00` normal, `02` song; `APP-CLICKTHROUGH-P1.md`), which a project load
-  re-broadcasts. The bridge's re-read on it (below) also fires on every scene-key press in Song mode — to fix;
-  the bridge re-reads everything 0.5 s after it. ❓ Not yet checked: does switching projects send the same?
+  `01 1p 31 00` per track, master FX `30 43…46`, `31 2x`, `01 1p 30`, … ending **`01 10 00 00`**
+  (Pi capture 2026-10-13). No step data is in the burst. The same `01 10 00 00` starts the burst the
+  Seqtrak sends when it (re)connects (firmware version `01 00 00`, `01 10 15`, `01 1p 30` …).
+- **Switching projects** on the device (2026-10-14 14:29, Mac capture) sends **no** burst: `01 10 18 01`,
+  `01 10 2D 04`, CC 120 on every channel, then **`01 10 15 [project 0-7]`**, then the device plays on.
+- `01 10 17` is the Song mode state (`00` normal, `02` song), not "project loaded"; it toggles on scene keys.
+- **Bridge** (fixed 2026-10-14): full re-read 1 s after `01 10 15` changes, and 0.5 s after `01 10 00`
+  (the bridge never requests it, so it always means a burst ended). No longer on `01 10 17`.
 - Delete on the device is bracketed by `01 10 19 04` (Delete held) … `01 10 19 00`; the bridge re-reads
   all steps when Delete is released, since not every deletion is reported step by step.
 

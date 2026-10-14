@@ -69,11 +69,11 @@ Message frame for all rows unless noted: Parameter Change `F0 43 10 7F 1C 0C [H 
 |---|---|---|---|---|
 | `01 00 00` | read | `01 02 01 03` | Firmware version (the app showed 1.21.3) | 🟡 |
 | `01 00 04` | read | `01` | ❓ | 📥 |
-| `01 10 00` | ← read | `00` | End of a project-load burst (Pi capture) | 🟡 |
+| `01 10 00` | ← read | `00` | Ends the burst after a project delete and after the Seqtrak (re)connects; never seen otherwise unless requested. The bridge re-reads everything on it | 🟡 |
 | `01 10 01` | → ← | `0/1` | ❓ written by the app on the PROJECT/SOUND MANAGER page | 📱 |
 | `01 10 03` | → | `00` off, `01` 5 min, `02` 10, `03` 15, `04` 30, `05` 60, `06` 120 | **Auto power off** | 📱 |
 | `01 10 09 / 0B / 0D / 0F / 11 / 13` | read | 2 bytes each (e.g. `0F 19`, `06 66`) | 🟡 memory meters on the PROJECT/SOUND MANAGER page | 📥 |
-| `01 10 15` | read | `07` until 14:29, then `00` | 🟡 **Current project, 0-based** (project 8 = `07`) — the user switched to project 1 at 14:29 | 📥 |
+| `01 10 15` | ← read | `[project 0-7]` | **Current project, 0-based** (project 8 = `07`). Sent by the Seqtrak on its own when the project is switched on the device (14:29: `07` → `00`, and it was the only project message). The bridge re-reads everything when it changes | 📥 |
 | `01 10 16` | read | ~88 bytes, zeros | ❓ (project name? empty in this project) | 📥 |
 | `01 10 17` | ← read | `00` normal, `02` song | **Song mode state**; also re-sent at the start of a project load. ❓ Scene mode value | 🟡 |
 | `01 10 18` | ← read | `00`, `03`, `08`, `13`, `15`, `16` | Device display mode (`03` step held, `08` micro timing shown, `00` normal; others ❓) | 🟡 |
@@ -131,4 +131,4 @@ Format: request `F0 43 20 7F 1C 0C [H M L] F7`; reply pages `F0 43 00 7F 1C [cou
 2. `71 40` leading bytes: change a scene's length on the device (§13.5.2) and re-read.
 3. `01 10 17` in Scene mode; `71 50 00`.
 4. Sample rate: record exactly 16 s and read `01 1[e] 40`.
-5. `01 10 15`: switch projects on the device and read it — if it is the project number, the bridge can show it.
+5. `01 10 15`: switch to a few different projects on the device to confirm the value is always the project number.

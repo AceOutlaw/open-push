@@ -504,6 +504,7 @@ class SeqtrakBridge:
         self._resync_at = 0.0        # when to re-read (0 = not scheduled)
         self._resync_full = False    # True: everything; False: steps only
         self._seqtrak_ui_mode = 0    # 01 10 19: 00 idle, 03 step input, 04 Delete held
+        self._seqtrak_project = None # 01 10 15: current project, 0-based (None = not heard yet)
 
         # Variation mode: 3 or 6 variations available (global setting)
         self.variation_mode = 3  # Default: 3 variations
@@ -783,9 +784,17 @@ class SeqtrakBridge:
             if 1 <= steps <= 128:
                 self.track_step_counts[(track, variation)] = steps
 
-        # Project loaded on the Seqtrak (switched, deleted, new): it broadcasts the whole project,
-        # starting with 01 10 17 and master FX 30 43 00 ... (seen 2026-10-13 on project delete).
-        elif addr == [0x01, 0x10, 0x17]:
+        # Project switched on the Seqtrak: it sends the new project number, 01 10 15 [0-7]
+        # (seen 2026-10-14). Its parameters aren't broadcast, so re-read everything.
+        elif addr == [0x01, 0x10, 0x15] and sysex_data:
+            if sysex_data[0] != self._seqtrak_project:
+                self._seqtrak_project = sysex_data[0]
+                self._schedule_resync(full=True, delay=1.0)
+
+        # 01 10 00 00 ends the burst the Seqtrak sends after a project delete and after it
+        # (re)connects (seen 2026-10-13/14); the bridge never requests it, so it is always that.
+        # Not 01 10 17: that is the Song mode state and changes on every scene key in Song mode.
+        elif addr == [0x01, 0x10, 0x00]:
             self._schedule_resync(full=True)
 
         # Seqtrak UI mode 01 10 19: 04 = Delete held. Whatever was deleted isn't always
