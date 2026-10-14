@@ -1,0 +1,2 @@
+# EX-08  skai 14:11:42-14:12:07 EDT
+# OUT = sent to SEQTRAK by any Mac app (MIDI Monitor spy), IN = sent by SEQTRAK

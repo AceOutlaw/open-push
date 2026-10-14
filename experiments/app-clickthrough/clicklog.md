@@ -304,3 +304,91 @@ One line per app action (local time). Correlate with MIDI Monitor spy capture.
 - 03:00:25 | 112-11 | TRANSPORT: Play (3s) -> Stop
 - 03:01:15 | 102-01 | SETTINGS PROJECT name: popup (empty grid + text field). Typed TEST+Enter -> popup closed, name still blank; 2nd double-click landed on main page near SCALES gear + Delete/Return keys. Rename appears not to apply
 - 03:01:46 | 102-02 | HOME > PROJECT/SOUND MANAGER view only: SOUNDS tab (opened on SHAKER/TAMBOURINE list), PROJECTS tab, back HOME. Nothing changed.
+- 11:05:13 | NOTE: resumed after break. Window moved: offset now about -15x,-13y from earlier coords. Project now shows BPM 120 / swing 50% (changed outside this session).
+- 11:05:13 | 106-07 | SAMPLE 1 (Female Count 1) START drag right (~20%) -> back to 0; END drag left (~75%) -> back to max. Loop point moved with START
+- 11:05:44 | 106-08 | SAMPLE 1 LOOP OFF->ON; LOOP point drag right (~40%) -> back to start; LOOP ON->OFF (restored)
+- 11:06:25 | 106-09 | SAMPLE 1 knobs (relative drags, net 0): PITCH +58px then -58px; TYPE TRIGGER/GATE x2; PAN up 46 then down 46; VOLUME down 46 then up 46
+- 11:06:54 | 106-10 | SAMPLE 1 AEG typed: ATTACK 0->20->0; DECAY 50->80->50
+- 11:07:35 | 106-11 | SAMPLE 1 PITCH ENVELOPE typed: ATK PITCH 0->30->-30->0; DEC PITCH 0->-40->0; ATK TIME 40->10->40; DEC TIME 64->100->64
+- 11:07:52 | 106-12 | SAMPLE 1 PITCH ENV ATTACK TIME redo (missing from 106-11): 40->10->40
+- 11:08:13 | NOTE 106-12 EMPTY: batch failed before any click. Redone as 106-13.
+- 11:08:14 | 106-13 | SAMPLE 1 PITCH ENV ATTACK TIME: 40->10->40
+- 11:08:42 | NOTE 106-13: PEG ATTACK TIME 40->10->40 changed on screen but sent NO SysEx (pitch was 0).
+- 11:08:43 | 106-14 | SAMPLE 1 PEG: ATK PITCH 0->30, then ATK TIME 40->10->40, then ATK PITCH 30->0 (test if time sends only when pitch nonzero)
+- 11:09:02 | NOTE 106-14: ATK TIME still sent nothing even with ATK PITCH=30.
+- 11:09:03 | 106-15 | SAMPLE 1 PEG graph: drag attack point right ~33px then back (does graph send ATK TIME?)
+- 11:09:45 | NOTE 106-15: dragging PEG graph attack point also sent nothing; PEG ATTACK TIME appears to send no SysEx from the app.
+- 11:09:45 | 106-16 | SAMPLE 1 SOUND picker: Female Count 1 -> Female Count 2 -> Male Count 1 A -> RISER cat first item -> VOCAL COUNT Female Count 1 (restored)
+- 11:10:25 | 106-17 | SAMPLE 2 (Singing - Female - Ah 1) select pad2 + open edit; AEG ATTACK typed 0->20->0 (per-pad address offset)
+- 11:10:54 | 106-18 | SAMPLE 7 select pad7 + open edit; AEG ATTACK typed 0->20->0
+- 11:11:23 | 106-19 | SAMPLER overview: reselect pad 1; track PAN knob up 46 then down 46; track VOLUME down 46 then up 46
+- 11:11:56 | NOTE 106-19 INVALID: view was still SAMPLE 1 edit (tapping pad 1 reopened it); knob drags landed in the sample-length area, no param changes sent. Redone as 106-20.
+- 11:11:56 | 106-20 | SAMPLER overview (pad 1 selected): track PAN knob up 46 then down 46; track VOLUME down 46 then up 46
+- 11:12:24 | 106-21 | SAMPLER EFFECT page (DISTORTION / WAVE FOLDER): FOLD slider up ~42px then back down 42px
+- 11:12:51 | 106-22 | SAMPLER EFFECT FOLD slider back down (0.642 -> ~0.184 restore attempt)
+- 11:13:12 | 106-23 | END OF CLICK-THROUGH: no clicks in this block (empty). Sampler loose ends finished; stopping for data review.
+- 11:13:19 | NOTE 106-22: FOLD restored to 0.202 (orig 0.184). Sampler track effect params appear at 31 2A 03 with 2-byte value (0.642 -> 05 02, 0.202 -> 01 4A).
+- 11:30:56 | LE-01 | EMPTY: navigated DRUMS > KICK > pattern editor only. NOTE: a different project seems loaded since the break (BPM 120, swing 50, KICK P1 empty 1 bar/16).
+- 13:54:17 | LE-02 | EMPTY/INVALID: only SYNTHS + SYNTH 1 nav clicks before SEQTRAK battery died (device not charging over Mac USB). Resumed 13:54.
+- 13:55:19 | LE-03 | SYNTH1 pattern 1 piano roll: add C3 at step 5; Delete key (no effect); click note right edge (no effect); DRAG note to step 1 (moved); LONG-PRESS 2s on note -> note REMOVED. Pattern empty again.
+- 13:55:55 | LE-04 | PROJECT name retry: popup opened; single click on text field closed popup; typed TEST + Return landed on main page. Name stays blank. Project name looks read-only/not settable here.
+- 13:56:12 | NOTE LE-04: clicking in the PROJECT popup sent a bulk request (F0 43 20 ... 0B 00 00) + bulk (F0 43 00 ... 0B ...) and B0 00 40 / B0 20 00 / C0 07 (bank select + program change ch1). The popup may be a project/sound selector, not a rename.
+- 13:57:04 | LE-05 | SYNTH1 SOUND DESIGN > ARP > TYPE list re-check: scroll wheel x10 + slow drag in list: still only 9 types (UP..RHYTHM 2), no scrollbar. App exposes 9 arp types. Closed, nothing selected.
+- 13:57:33 | LE-06 | SAMPLER GUIDE panel: WAVEFORM knob up 46 then down 46; GUIDE PITCH knob up 46 then down 46
+- 13:58:17 | LE-07 | SAMPLER GUIDE page 2 (AEG ATTACK, AEG DECAY, FILTER FREQ, FILTER RES): each knob up 46 then down 46; then GUIDE next page
+- 13:58:56 | LE-08 | SAMPLER GUIDE page 3 (REVERB SEND, DELAY SEND, EQ HIGH GAIN, EQ LOW GAIN): each knob up 46 then down 46; then GUIDE next page
+- 13:59:36 | LE-09 | SAMPLER GUIDE page 4 (START POINT, END POINT, LOOP MODE, LOOP LENGTH): START up46/down91; END down46/up91; LOOP MODE up46/down91; LOOP LEN down46/up91 (overshoot to clamp back); then GUIDE next page
+- 14:00:11 | LE-10 | SAMPLER GUIDE page 5 (last; PEG Attack Pitch?, PEG Attack Time?, PEG Decay Pitch?, PEG Decay Time? - labels truncated): each knob up 46 then down 46
+- 14:00:54 | LE-11 | RESTORES on SAMPLE 1: AEG ATTACK typed 8->0; PEG ATK PITCH +16->0; PEG DEC TIME 56->64; GUIDE knob PEG ATK TIME down 46 (48->~40); LOOP point dragged back to start
+- 14:01:10 | LE-12 | END OF LEFTOVERS: empty end marker.
+- NOTE LE summary: piano-roll note removal = LONG-PRESS (~2s) on note (LE-03). Note drag = move. PROJECT popup is not a rename (sends bulk + bank/program change, LE-04). ARP TYPE: app shows 9 types only (LE-05). GUIDE panel (sampler) has 5 pages x4 knobs: p1 WAVEFORM(sends nothing)/PITCH/PAN/VOLUME; p2 AEG ATK/AEG DEC/FILTER FREQ/FILTER RES; p3 REVERB SEND/DELAY SEND/EQ HIGH GAIN/EQ LOW GAIN; p4 START/END/LOOP MODE(sent nothing)/LOOP LENGTH; p5 PEG ATK PITCH/PEG ATK TIME/PEG DEC PITCH/PEG DEC TIME. PEG ATK TIME = 41 0A 58 (only sent via GUIDE knob, not the typed field). Page change sends 01 1A 30 0n. Leftover drift: sampler filter freq/res nudged (31 3A 03/05), loop length end 01 26 6F vs 70.
+- 14:07:52 | EX-01 | PERFORM > PAD/KEY > DRUMS: tap KICK, SNARE, CLAP, HAT1, HAT2, PERC1, PERC2 (1s apart), then hold KICK 2s
+- 14:08:34 | EX-02 | PAD/KEY > SYNTH 1 (PAD mode): tap C3, A#3; tapped dark circle = RECORD (started rec + transport play!); toggle PAD->KEYBOARD; RECORD off; transport STOP
+- 14:09:05 | EX-03 | PAD/KEY > SYNTH 1 KEYBOARD: C3, C4, C#3; OCTAVE up, C3; OCTAVE down x2, C3; OCTAVE up (restore)
+- 14:09:36 | EX-04 | PAD/KEY: SYNTH 2 key C3 (keyboard mode carried over?), DX key C3, SAMPLER pads 1, 2, 7
+- 14:10:23 | EX-05 | DRUM track offsets: SNARE, CLAP, HAT1 each: PITCH knob up 58px then down 58px (net 0). (SNARE select also clicked pattern 1 btn)
+- 14:10:59 | EX-06 | DRUM track offsets: HAT2, PERC1, PERC2 each: PITCH knob up 58px then down 58px
+- 14:11:35 | EX-07 | SYNTH 2 (Round Saw Phase) offset: overview PAN up 46/down 46; AEG ATTACK typed 0->20->0
+- 14:12:01 | EX-08 | SYNTH 2 GUIDE page 1: SOUND knob up 23/down 23; CHORD MODE(?) knob up 46/down 46
+- 14:12:38 | EX-09 | SYNTH 2 GUIDE page 2: 4 knobs each up 46/down 46
+- 14:13:17 | EX-10 | SYNTH 2 GUIDE page 3: 4 knobs each up 46/down 46
+- 14:13:58 | EX-11 | SYNTH 2 GUIDE page 4: 4 knobs each up 46/down 46; then next page
+- 14:14:26 | EX-12 | DX selected; GUIDE page 1 knob 2 up 46/down 46; then GUIDE next page
+- 14:14:59 | EX-13 | DX GUIDE page 2 (AEG ATK, AEG DEC, FILTER FREQ, FILTER RES): each up 46/down 46
+- 14:15:36 | EX-14 | DX GUIDE page 3: 4 knobs each up 46/down 46
+- 14:16:14 | EX-15 | DX GUIDE page 4 (last?): 4 knobs each up 46/down 46
+- 14:16:56 | EX-16 | DRUMS KICK GUIDE page 2: 4 knobs each up 46/down 46
+- 14:17:37 | EX-17 | DRUMS KICK GUIDE page 3: 4 knobs each up 46/down 46; then next page
+- 14:18:23 | EX-18 | KICK SOUND picker: TS_RNB_kick_rnb -> SO_WR_drip_double -> OS_VV5_kick_dilla -> cat SNARE first item -> cat KICK TS_RNB_kick_rnb (restored); favorite heart on TS_RNB toggled x2
+- 14:19:13 | EX-19 | SYNTH 1 SOUND picker: LO-FI SOUL 1 BASS 01 -> Rn Bass -> Acid3 -> cat PAD first -> cat BASS LO-FI SOUL 1 BASS 01 (restored)
+- 14:20:11 | EX-20 | DX: AEG ATTACK typed +8 -> 0 (drift fix). DX SOUND picker: FM Metallic Lead -> Dyna Lead -> Bit Tune -> cat BASS first -> cat SYNTH LEAD FM Metallic Lead (restored)
+- 14:21:34 | EX-21 | HOME > VISUALIZER opened (separate 3D visual app, 4GB RAM warning, scene presets list), left via its HOME (discarded unsaved visual scene). Back on HOME. END of extra pass.
+- NOTE EX summary: PAD/KEY pads = note-on 60 per track channel (ch1-7 drums, ch8 SYNTH1, ch9 SYNTH2, ch10 DX, ch11 SAMPLER pads = notes 60..66). Keyboard octave shifts notes by 12. Circle on PAD/KEY = RECORD (01 10 21 xx); transport play/stop = 01 10 20 xx. Drum tracks 31 10..31 16 (KICK..PERC2), SYNTH2 = 31 18, DX = 31 19 (DX AEG atk/dec at 31 19 01/02, bipolar 40=0). GUIDE pages: drums 3, synth/DX 4, sampler 5; page select = 01 1t 30 0n. Sound picker = bank select (CC0=3F, CC32=bank) + program change on track channel, plus bulk read/write (F0 43 20 / F0 43 00 ... 0C) of sound params. Drift left: EQ HIGH GAIN 4D=3D on KICK/DX (was 40?), SYNTH2 AEG decay 31 18 00 48, filter freq 02 01 vs 02 21? on several tracks, PERC1 pitch +1, ARP speed on SYNTH2/DX 03.
+- 14:31:43 | SG-01 | NAV: HOME > GUI EDITOR > PERFORM > SONG (empty, MODE NORMAL) > PATTERN grid (3 patterns/track). App seems not to reflect the newly selected project yet.
+- 16:34:08 | SG-02 | EMPTY: armed but no clicks (access expired / waiting on approval).
+- 16:34:26 | SG-03 | NAV only: PERFORM > SONG page open
+- 16:34:42 | SG-04 | SONG: '+' once -> adds scene 1
+- 16:35:01 | SG-05 | SONG: '+' once -> adds scene 2
+- 16:35:20 | SG-06 | SONG: tap scene 2 once
+- 16:35:38 | SG-07 | SONG scene 2 popup: KICK row pattern 2 (single click)
+- 16:36:03 | SG-08 | NAV: back to PERFORM > SONG, open scene 2 popup
+- 16:36:30 | SG-09 | NAV: PAD/KEY then back to SONG (re-read song)
+- 16:36:48 | SG-10 | EMPTY marker (waiting on Ace to switch device mode).
+- 16:36:55 | NOTE SG: '+' sends 71 00 00 <idx>; device replies 71 40 <idx> <scene data: 2 bytes + 11 track pattern idx (0-based)>. Opening scene popup: device sends 71 10 01..03. Clicking KICK pat2 in scene-2 popup sent 71 10 01 01 01 and jumped app to DRUMS. After navigating back, app SONG page shows EMPTY although device still reports scenes 0,1,2 (71 40 00/01/02 = all P1 / all P2 / all P3) and 71 10 04=01, 71 10 06=00, 71 50 00=00. Mode shown NORMAL.
+- 16:38:18 | SG-11 | Ace switched device to SONG mode (hold ALL + PROJECT) during this block; then NAV PAD/KEY -> SONG to refresh
+- 16:38:33 | SG-12 | SONG loop button single click
+- 16:38:50 | NOTE SG-12 EMPTY: loop click blocked by Wispr Flow overlay. SG-11: no mode-change message seen after Ace switched to SONG mode; app still shows NORMAL and empty song while device reports 3 scenes.
+- 16:42:54 | SG-13 | Device confirmed in SONG mode (Ace). NAV PAD/KEY -> SONG to refresh
+- 16:43:14 | NOTE SG-13: during this block Ace switched to SONG mode on device and pressed drum keys: mode = 01 10 17 02 (was 00 NORMAL); selected scene = 71 10 04 nn (0..2); 71 50 00 01/00 toggles around key presses (loop/queue flag?). App MODE line now shows SONG; app scene tiles still empty.
+- 16:43:14 | SG-14 | SONG loop button single click
+- 16:43:33 | NOTE SG-14 EMPTY: loop button click blocked by Wispr Flow overlay again.
+- 16:43:33 | SG-15 | SONG mode on device: app '+' once
+- 16:44:00 | SG-16 | SONG mode: app Play ~10s then Stop
+- 16:44:19 | SG-17 | SONG mode: tap scene tile 1 (opens scene popup)
+- 16:44:37 | SG-18 | SONG mode, scene 1 popup: SNARE pattern 3 (single click)
+- 16:44:57 | SG-19 | SONG mode, scene 1 popup: HAT2 pattern 2 (single click)
+- 16:45:15 | SG-20 | SONG mode, scene 1 popup: HAT2 MUTE (single click on)
+- 16:45:33 | SG-21 | SONG mode, scene 1 popup: HAT2 SOLO (single click on)
+- 16:45:59 | SG-22 | SONG scene 1 restore: HAT2 SOLO off, HAT2 MUTE off, HAT2 pat 1, SNARE pat 1 (2s apart)
+- 16:46:39 | SG-23 | SONG: close popup; right-click scene tile 1 (nothing); long-press tile 1 2s (just opens popup); close popup. No scene delete found in app.
+- NOTE SG summary (device in SONG mode from SG-13): mode 01 10 17 (00 NORMAL, 02 SONG); current scene 71 10 04 nn (changes as song plays: 0->1->2 during app Play in SG-16); scene data read 71 40 nn (16 slots, 2 bytes + 11 track pattern idx 0-based); app '+' sends 71 00 00 nn; scene edit pattern = 71 1t 01 <scene> <pat0>; scene mute = 71 1t 02 <scene> 00/01; scene solo = 71 10 03 <scene> <track+1, 0=off>. App SONG page does not render device's existing scenes (shows only ones added in this app session). No delete-scene control found in app (right-click/long-press do nothing). Loop button not captured (Wispr Flow overlay blocks that spot).

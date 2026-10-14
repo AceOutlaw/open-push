@@ -59,6 +59,11 @@ Request (`F0 43 30 7F 1C 0C [H] [M] [L] F7`, the device replies with a Parameter
    emptied V1 and left V2. Readback (`75 g`) and remove (`74 g`) do follow the MIDI-selected variation,
    so the bridge clears by reading the list and removing every index.
 
+📱 **The SEQTRAK app does it in one round trip** (2026-10-14, `APP-CLICKTHROUGH-P1.md` block LE-03, SYNTH 1):
+`76 [g] 00` + `[tick hi lo] 00 [note] 00 00` asks for the note at that position and pitch; the Seqtrak replies
+`76 [g+1] 00` + the same 6 bytes + `00 00` (🟡 last two = the note's index). The app then sends `74 [g] [index]`
+(no data byte) to delete it, or `73 [g] 00` + a full 8-byte note to replace it (move). Not yet tried from the bridge.
+
 To remove "pad p, step s": read `75 [g] 00, 01, …` until an empty reply, find the note whose position
 and note number match, send `74 [g] [index] 00`.
 
@@ -66,7 +71,9 @@ and note number match, send `74 [g] [index] 00`.
 - Deleting the project on the device (user guide §4.4: [PROJECT↑]+[DELETE]+Drum key; leaves one KICK
   step) made the Seqtrak broadcast the whole project: `01 10 17 00`, `01 10 27/1E/1A/1B/1C`,
   `01 1p 31 00` per track, master FX `30 43…46`, `31 2x`, `01 1p 30`, … ending `01 10 00 00`.
-  No step data is in the burst. 🟡 `01 10 17` assumed to mean "project loaded" (only seen in this burst);
+  No step data is in the burst. ⚠️ `01 10 17` is **not** "project loaded": the 2026-10-14 song-mode capture
+  showed it is the Song mode state (`00` normal, `02` song; `APP-CLICKTHROUGH-P1.md`), which a project load
+  re-broadcasts. The bridge's re-read on it (below) also fires on every scene-key press in Song mode — to fix;
   the bridge re-reads everything 0.5 s after it. ❓ Not yet checked: does switching projects send the same?
 - Delete on the device is bracketed by `01 10 19 04` (Delete held) … `01 10 19 00`; the bridge re-reads
   all steps when Delete is released, since not every deletion is reported step by step.

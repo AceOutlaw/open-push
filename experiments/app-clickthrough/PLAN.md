@@ -35,6 +35,8 @@ HOLD <reason>  either side: stop. A human checks before anything continues.
 
 - The clicker never starts a block until it reads `ARMED <ID>`. The capturer never stops a capture until it reads `DONE <ID>`.
 - Both sides poll `status` every few seconds.
+- **Re-runs use a new ID** (e.g. `111-01r`): the capturer saves `captures/<ID>.txt` and would overwrite an
+  existing capture with the same ID.
 - If anything unexpected happens (an app dialog, the device disconnecting, a value that won't change), write `HOLD` and explain in `clicklog.md`.
 
 ## 3. Rules for every block
@@ -164,12 +166,30 @@ Where a parameter repeats per track, run one track first; repeat on others only 
 | 103-03 | KM-103 | COPY / PASTE pattern (paste into an empty pattern) | button | — | todo |
 | 103-04 | KM-103 | SETTINGS > PATTERNS 3↔6 | toggle | — | todo |
 | 103-05 | KM-103 | SETTINGS > ADVANCED > LAUNCH QUANTIZE | enum | all | todo |
-| 103-06 | KM-103 | Track TYPE selector DRUM / DRUMKIT / SYNTH on PERC2 (v2.0, KM-34), then restore | enum | 3 | todo |
+| 103-06 | KM-103 | Track TYPE selector DRUM / DRUMKIT / SYNTH on PERC2 (v2.0, KM-34), then restore | enum | 3 | **skip** — needs firmware 2.0; this Seqtrak runs 1.21.3 (Ace, 2026-10-14) |
 | **KM-110 Mute / KM-111 Song** | | | | | |
 | 110-01 | KM-110 | PERFORM > MIXER MUTE (KICK) | toggle | — | todo |
 | 110-02 | KM-110 | PERFORM > MIXER SOLO (KICK) | toggle | — | todo |
 | 111-01 | KM-111 | PERFORM > SONG: "+" add scene, then remove it | button | — | todo |
 | 111-02 | KM-111 | SONG loop button | toggle | — | todo |
+| **KM-111 Song mode re-run (2026-10-14 afternoon)** | | One action per block, ~3 s apart, transport stopped unless the row says so. User guide §13 (p. 79–84). Use IDs 111-10 onward | | | |
+| 111-10 | KM-111 | PERFORM > SONG: open the page only, touch nothing (what the app reads) | nav | — | todo |
+| 111-11 | KM-111 | MODE NORMAL → SONG | enum | — | todo |
+| 111-12 | KM-111 | MODE SONG → SCENE → SONG | enum | — | todo |
+| 111-13 | KM-111 | "+" add one scene (guide: the selected scene is copied into it) | button | — | todo |
+| 111-14 | KM-111 | "+" add a second scene | button | — | todo |
+| 111-15 | KM-111 | Select scene 1, then scene 2 (tap only, transport stopped) | nav | — | todo |
+| 111-16 | KM-111 | Scene 2 popup: change ONE track's pattern (e.g. KICK 1 → 2) | enum | 1–6 | todo |
+| 111-17 | KM-111 | Scene 2 popup: change a second track type's pattern (e.g. SYNTH 1) | enum | 1–6 | todo |
+| 111-18 | KM-111 | Scene 2 popup: MUTE one track on, off | toggle | — | todo |
+| 111-19 | KM-111 | Scene 2 popup: SOLO one track on, off | toggle | — | todo |
+| 111-20 | KM-111 | Scene length (if the app shows it): change it, including AUTO (guide §13.5.2: 16-step measures, AUTO = longest pattern) | enum | — | todo |
+| 111-21 | KM-111 | Song loop button (whole-song loop, guide §13.2.3: app-only, default OFF) on, off | toggle | — | todo |
+| 111-22 | KM-111 | Play in SONG mode from scene 1, wait for it to reach scene 2, Stop | transport | — | todo |
+| 111-23 | KM-111 | Play in SCENE mode, switch to the other scene while playing, Stop | transport | — | todo |
+| 111-24 | KM-111 | Loop one scene while playing (guide §13.2.2: double-tap) if the app offers it, Stop | transport | — | todo |
+| 111-25 | KM-111 | Delete scene 2 (guide §13.4), then scene 1 if needed to restore the original song | button | — | todo |
+| 111-26 | KM-111 | MODE back to NORMAL | enum | — | todo |
 | **KM-112 Connections & Settings** | | | | | |
 | 112-01 | KM-112 | BPM field (▲▼ in popup) | continuous | — | todo |
 | 112-02 | KM-112 | SWING | continuous | — | todo |
