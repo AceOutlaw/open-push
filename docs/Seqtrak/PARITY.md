@@ -2,16 +2,16 @@
 
 **Goal:** everything the Yamaha SEQTRAK can do (per Yamaha's User Guide, OS V2.00) should be doable from
 an Ableton Push 1 through the bridge.
-**Built:** 2026-10-12, from the user guide text (`reference files/Yamaha/User Guide/SEQTRAK_user_guide_En_D0.txt`),
+**Updated:** 2026-10-15 (after the KM-100 fixes, new buttons, song mode and the app click-through). **Built:** 2026-10-12, from the user guide text (`reference files/Yamaha/User Guide/SEQTRAK_user_guide_En_D0.txt`),
 `src/open_push/seqtrak/app.py` / `protocol.py` (working tree on `integration`, incl. uncommitted changes), and
 `STEP-SEQUENCER.md`, `FUNCTIONALITY-MAP.md`, `midi-data-table.md`, `BUGS_AND_ENHANCEMENTS.md`.
 
 **Legend**
 - **Guide §** = section and page of the User Guide (the authority for *what* the Seqtrak does).
-- **On Push:** ✅ works · 🟡 partial or buggy (what's wrong is in Notes) · ❌ missing · — not applicable
+- **On Push:** ✅ works (hardware-tested) · 🔵 built and deployed, awaiting hardware test · 🟡 partial or buggy (what's wrong is in Notes) · ❌ missing · — not applicable
   (physical/app-only, nothing to do on the Push). Every ✅/🟡 cites the app.py function/line that does it.
 - **Protocol:** ✅ verified (STEP-SEQUENCER.md "verified", or FUNCTIONALITY-MAP.md "Cap ✅" = confirmed by live
-  capture) · 🟡 address documented (Data List / guide CC table) but not tested · ❓ unknown · — none needed.
+  capture or readback) · 📱 sent by the official app for that control (APP-CLICKTHROUGH-P1.md) · 📥 reported by the device · 🟡 address documented (Data List / guide CC table) but not tested · ❓ unknown · — none needed.
 
 ---
 
@@ -19,24 +19,29 @@ an Ableton Push 1 through the bridge.
 
 ### Counts per chapter (On Push column)
 
-| Chapter | ✅ | 🟡 | ❌ |
-|---|---|---|---|
-| 4. Projects | 0 | 3 | 7 |
-| 5. Tracks and Patterns | 4 | 8 | 6 |
-| 6. Drum Tracks | 5 | 1 | 4 |
-| 7. Synth Tracks | 3 | 3 | 6 |
-| 8. SAMPLER Track | 3 | 1 | 9 |
-| 9. Sound Design | 1 | 4 | 9 |
-| 10. Effects | 3 | 0 | 9 |
-| 11. Mixer Mode | 0 | 3 | 5 |
-| 12. Mute Mode | 1 | 0 | 1 |
-| 13. Song Mode | 0 | 0 | 10 |
-| 15. Connections | 0 | 0 | 1 |
-| 16. Settings | 1 | 0 | 5 |
-| **Device total (ch. 4–13, 15–16)** | **21** | **23** | **72** |
-| 14. App-only (optional) | 0 | 0 | 6 |
+| Chapter | ✅ | 🔵 | 🟡 | ❌ |
+|---|---|---|---|---|
+| 4. Projects | 1 | 2 | 1 | 6 |
+| 5. Tracks and Patterns | 5 | 6 | 2 | 5 |
+| 6. Drum Tracks | 5 | 3 | 1 | 0 |
+| 7. Synth Tracks | 4 | 2 | 0 | 6 |
+| 8. SAMPLER Track | 3 | 0 | 1 | 9 |
+| 9. Sound Design | 1 | 3 | 2 | 8 |
+| 10. Effects | 3 | 0 | 0 | 9 |
+| 11. Mixer Mode | 0 | 1 | 2 | 5 |
+| 12. Mute Mode | 1 | 0 | 0 | 1 |
+| 13. Song Mode | 0 | 10 | 0 | 0 |
+| 15. Connections | 0 | 0 | 0 | 1 |
+| 16. Settings | 1 | 0 | 0 | 5 |
+| **Device total (ch. 4–13, 15–16)** | **24** | **27** | **9** | **55** |
+| 14. App-only (optional) | 0 | 0 | 0 | 6 |
 
 Rows marked — (physical or automatic) aren't counted.
+
+**Progress:** audit 2026-10-13 = 21 ✅ · 23 🟡 · 72 ❌. Now 2026-10-15 = 24 ✅ · 27 🔵 · 9 🟡 · 55 ❌
+(track type moved to — : needs firmware 2.0). Of the 55 missing, about 37 have a known command (📱/✅ in the Protocol
+column) and are build work; the rest (❓) need a capture of the Seqtrak's own keys. Bug 14 (dead Mute/Solo buttons) is
+fixed too (`bb115a8`).
 
 ### BUGS — Push has the feature, but it misbehaves (fix these first)
 
@@ -116,17 +121,17 @@ Rows marked — (physical or automatic) aren't counted.
 
 | Feature | Guide § (page) | On Push | Protocol | Notes |
 |---|---|---|---|---|
-| Switch project (1–8) | §4.1 (p.23) | ❌ | ❓ | Bridge only *detects* a load (`01 10 17` → full re-read, app.py:788; meaning 🟡 assumed) |
+| Switch project (1–8) | §4.1 (p.23) | ❌ | ✅ | Bank MSB 64 / LSB 0 / PC 0–7 (Data List; the app sends it). Bridge re-reads on `01 10 15` (project switched, `ab1c99a`). Push control not built |
 | Ext-clock project switch (bar-synced stop, MANUAL/AUTO start, on/off) | §4.1.1 (p.23–24) | ❌ | ❓ | AUTO/MANUAL is app-only |
 | Save project | §4.2 (p.24) | — | — | Automatic on switch / power-off |
 | Back up / restore via app | §4.3 (p.24) | — | ❓ | App-only (ch. 14) |
-| Delete project | §4.4 (p.25) | ❌ | ❓ | Bridge re-reads after a device-side delete (STEP-SEQUENCER "Project load / delete") |
-| Tempo 5–300 BPM | §4.5.1 (p.26) | 🟡 | ✅ | Tempo encoder CC 14 (`handle_encoder`, app.py:2420) floors at 20; Tap Tempo (app.py:2143). Read at start + followed (app.py:869) |
+| Delete project | §4.4 (p.25) | ❌ | ❓ | Bridge re-reads after a device-side delete (`01 10 00` burst end) |
+| Tempo 5–300 BPM | §4.5.1 (p.26) | 🔵 | ✅ | Tempo encoder CC 14 now 5–300 (`dcfc4b3`); Tap Tempo; read at start + followed |
 | Reset tempo to project start value | §4.5.1 (p.26) | ❌ | ❓ | |
-| Swing −58…+58 ticks | §4.5.2 (p.27) | 🟡 | ✅ | Swing encoder CC 15 (app.py:2441) → `set_swing` 0…+28 only; not read back |
+| Swing −58…+58 ticks | §4.5.2 (p.27) | ✅ | ✅ | Swing encoder CC 15: full −58…+58 (128 + ticks), also to the synth arps like the app; read back; LCD popup (`dcfc4b3`, `2474f4d`). Confirmed by Ace 2026-10-14 |
 | Reset swing (DELETE+SWING) | §4.5.2 (p.27) | 🟡 | ✅ | Only by turning the encoder back to 0 |
-| Metronome on/off | §4.5.3 (p.27) | ❌ | ✅ | Click Switch `00 00 25`. Push Metronome button (CC 9, app.py:415) is defined but unhandled |
-| Metronome sound / volume | §4.5.3 (p.28) | ❌ | ✅ | `00 00 26` / `00 00 27` (app-only on device) |
+| Metronome on/off | §4.5.3 (p.27) | 🔵 | ✅ | Push Metronome button CC 9 → `00 00 25`, read + followed, LED (`bb115a8`) |
+| Metronome sound / volume | §4.5.3 (p.28) | ❌ | 📱 | `00 00 26` type A–E / `00 00 27` volume (app capture 112-03) |
 | Temporary save / restore | §4.6 (p.28) | ❌ | ❓ | |
 
 ## 5. Tracks and Patterns
@@ -134,22 +139,22 @@ Rows marked — (physical or automatic) aren't counted.
 | Feature | Guide § (page) | On Push | Protocol | Notes |
 |---|---|---|---|---|
 | Switch pattern, one track (instant) | §5.1.1 (p.29) | ✅ | ✅ | Track mode encoder 8 (`_adjust_variation`, app.py:2676); device-side changes followed (`30 5p 0F`, app.py:768) |
-| Switch pattern, all 11 tracks | §5.1.1 (p.29) | 🟡 | ✅ | Session view row launch (`_handle_session_row_launch`, app.py:1917): fix awaiting hardware test (BUGS #4), auto-starts playback. Global `01 10 2A` followed (app.py:799) |
+| Switch pattern, all 11 tracks | §5.1.1 (p.29) | 🟡 | ✅ | Track mode per track; all tracks at once only via Song view scenes now (Session view is the song, `83b9230`) |
 | Reserved (launch-quantized) switching | §5.1.1–5.1.2 (p.29–30) | ❌ | ❓ | Push switches instantly only |
-| Launch Quantize length | §5.1.3 (p.30) | ❌ | 🟡 | Maybe `30 40 7A` Pattern Master Step (1–128, data table): mapping unconfirmed |
-| Pattern length | §5.2, §5.2.1 (p.31–32) | 🟡 | 🟡 | `_adjust_bar_length` (app.py:2609) writes `30 5p 16+2v`: 1/2/4/8 bars only, other lengths reset to 1 bar (bug 8). BUGS #6 complete. Step counts read at start (app.py:778) |
-| 3 ⇔ 6 patterns | §5.3 (p.33) | 🟡 | ❓ | `_toggle_variation_mode` (app.py:2704) writes `01 10 18` = display mode (bug 2); guide is per track |
-| Delete current pattern (one track) | §5.4 (p.34) | 🟡 | ✅ | Delete menu [1] (`_delete_current_variation`, app.py:1166). Sampler/synth: read list + `74 g idx 00` ✅. Drums: steps > 64 survive (bug 1) |
-| Delete current pattern on all tracks | §5.4 (p.34) | 🟡 | ✅ | Menu [3] deletes *all* patterns of every track instead (bug 10) |
-| Copy / paste pattern | §5.5 (p.34–35) | ❌ | ❓ | Could be emulated by read + write for notes; p-locks/motion not readable |
+| Launch Quantize length | §5.1.3 (p.30) | ❌ | 📱 | `30 40 7A` (app LAUNCH QUANTIZE: 1 / 4 / 16 / 32, capture 103-05) |
+| Pattern length | §5.2, §5.2.1 (p.31–32) | 🔵 | ✅ | Buttons 1/2/4/8 bars, encoder 1–128 steps (Shift = a bar), LCD shows steps (`dcfc4b3`); Double Loop doubles (`8ed2c21`). Lengthening copies bars (verified) |
+| 3 ⇔ 6 patterns | §5.3 (p.33) | 🔵 | 📱 | Shift + encoder 8 writes `30 40 79` 00/01 (app capture 103-04), read at start (`dcfc4b3`). Global setting in the app |
+| Delete current pattern (one track) | §5.4 (p.34) | 🔵 | ✅ | Delete menu [1]; drums now clear all 128 steps (`42d6679`); drum deletes follow the MIDI-selected pattern (verified) |
+| Delete current pattern on all tracks | §5.4 (p.34) | 🔵 | ✅ | Delete menu [3] = current pattern on every track, like DELETE+ALL (`dcfc4b3`) |
+| Copy / paste pattern | §5.5 (p.34–35) | 🔵 | ✅ | Duplicate (hold): Track / Drums / All, from → to (`8ed2c21`). `77 01 20/21 [track] [pattern]` verified on PERC 2 |
 | Select track | §5.6 (p.36) | 🟡 | ✅ | Encoder 1 / CC 20·102 (`_select_next_track`, app.py:4015); Shift+Track overlay (`_handle_track_select_button`, app.py:1087); device-side selects followed (app.py:845). BUGS #1 fix awaiting retest |
 | Audition track | §5.6 (p.36) | ✅ | ✅ | Drum/sampler/keyboard pads trigger notes (`_handle_drum_pad`, app.py:3058) |
 | Change sound (Drum / Synth / DX) | §5.7 (p.36) | ✅ | ✅ | `_cycle_patch` (app.py:3904): Bank MSB/LSB + PC; name read via `01 1p 35` (app.py:859) |
-| Change sound of a SAMPLER pad | §5.7 (p.36) | 🟡 | ❓ | `_cycle_sampler_pad_preset` (app.py:3953) sends on channels 1–7 = drum tracks (bug 4) |
+| Change sound of a SAMPLER pad | §5.7 (p.36) | ✅ | 📱 | Was flagged as a bug; it already sends what the app sends (Bank MSB 62 on the pad's channel, capture 106-16) |
 | Category jump | §5.7.1 (p.37) | ❌ | ❓ | Shift+patch encoder jumps 128 presets, not categories (app.py:2575) |
-| Mute track | §5.8.1 (p.38) | ✅ | ✅ | Mixer lower row (`_toggle_track_mute_simple`, app.py:3711), CC 23. State not read back |
-| Unmute all | §5.8.1 (p.38) | ❌ | ✅ | `30 5p 29 00` × 11 (FUNCTIONALITY-MAP §3.6 "mixer reset") |
-| Solo track | §5.8.2 (p.38) | 🟡 | ✅ | Mixer upper row (`_toggle_track_solo`, app.py:3731), CC 24. Bugs 3 and 9; not read back |
+| Mute track | §5.8.1 (p.38) | ✅ | ✅ | Mixer lower row + Push Mute button (`bb115a8`); read back (`30 5p 29`, 7D = muted) |
+| Unmute all | §5.8.1 (p.38) | ❌ | ✅ | `30 5p 29 00` × 11 |
+| Solo track | §5.8.2 (p.38) | 🔵 | ✅ | One soloed track like the Seqtrak (`30 40 68` / CC 24), un-solo restores mute, DRUM-bus solo mutes the others, read back; Push Solo button (`dcfc4b3`, `bb115a8`) |
 | Copy / paste track steps | §5.9 (p.39) | ❌ | ❓ | |
 
 ## 6. Drum Tracks
@@ -161,28 +166,28 @@ Rows marked — (physical or automatic) aren't counted.
 | Show live-recorded steps | §6.5 (p.42) | 🟡 | ✅ | Not reported by the device; polled ~1/s (bug 13) |
 | Pages (> 16 steps) | §6.2 (p.40) | ✅ | ✅ | 4 pages × 32 steps (page buttons, app.py:2347 / 2384) |
 | Step position / playhead | §6.1 (p.40) | ✅ | — | `_process_playhead` (app.py:3197), timed from tempo (no MIDI clock): may drift, ignores swing |
-| Micro timing (−60…+59 ticks) | §6.3 (p.41) | ❌ | 🟡 | Readback byte 4 ✅ and device report `70 1t 00` ✅; as a command ❓ |
-| Substep (none, ×2, ×3 8T, ×3 16T, ×4) | §6.4 (p.41) | ❌ | 🟡 | Readback byte 3 ✅, report `70 1t 03` ✅; value mapping and command ❓ |
+| Micro timing (−60…+59 ticks) | §6.3 (p.41) | 🔵 | ✅ | Hold a step pad + encoder 1 → `70 [10+t] 00 [step] [60+offset]`; verified from the Pi 2026-10-15; shown from readback byte 4 |
+| Substep (none, ×2, ×3 8T, ×3 16T, ×4) | §6.4 (p.41) | 🔵 | ✅ | Hold a step pad + encoder 2 → `70 [10+t] 03` (order none, ×2, ×3 8T, ×3 16T, ×4); verified from the Pi |
 | Real-time input + record | §6.5 (p.42) | ✅ | ✅ | Drum pads (`_handle_drum_pad`, app.py:3058) + Record `01 10 21` (app.py:2135) |
-| Step probability (8 levels) | §6.6 (p.43) | ❌ | ❓ | Probably another `70 1t [param]`; not captured |
-| Track type Drum / DrumKit / Synth | §6.7 (p.44–45) | ❌ | ❓ | Types hard-coded (`get_track_type`, app.py:385): a DrumKit/Synth drum track still gets the drum UI |
+| Step probability (8 levels) | §6.6 (p.43) | 🔵 | ✅ | Hold a step pad + encoder 3 → `70 [10+t] 04` (8 levels); stored in `70 [60+t] [step]`, read back; verified from the Pi |
+| Track type Drum / DrumKit / Synth | §6.7 (p.44–45) | — | ❓ | Needs firmware 2.0; this unit runs 1.21.3 (skipped, Ace 2026-10-14) |
 
 ## 7. Synth Tracks (SYNTH 1, SYNTH 2, DX)
 
 | Feature | Guide § (page) | On Push | Protocol | Notes |
 |---|---|---|---|---|
 | Real-time play + record | §7.1 (p.46) | ✅ | ✅ | Isomorphic keyboard (`_handle_melodic_pad`, app.py:3501) + Record |
-| Record quantize on/off | §7.2 (p.47) | ❌ | ✅ | Record Quantize `00 00 1F` (value 1/32…OFF is app-only on device) |
-| Octave (+2…−3) | §7.3 (p.48) | 🟡 | ✅ | Octave buttons shift pads (app.py:2154) but don't set `30 5p 0C` (bug 11) |
-| Scale (8 per project) | §7.4 (p.48) | 🟡 | ✅ | Push Scale mode (`_handle_scale_mode_button`, app.py:1683) is Push-only; `30 40 7E` not set/read (bug 11) |
-| Key | §7.5 (p.49) | 🟡 | ✅ | Root buttons in Scale mode, Push-only; `30 40 7F` not set/read (bug 11) |
+| Record quantize on/off | §7.2 (p.47) | ❌ | 📱 | `00 00 1F`: 00 off, 01 1/32, 02 1/16T, 03 1/16, 04 1/8T, 05 1/8 (capture 105-13) |
+| Octave (+2…−3) | §7.3 (p.48) | ✅ | ✅ | Push octave = pad layout; the Seqtrak's octave only shifts its own keys (guide §7.3), so not linked on purpose |
+| Scale (8 per project) | §7.4 (p.48) | 🔵 | ✅ | Sent to the Seqtrak (matched by intervals to the project's 8 slots) and followed (`dcfc4b3`) |
+| Key | §7.5 (p.49) | 🔵 | ✅ | `30 40 7F` = 0x40 + semitone, sent and followed (`dcfc4b3`) |
 | MONO / POLY / CHORD | §7.6 (p.49) | ✅ | ✅ | Device page 1 "Mode", CC 26 (app.py:252) |
-| Edit chords | §7.7 (p.50) | ❌ | 🟡 | `30 6p` / `30 7p` seen as broadcasts; writing untested |
+| Edit chords | §7.7 (p.50) | ❌ | 📱 | `30 6p 00–1B` chord notes (capture 105-08) |
 | Keyboard input mode | §7.8 (p.51) | ✅ | — | Push pads are always a keyboard (app.py:1486) |
-| Step input: notes on/off per step | §7.9 (p.51) | ❌ | ✅ | No melodic step grid. SYNTH 1 add/read/remove verified; SYNTH 2 `10` / DX `20` inferred |
+| Step input: notes on/off per step | §7.9 (p.51) | ❌ | ✅ | No melodic step grid yet. Add / read / remove verified (SYNTH 1); find `76`, replace `73` from the app (LE-03) |
 | Step input: add/remove notes, chords per step | §7.9 (p.52) | ❌ | ✅ | Note list holds several notes per position |
 | Step input: note length | §7.9 (p.52) | ❌ | ✅ | Last two bytes of the 8-byte note |
-| Step input: micro timing | §7.9 note (p.52) | ❌ | ❓ | Presumably an off-grid tick; untested |
+| Step input: micro timing | §7.9 note (p.52) | ❌ | ❓ | Presumably an off-grid tick |
 
 ## 8. SAMPLER Track
 
@@ -190,89 +195,89 @@ Rows marked — (physical or automatic) aren't counted.
 |---|---|---|---|---|
 | Real-time play 7 samples + record | §8.1 (p.53) | ✅ | ✅ | `_handle_sampler_pad` (app.py:3601): ch 11, notes 60–66 |
 | Sample into a pad (mic / AUDIO IN / USB) | §8.2 (p.53) | ✅ | ✅ | Shift+Record (app.py:2120): `01 10 28` pad + `01 10 22` |
-| Sampling source | §8.3 (p.54) | ❌ | ✅ | `00 00 19` (FUNCTIONALITY-MAP §3.7) |
+| Sampling source | §8.3 (p.54) | ❌ | 📱 | `00 00 19` 00 USB, 01 MIC/LINE, 02 RESAMPLING (sampler parked until after core) |
 | Resampling | §8.4 (p.54) | ❌ | ✅ | Sampling source = Resampling |
 | Cancel sampling | §8.5 (p.54) | ❌ | ❓ | |
-| Sampling count-in | §8.6 (p.55) | ❌ | ✅ | `00 00 1B` |
+| Sampling count-in | §8.6 (p.55) | ❌ | 📱 | `00 00 1B` |
 | Monitoring mode (input meter) | §8.7 (p.55) | ❌ | ❓ | |
-| Auto-normalize | §8.8 (p.56) | ❌ | ✅ | `00 00 1C` (app-only on device) |
+| Auto-normalize | §8.8 (p.56) | ❌ | 📱 | `00 00 1C` |
 | Delete pattern of one sample | §8.9 (p.56) | ❌ | ✅ | Read list, remove that pad's indexes |
 | Step input per pad | §8.10 (p.56) | ✅ | ✅ | `_toggle_sampler_step` (app.py:3445); BUGS #2 solved; pad select both ways (`01 10 28`, app.py:833 / 3668) |
 | Step note length | §8.10 (p.57) | 🟡 | ✅ | Automatic only: rings to the pad's next step (`_sampler_ring_length`, app.py:3440); no manual edit |
 | Step micro timing | §8.10 note (p.57) | ❌ | ❓ | |
-| Mute a sample | §8.11 (p.58) | ❌ | 🟡 | `30 40 63` bitmask (data table) |
+| Mute a sample | §8.11 (p.58) | ❌ | 📱 | `30 40 63` bit mask (capture 109-03) |
 
 ## 9. Sound Design
 
 | Feature | Guide § (page) | On Push | Protocol | Notes |
 |---|---|---|---|---|
 | Parameter pages + advanced pages | §9.1.1 (p.60) | ✅ | — | Device mode pages via page buttons (app.py:2338 / 2375) |
-| Drum params (sound, pitch, pan, vol, attack, decay, filter, reso, sends, EQ) | §9.1.2 (p.60) | 🟡 | ✅ | `DEVICE_PARAMS_DRUM` (app.py:221). Bugs 5, 6 (BUGS #3) |
-| Synth params incl. porta, arp type/gate/speed | §9.1.3 (p.61) | 🟡 | ✅ | `DEVICE_PARAMS_SYNTH` (app.py:247). Bugs 5, 6 |
-| DX params incl. FM algorithm/mod amount/freq/feedback | §9.1.4 (p.62) | 🟡 | ✅ | `DEVICE_PARAMS_DX` (app.py:284). Bug 5 |
+| Drum params (sound, pitch, pan, vol, attack, decay, filter, reso, sends, EQ) | §9.1.2 (p.60) | 🔵 | ✅ | Ranges clamped to the guide (§18.3.1); values read back and followed from the Seqtrak's knobs (`dcfc4b3`, `2474f4d`) except cutoff/reso |
+| Synth params incl. porta, arp type/gate/speed | §9.1.3 (p.61) | 🔵 | ✅ | Ranges clamped; vol/pan/sends/EQ/mono-poly/porta read back; arp/filter not |
+| DX params incl. FM algorithm/mod amount/freq/feedback | §9.1.4 (p.62) | 🟡 | ✅ | FM macros CC 116–119 have no readable SysEx; full engine is in the app capture (113-2x) |
 | SAMPLER params pages 1–3 | §9.1.5 (p.63) | 🟡 | ✅ | `DEVICE_PARAMS_SAMPLER` (app.py:305): no PITCH (no sampler CC in §18.3); whole track vs selected pad ❓. Bug 5 |
-| SAMPLER start / end / loop on-off / loop length | §9.1.5 (p.63) | ❌ | 🟡 | Start/End/Loop length `50 eA 66/6A/60` captured; loop on/off address ❓ |
-| SAMPLER pitch EG (PEG) | §9.1.5 (p.63) | ❌ | ❓ | |
+| SAMPLER start / end / loop on-off / loop length | §9.1.5 (p.63) | ❌ | 📱 | `50 eA 66/6A/5F/60` (4×7-bit frames); length readable at `01 1[e] 40` (sampler parked) |
+| SAMPLER pitch EG (PEG) | §9.1.5 (p.63) | ❌ | 📱 | `41 eA 58–64` (sampler parked) |
 | Pitch per step (synth, step input) | §9.1.3 note (p.61) | ❌ | ❓ | |
 | Parameter Lock | §9.2 (p.64) | ❌ | ❓ | Purple steps; Push shows every step green (STEP-SEQUENCER §2) |
 | Delete Parameter Lock (pattern / step) | §9.2.1 (p.65–66) | ❌ | ❓ | |
 | Motion Recording | §9.3 (p.67) | ❌ | ❓ | Untested whether Push CCs during recording become motion |
 | Delete Motion | §9.3.1 (p.67) | ❌ | ❓ | |
-| Undo / Redo | §9.4 (p.68) | ❌ | ❓ | |
-| Save sound (+ favorite) | §9.5 (p.68) | ❌ | ❓ | |
+| Undo / Redo | §9.4 (p.68) | 🔵 | ✅ | Push Undo (CC 119) → `01 10 1F 01`, verified from the Pi (`2474f4d`) |
+| Save sound (+ favorite) | §9.5 (p.68) | ❌ | 🟡 | Favourite = bulk write `10 01 03` (capture EX-18); save ❓ |
 | Delete / import sounds | §9.6–9.7 (p.68–69) | — | ❓ | App-only |
 
 ## 10. Effects
 
 | Feature | Guide § (page) | On Push | Protocol | Notes |
 |---|---|---|---|---|
-| Single (track) effect type | §10.1.1, §10.2.2 (p.70, 73) | ❌ | 🟡 | Insertion A `31 2p 00` (Data List) |
-| Single effect parameters 1–3 | §10.2.5 (p.74) | ❌ | 🟡 | CC 107–109 per track (guide §18.3.2) |
+| Single (track) effect type | §10.1.1, §10.2.2 (p.70, 73) | ❌ | ✅ | `31 2p 00` (MSB LSB = Data List effect type list, matched in capture 108-70) |
+| Single effect parameters 1–3 | §10.2.5 (p.74) | ❌ | 📱 | `31 2p 03, 05, …` (capture 108-71) |
 | Track LP-HP filter | §10.1.1 (p.70) | ✅ | ✅ | Device Cutoff/Reso, CC 74/71 |
 | Track 2-band EQ | §10.1.1 (p.70) | ✅ | ✅ | Device EQ Hi/Lo, CC 20/21 (range bug 6) |
 | Reverb / Delay send level per track | §10.1.2 (p.71) | ✅ | ✅ | Device Reverb/Delay, CC 91/94 |
-| Master effect type (8 categories × 8) | §10.2.2 (p.73) | ❌ | 🟡 | `30 43 00` type |
+| Master effect type (8 categories × 8) | §10.2.2 (p.73) | ❌ | ✅ | `30 43 00`; every type the app picked matched the Data List (108-01) |
 | Master effect params (FX LEVEL, page 2) | §10.2.4 (p.74) | ❌ | ✅ | CC 102–104 ch 1; constants in protocol.py:119, not wired |
 | HIGH PASS slider | §10.1.3 (p.72) | ❌ | ✅ | Likely CC 105 (master effect 2): mapping inferred |
 | REPEATER slider | §10.1.3 (p.72) | ❌ | ✅ | Likely CC 106 (master effect 3): mapping inferred |
-| Master compressor | §10.1.3 (p.72) | ❌ | 🟡 | `30 46` (app-only on device) |
-| Master 5-band EQ | §10.1.3 (p.72) | ❌ | 🟡 | `30 47` (app-only on device) |
+| Master compressor | §10.1.3 (p.72) | ❌ | 📱 | `30 46` (type, ON/OFF `30 46 47`, params; capture 108-5x) |
+| Master 5-band EQ | §10.1.3 (p.72) | ❌ | 📱 | `30 47 00–14` gain/freq/Q per band (capture 108-60) |
 | CLEAR FX | §10.3 (p.74) | ❌ | ❓ | |
 
 ## 11. Mixer Mode
 
 | Feature | Guide § (page) | On Push | Protocol | Notes |
 |---|---|---|---|---|
-| VOLUME per track | §11.2 (p.75) | 🟡 | ✅ | Mixer encoders (app.py:2533), CC 7. Not read back: shows 100 at start |
+| VOLUME per track | §11.2 (p.75) | 🔵 | ✅ | Mixer encoders; read back at start and followed (`dcfc4b3`, `2474f4d`) |
 | PAN per track | §11.2 (p.75) | 🟡 | ✅ | Only in Device mode, one track at a time |
 | REVERB / DELAY SEND per track | §11.2 (p.75) | 🟡 | ✅ | Only in Device mode, one track at a time |
-| Project volume (ALL knob) | §11.2 (p.76) | ❌ | 🟡 | `30 40 66` (seen in capture, not tested). Push master knob sets *speaker* volume instead |
+| Project volume (ALL knob) | §11.2 (p.76) | ❌ | ✅ | `30 40 66` (P0-PROBE). Push master knob sets the speaker volume |
 | Project pan (ALL knob) | §11.2 (p.76) | ❌ | 🟡 | `30 40 65` |
-| Reverb / Delay return level | §11.2 (p.76) | ❌ | ❓ | |
-| Send effect type (8 presets each) | §11.3.1 (p.76) | ❌ | 🟡 | `30 41 00` / `30 42 00` |
-| Send effect parameters | §11.3.2 (p.76–77) | ❌ | 🟡 | CC 110–115 ch 1 (guide §18.3.2) |
+| Reverb / Delay return level | §11.2 (p.76) | ❌ | 📱 | `30 41 44` / `30 42 44` (captures 108-31, 108-41) |
+| Send effect type (8 presets each) | §11.3.1 (p.76) | ❌ | ✅ | `30 41 00` / `30 42 00` (matched the Data List, 108-30/40) |
+| Send effect parameters | §11.3.2 (p.76–77) | ❌ | 📱 | `30 41 03…`, `30 42 03…` (108-32, 108-42) |
 
 ## 12. Mute Mode
 
 | Feature | Guide § (page) | On Push | Protocol | Notes |
 |---|---|---|---|---|
-| One-press mute per track | §12.1–12.2 (p.78) | ✅ | ✅ | Mixer lower-row buttons (`_toggle_track_mute_simple`, app.py:3711). Pad mute grid is dead code (bug 14) |
+| One-press mute per track | §12.1–12.2 (p.78) | ✅ | ✅ | Mixer lower row + Push Mute button for the selected track (`bb115a8`) |
 | Unmute all | §12.2 (p.78) | ❌ | ✅ | `30 5p 29 00` × 11 |
 
 ## 13. Song Mode
 
 | Feature | Guide § (page) | On Push | Protocol | Notes |
 |---|---|---|---|---|
-| Enter / exit Song mode | §13.1 (p.79) | ❌ | ❓ | Push Session view is a bridge-only launcher, not stored on the Seqtrak |
-| Scene mode (loop one scene) | §13.1.1 (p.79) | ❌ | ❓ | |
-| Play / stop scenes in order | §13.2 (p.80) | ❌ | ❓ | |
-| Change scene | §13.2.1 (p.80) | ❌ | ❓ | |
-| Loop a scene | §13.2.2 (p.81) | ❌ | ❓ | |
-| Loop whole song | §13.2.3 (p.81) | ❌ | ❓ | App setting |
-| Add scene (up to 16) | §13.3 (p.82) | ❌ | ❓ | |
-| Delete scene | §13.4 (p.82) | ❌ | ❓ | |
-| Edit scene patterns / mute / solo | §13.5.1 (p.83) | ❌ | ❓ | |
-| Scene length (incl. AUTO) | §13.5.2 (p.83–84) | ❌ | ❓ | |
+| Enter / exit Song mode | §13.1 (p.79) | 🔵 | ✅ | Song view (Session) button 1 / Shift+Session: `01 10 17` 02/00, verified from the Pi (`83b9230`) |
+| Scene mode (loop one scene) | §13.1.1 (p.79) | 🔵 | ✅ | `71 50 00` 01/00, verified (leaving it also leaves Song mode) |
+| Play / stop scenes in order | §13.2 (p.80) | 🔵 | ✅ | Play/Stop in Song mode; playing scene followed (`71 10 04`) |
+| Change scene | §13.2.1 (p.80) | 🔵 | ✅ | Launch buttons → `71 10 04`, verified stopped; while playing untested |
+| Loop a scene | §13.2.2 (p.81) | 🔵 | 📥 | Double-press a launch button → `71 10 07` (device report; untested as a command) |
+| Loop whole song | §13.2.3 (p.81) | 🔵 | 📱 | Song view button 8 → `71 10 06` |
+| Add scene (up to 16) | §13.3 (p.82) | 🔵 | ✅ | Dim pad under the last scene → `71 00 00 [scene]`, verified |
+| Delete scene | §13.4 (p.82) | 🔵 | ✅ | Delete + launch button → `71 20 00 [scene]`, verified |
+| Edit scene patterns / mute / solo | §13.5.1 (p.83) | 🔵 | 📱 | Encoders → `71 [10+t] 01`; hold Mute/Solo + pad → `71 [10+t] 02` / `71 10 03` |
+| Scene length (incl. AUTO) | §13.5.2 (p.83–84) | 🔵 | ✅ | Master encoder in Song view: AUTO or 1–96 bars (`71 10 00`), verified |
 
 ## 14. SEQTRAK App: app-only features (listed separately)
 
@@ -280,11 +285,11 @@ These aren't on the Seqtrak's panel; parity here is optional.
 
 | Feature | Guide § (page) | On Push | Protocol | Notes |
 |---|---|---|---|---|
-| LFO per track | §14.1 (p.85) | ❌ | 🟡 | `31 4p` |
+| LFO per track | §14.1 (p.85) | ❌ | 📱 | `31 4p 01–0C` (captures 113-01…12) |
 | Alternate (choke) groups | §14.1 (p.85) | ❌ | ✅ | Group Number `30 5p 08` |
-| All FM engine params (DX) | §14.1 (p.85) | ❌ | 🟡 | `48 09` / `49 o9` |
+| All FM engine params (DX) | §14.1 (p.85) | ❌ | 📱 | `48 09` / `49 o9` (captures 113-2x…5x) |
 | Deep sound / element params | §14.1 (p.85) | ❌ | 🟡 | `31 1p`, `41 ep`, `42 ep` |
-| Scale editing | §7.4 note (p.48) | ❌ | ✅ | `30 4D` (8 × 7 notes) |
+| Scale editing | §7.4 note (p.48) | ❌ | 📱 | `30 4D [16*slot + n]` (capture 105-12) |
 | HIGH PASS / REPEATER effect type | §10.1.3 (p.72) | ❌ | ❓ | |
 | Project / sound manager, full backup | §14.2 (p.86) | — | ❓ | Bulk dumps seen; request unknown; puts device in content mode |
 | Visualizer | §14.3 (p.87) | — | — | |
@@ -297,7 +302,7 @@ These aren't on the Seqtrak's panel; parity here is optional.
 |---|---|---|---|---|
 | Wired USB-C MIDI (host / device) | §15.1.1, §15.2.1, §15.3 (p.89–92) | — | — | The bridge itself (Pi is USB host for Push + Seqtrak) |
 | Bluetooth pairing | §15.1.2 (p.90) | — | — | Physical key combo |
-| Wi-Fi on/off | §15.1.3 (p.90) | ❌ | 🟡 | Wireless LAN `00 00 16` (FUNCTIONALITY-MAP §4) |
+| Wi-Fi on/off | §15.1.3 (p.90) | ❌ | 🟡 | Wireless LAN `00 00 16` (FUNCTIONALITY-MAP §4); not captured |
 | MIDI conversion cable | §15.2.2 (p.92) | — | — | Physical |
 
 ## 16. Settings
@@ -305,9 +310,9 @@ These aren't on the Seqtrak's panel; parity here is optional.
 | Feature | Guide § (page) | On Push | Protocol | Notes |
 |---|---|---|---|---|
 | Factory reset | §16.1 (p.93) | — | ❓ | Power-on key combo |
-| Track knob sensitivity | §16.2 (p.93) | ❌ | 🟡 | "Pattern select sensitivity", system block (FUNCTIONALITY-MAP §4) |
-| MIDI clock (sync, clock out) | §16.3.1 (p.93) | ❌ | 🟡 | `00 00 2A` / `00 00 2D` |
-| MIDI output filters | §16.3.2 (p.93) | ❌ | 🟡 | System block transmit filters |
+| Track knob sensitivity | §16.2 (p.93) | ❌ | 📱 | `00 00 2F` 01 fast / 02 normal / 03 slow (capture 112-13a) |
+| MIDI clock (sync, clock out) | §16.3.1 (p.93) | ❌ | 📱 | `00 00 2A` / `00 00 2D` (capture 112-07) |
+| MIDI output filters | §16.3.2 (p.93) | ❌ | 📱 | Per port `00 00 0A–14` (capture 112-08…10) |
 | MIDI Thru | §16.3.3 (p.93) | ❌ | 🟡 | System block |
 | Master volume (speaker) | §16.4 (p.94) | ✅ | ✅ | Master encoder CC 79 (app.py:2591) → `00 00 00`; read at start + followed (app.py:819) |
 | Headphone master volume | §16.4 (p.94) | ❌ | 🟡 | `00 00 01`: Push only writes the speaker volume |

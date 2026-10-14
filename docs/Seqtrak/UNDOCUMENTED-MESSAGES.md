@@ -26,10 +26,10 @@ Message frame for all rows unless noted: Parameter Change `F0 43 10 7F 1C 0C [H 
 |---|---|---|---|---|
 | `70 [0t] 00` | → ← | `[step] [note] [vel] 00 78` | Add a step (`3C 64 00 78` = note 60, vel 100) | ✅ |
 | `70 [2t] 00` | → ← | `[step]` | Remove a step | ✅ |
-| `70 [1t] [param] [step] [value]` | → ← | | Edit one step: param `00` micro timing (`60` + offset, −60…+59), `03` substep (`00` none, `01` ×2, `02` ×3 16th triplet, `03` ×4, `04` ×3 8th triplet), `04` probability (`00` = 100 %, `01` = 87 %, `04` = 49 %, `07` = 10 %) | 📱 (device reports the same) |
+| `70 [1t] [param] [step] [value]` | → ← | | Edit one step: param `00` micro timing (`60` + offset, −60…+59), `03` substep (`00` none, `01` ×2, `02` ×3 16th triplet, `03` ×4, `04` ×3 8th triplet), `04` probability (`00` = 100 %, `01` = 87 %, `04` = 49 %, `07` = 10 %) | ✅ verified from the Pi 2026-10-15 |
 | `70 [4t] [step]` | read | `[note] [vel] [substep] [60+micro] [len hi] [len lo]`; no data = empty step | Read a step | ✅ |
 | `70 [5t] [step]` | read | never answered so far | ❓ second step table (parameter locks?) — the app reads it for every step | ❓ |
-| `70 [6t] [step]` | read | `00` on every set step | ❓ third step table (probability?) | ❓ |
+| `70 [6t] [step]` | read | 1 byte per set step | **Probability** of the step (`00` = 100 % … `07` = 10 %); verified 2026-10-15 | ✅ |
 
 ### Sampler / melodic notes — an ordered list, addressed by index
 | Address | Dir | Data | Meaning | Status |

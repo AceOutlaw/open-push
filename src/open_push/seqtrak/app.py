@@ -146,6 +146,12 @@ DRUM_TRACK_COLORS = {
 # Step sequencer colors
 STEP_COLOR_ON = COLOR_GREEN
 STEP_COLOR_OFF = COLOR_DIM
+STEP_COLOR_EDITED = COLOR_CYAN   # step with micro timing, substep or lower probability
+STEP_COLOR_HELD = COLOR_WHITE    # step being edited (held)
+
+# Substep options in the order the Seqtrak lists them (guide §6.4) and their values (app capture 104-03)
+SUBSTEP_ORDER = [0x00, 0x01, 0x04, 0x02, 0x03]
+SUBSTEP_NAMES = {0x00: 'off', 0x01: 'x2', 0x04: 'x3 8T', 0x02: 'x3 16T', 0x03: 'x4'}
 PLAYHEAD_COLOR = COLOR_WHITE      # Playhead on an empty step
 PLAYHEAD_COLOR_HIT = COLOR_YELLOW # Playhead on a set step
 
@@ -523,6 +529,10 @@ class SeqtrakBridge:
         self.selected_drum_track = 1  # Which drum track's steps to display (1-7)
         self.step_page = 0            # Current page (0 = steps 1-32, 1 = steps 33-64, etc.)
         self.step_states = {}         # {track: [bool]*128} - step on/off states per track
+        # Drum step details read from / set on the Seqtrak: {track: {step: {'micro', 'sub', 'prob'}}}
+        # micro = offset in ticks (-60..+59), sub = substep value, prob = 0 (100 %) .. 7 (lowest)
+        self.step_details = {}
+        self.held_steps = {}          # step -> {'was_set', 'edited'} while step pads are held
 
         # Sampler step sequencer state (7 sample pads, each with 128 steps)
         self.sampler_step_states = {}  # {pad_index: [bool]*128} - step states per sample pad
@@ -929,9 +939,32 @@ class SeqtrakBridge:
         elif addr[0] == 0x70 and 0x20 <= addr[1] <= 0x26 and addr[2] == 0x00 and sysex_data:
             self._set_drum_step(addr[1] - 0x20 + 1, sysex_data[0], False)
 
-        # Drum step readback: 70 [0x40+track-1] [step] -> event data, or nothing if empty
+        # Drum step readback: 70 [0x40+track-1] [step] -> [note] [vel] [substep] [60+micro] [len],
+        # or nothing if empty. Probability is a separate table, 70 [0x60+track-1] [step].
         elif addr[0] == 0x70 and 0x40 <= addr[1] <= 0x46:
-            self._set_drum_step(addr[1] - 0x40 + 1, addr[2], bool(sysex_data))
+            track, step = addr[1] - 0x40 + 1, addr[2]
+            if len(sysex_data) >= 4:
+                d = self.step_details.setdefault(track, {}).setdefault(step, {'micro': 0, 'sub': 0, 'prob': 0})
+                d['sub'], d['micro'] = sysex_data[2], sysex_data[3] - 60
+                self.protocol.request_parameter([0x70, 0x60 + track - 1, step])
+            else:
+                self.step_details.get(track, {}).pop(step, None)
+            self._set_drum_step(track, step, bool(sysex_data))
+        elif addr[0] == 0x70 and 0x60 <= addr[1] <= 0x66 and sysex_data:
+            track, step = addr[1] - 0x60 + 1, addr[2]
+            self.step_details.setdefault(track, {}).setdefault(step, {'micro': 0, 'sub': 0, 'prob': 0})['prob'] = sysex_data[0]
+            self._redraw_step(track, step)
+        # Step edited on the Seqtrak (or our own edit echoed): 70 [0x10+track-1] [param] [step] [value]
+        elif addr[0] == 0x70 and 0x10 <= addr[1] <= 0x16 and len(sysex_data) >= 2:
+            track, param, step, value = addr[1] - 0x10 + 1, addr[2], sysex_data[0], sysex_data[1]
+            d = self.step_details.setdefault(track, {}).setdefault(step, {'micro': 0, 'sub': 0, 'prob': 0})
+            if param == 0x00:
+                d['micro'] = value - 60
+            elif param == 0x03:
+                d['sub'] = value
+            elif param == 0x04:
+                d['prob'] = value
+            self._redraw_step(track, step)
 
         # Speaker master volume (Seqtrak volume buttons, or reply to our startup read): 00 00 00 [vv]
         # Metronome (click) on/off: 00 00 25 (read at start, reported when changed on the Seqtrak)
@@ -2846,6 +2879,10 @@ class SeqtrakBridge:
                 self._show_swing()
                 print(f"Swing: {self.swing:+d} ticks ({self.protocol.swing_percent(self.swing)}%)")
 
+        # Held drum steps: encoders 1-3 = micro timing, substep, probability
+        elif self.held_steps and self.current_pad_mode == PadMode.DRUM and 71 <= cc <= 73:
+            self._edit_held_steps(cc - 71, delta)
+
         # Session mode: CC 71-78 encoders set pattern for selected slot
         # Must be checked BEFORE device/mixer modes to block other encoder behavior
         elif self.session_mode and 71 <= cc <= 78:
@@ -3509,14 +3546,31 @@ class SeqtrakBridge:
                 track_name = Track.NAMES.get(track, f"T{track}")
                 print(f"[D] {track_name} note {midi_note}")
 
-        # Check if it's a step sequencer pad (top 4 rows)
+        # Step sequencer pads (top 4 rows). Tap = toggle. Hold a step = edit it with encoders 1-3
+        # (micro timing, substep, probability; several held steps change together, guide §6.3-6.6).
+        # A lit step is only turned off on release if it wasn't edited while held.
         elif row >= 4:
-            if velocity > 0:  # Only on press, not release
-                # Calculate step index: top row first (row 7 = steps 0-7)
-                step_index = ((7 - row) * 8) + col + (self.step_page * 32)
-
-                if step_index < 128:
-                    self._toggle_step(self.selected_drum_track, step_index)
+            step_index = ((7 - row) * 8) + col + (self.step_page * 32)  # top row first
+            if step_index >= 128:
+                return
+            track = self.selected_drum_track
+            if velocity > 0:
+                was_set = self._step_is_set(track, step_index)
+                if not was_set:
+                    self._toggle_step(track, step_index)
+                self.held_steps[step_index] = {'was_set': was_set, 'edited': False}
+                self._show_step_edit()
+                self.set_pad_color(note, STEP_COLOR_HELD)
+            else:
+                held = self.held_steps.pop(step_index, None)
+                if held and held['was_set'] and not held['edited']:
+                    self._toggle_step(track, step_index)
+                else:
+                    self._redraw_step(track, step_index)
+                if self.held_steps:
+                    self._show_step_edit()
+                else:
+                    self.update_display()
 
         # Middle rows (2-3) are empty - ignore
 
@@ -3540,7 +3594,65 @@ class SeqtrakBridge:
         step_on = self._step_is_set(track, step_index)
         if self._playhead_drawn == (track, step_index):
             return PLAYHEAD_COLOR_HIT if step_on else PLAYHEAD_COLOR
-        return STEP_COLOR_ON if step_on else STEP_COLOR_OFF
+        if track == self.selected_drum_track and step_index in self.held_steps:
+            return STEP_COLOR_HELD
+        if step_on:
+            d = self.step_details.get(track, {}).get(step_index)
+            if d and (d['micro'] or d['sub'] or d['prob']):
+                return STEP_COLOR_EDITED
+            return STEP_COLOR_ON
+        return STEP_COLOR_OFF
+
+    def _redraw_step(self, track, step_index):
+        """Repaint one step pad if it is on screen."""
+        if self.current_pad_mode != PadMode.DRUM or track != self.selected_drum_track:
+            return
+        if not self.step_page * 32 <= step_index < self.step_page * 32 + 32:
+            return
+        i = step_index - self.step_page * 32
+        note = 36 + (7 - i // 8) * 8 + i % 8
+        self.set_pad_color(note, self._step_pad_color(track, step_index))
+
+    # Drum step editing (hold step pads + encoders 1-3)
+
+    def _held_step_details(self):
+        track = self.selected_drum_track
+        details = self.step_details.setdefault(track, {})
+        return [(s, details.setdefault(s, {'micro': 0, 'sub': 0, 'prob': 0})) for s in sorted(self.held_steps)]
+
+    def _show_step_edit(self):
+        held = self._held_step_details()
+        if not held:
+            return
+        step, d = held[0]
+        steps = f"Step {step + 1}" if len(held) == 1 else f"{len(held)} steps"
+        prob_level = 8 - d['prob']
+        self.set_lcd_segments(1, "STEP EDIT", Track.NAMES.get(self.selected_drum_track, ''), steps, "")
+        self.set_lcd_segments(2, f"Micro {d['micro']:+d}", f"Substep {SUBSTEP_NAMES.get(d['sub'], d['sub'])}",
+                              f"Prob {prob_level}/8", "")
+        self.set_lcd_segments(3, "Enc 1: timing", "Enc 2: substep", "Enc 3: probabil.", "")
+        self.set_lcd_segments(4, "", "release = done", "", "")
+
+    def _edit_held_steps(self, which, delta):
+        """which: 0 = micro timing (-60..+59 ticks), 1 = substep, 2 = probability (8 levels)."""
+        track = self.selected_drum_track
+        t = track - 1
+        step_dir = 1 if delta > 0 else -1
+        for step, d in self._held_step_details():
+            if not self._step_is_set(track, step):
+                continue
+            if which == 0:
+                d['micro'] = max(-60, min(59, d['micro'] + delta))
+                self.protocol.send_parameter([0x70, 0x10 + t, 0x00], [step, d['micro'] + 60])
+            elif which == 1:
+                i = SUBSTEP_ORDER.index(d['sub']) if d['sub'] in SUBSTEP_ORDER else 0
+                d['sub'] = SUBSTEP_ORDER[max(0, min(len(SUBSTEP_ORDER) - 1, i + step_dir))]
+                self.protocol.send_parameter([0x70, 0x10 + t, 0x03], [step, d['sub']])
+            else:
+                d['prob'] = max(0, min(7, d['prob'] - step_dir))  # turn right = more likely
+                self.protocol.send_parameter([0x70, 0x10 + t, 0x04], [step, d['prob']])
+            self.held_steps[step]['edited'] = True
+        self._show_step_edit()
 
     def _step_grid_track(self):
         """Track whose steps are on the pads, or None if no step grid is showing."""
@@ -3813,6 +3925,8 @@ class SeqtrakBridge:
         # Track index (0-indexed for SysEx)
         track_idx = track - 1
 
+        if not new_state:
+            self.step_details.get(track, {}).pop(step_index, None)
         if new_state:
             # Add step: address 70 [track-1] 00
             addr = [0x70, track_idx, 0x00]

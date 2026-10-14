@@ -118,8 +118,9 @@ and note number match, send `74 [g] [index] 00`.
   - Substep values: `00` none · `01` ×2 · `04` ×3 8th triplet · `02` ×3 16th triplet · `03` ×4
     (so the SNARE steps above were ×3 16th, ×3 8th, ×3 16th, ×2).
   - Probability `70 [10+t] 04 [step] [v]`: `00` = 100 %, `01` = 87 %, `04` = 49 %, `07` = 10 % (8 levels).
-  - ❓ The app also reads `70 [50+t] [step]` (never answered) and `70 [60+t] [step]` (`00` on every set step) —
-    probability may be stored in `70 6t`; check by reading it after setting a probability.
+  - ✅ **Verified as commands from the Pi (2026-10-15, PERC 2):** micro +30 → readback byte 4 `5A`; substep ×4 → byte 3
+    `03`; probability 49 % / 10 % → **`70 [60+t] [step]` = `04` / `07`**. So probability lives in the `70 6t` table
+    (1 byte per set step, `00` = 100 %, no reply for empty steps); `70 5t` still never answers (parameter locks?).
 - So the full drum readback is **`[note] [vel] [substep] [60+micro] [len_hi] [len_lo]`**.
 - ❓ Velocity byte read `64` (100) on every note so far; soft/hard Push pad hits not yet tested.
 - 📖 **Purple step keys = Parameter Lock** (user guide §9.2, p. 64). The guide also says a VOLUME
