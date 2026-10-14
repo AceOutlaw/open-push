@@ -19,6 +19,8 @@ Complete MIDI protocol documentation for Yamaha Seqtrak, combining official Yama
 >   DX, LFO, MIDI settings, step substep/probability): `docs/Seqtrak/APP-CLICKTHROUGH-P1.md` (📱 = sent by the
 >   official app; still to be verified by readback). Corrections from it: Key `30 40 7F` = `0x40` + semitone;
 >   Swing `30 40 7C` = 128 + tick offset; Mute `30 5p 29` on = `7D`; 3/6 patterns = `30 40 79`.
+> - **Messages Yamaha doesn't document** (step data `70`–`77`, song `71`, device state `01 xx`, sound/sample
+>   lists, sample length/name, current project): `docs/Seqtrak/UNDOCUMENTED-MESSAGES.md`.
 > - A message the Seqtrak *sends* may only be a report; never assume it works as a command until tested.
 
 ---
