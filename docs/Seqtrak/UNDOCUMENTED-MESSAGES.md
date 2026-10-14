@@ -78,6 +78,7 @@ Message frame for all rows unless noted: Parameter Change `F0 43 10 7F 1C 0C [H 
 | `01 10 17` | ← read | `00` normal, `02` song | **Song mode state**; also re-sent at the start of a project load. ❓ Scene mode value | 🟡 |
 | `01 10 18` | ← read | `00`, `03`, `08`, `13`, `15`, `16` | Device display mode (`03` step held, `08` micro timing shown, `00` normal; others ❓) | 🟡 |
 | `01 10 19` | ← | `00` idle, `03` step input, `04` Delete held | Device UI mode | 🟡 |
+| `01 10 1F` | → ← | `01` | **[UNDO/REDO] button**: the Seqtrak sends it when the button is pressed, then reports the restored value (as the knob's CC). Sending it from the Pi toggled undo/redo of the last sound/effect change (2026-10-14: KICK attack CC 73 went 64 → 109 → 64). Guide §9.4 | ✅ |
 | `01 10 20` | → ← | `01` / `00` | **Play / Stop** | 📱 |
 | `01 10 21` | → ← | `01` / `00` | **Record on / off** | 📱 |
 | `01 10 27` | ← read | `00`, `09` | ❓ | 📥 |
@@ -87,6 +88,10 @@ Message frame for all rows unless noted: Parameter Change `F0 43 10 7F 1C 0C [H 
 | `01 10 2F` | → | `01` | ❓ written by the app on the PROJECT/SOUND MANAGER page | 📱 |
 | `00 60 06` | → read | 2 ASCII bytes ("US") | Wi-Fi country (HARDWARE page) | 🟡 |
 | `00 60 00`, `00 60 01`, `00 61 02` | read | `00` | ❓ other HARDWARE settings (Wi-Fi mode?) | 📥 |
+
+> **Knobs on the device are reported as CCs**, not SysEx: turning a Sound Design knob on the Seqtrak sends the
+> same CC as the guide's table (§18.3.1) on the track's channel (e.g. KICK attack = CC 73, ch 1). An undo/redo
+> sends the restored value the same way. ✅ (Pi capture 2026-10-14)
 
 ## 4. Per-track and per-pad state (`01 1p`, `01 1[e]`)
 | Address | Dir | Data | Meaning | Status |

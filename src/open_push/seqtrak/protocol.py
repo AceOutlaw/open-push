@@ -441,6 +441,11 @@ class SeqtrakProtocol:
     # Scale/Key
     # -------------------------------------------------------------------------
 
+    def undo_redo(self):
+        """Press the Seqtrak's [UNDO/REDO]: 01 10 1F 01 (reported by the device when the button is
+        pressed; sending it toggles undo/redo of the last sound/effect change, verified 2026-10-14)."""
+        self._send_sysex([0x01, 0x10, 0x1F], [0x01])
+
     def set_pattern_select_mode(self, six):
         """3 or 6 patterns per track (SETTINGS > PATTERNS in the app): 30 40 79 00/01."""
         self._send_sysex(Address.PATTERN_SELECT_MODE, [0x01 if six else 0x00])

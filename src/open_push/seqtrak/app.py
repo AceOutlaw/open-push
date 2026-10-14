@@ -475,6 +475,7 @@ BUTTONS = {
     'shift': 49,
     'select': 48,
     'delete': 118,  # Hold for the delete menu
+    'undo': 119,    # Seqtrak UNDO/REDO (sound and effect parameters)
     'user': 59,     # Shift+User = settings menu
 
     # 16 Buttons Below LCD
@@ -605,6 +606,7 @@ class SeqtrakBridge:
 
         # Swing offset in ticks, -58..+58 (0 = straight; the app shows (120 + offset) / 240 as %)
         self.swing = 0
+        self._swing_known = False  # True once read from the Seqtrak (no popup for the first read)
 
         # Accent mode (fixed velocity)
         self.accent_mode = False
@@ -738,6 +740,14 @@ class SeqtrakBridge:
         elif msg.type == 'control_change':
             # Bank Select messages
             channel = msg.channel + 1  # Convert to 1-indexed track
+            # A Sound Design knob turned on the Seqtrak (or undone/redone) is reported as the
+            # same CC on the track's channel (seen 2026-10-14: KICK attack = CC 73 on ch 1)
+            if 1 <= channel <= 11 and msg.control not in (0, 32):
+                self.device_params[(channel, msg.control)] = msg.value
+                if msg.control == 7:
+                    self.track_volumes[channel - 1] = msg.value
+                if channel == self.keyboard_track and self.current_mode in ('device', 'mixer'):
+                    self.update_display()
             if 1 <= channel <= 11:
                 if msg.control == 0:  # Bank Select MSB
                     self.track_bank_msb[channel] = msg.value
@@ -972,7 +982,12 @@ class SeqtrakBridge:
 
         # Swing: 128 + offset in ticks (7-bit pair)
         elif addr == Address.SWING and len(sysex_data) >= 2:
-            self.swing = ((sysex_data[0] << 7) | sysex_data[1]) - 128
+            swing = ((sysex_data[0] << 7) | sysex_data[1]) - 128
+            if swing != self.swing and self._swing_known:
+                self.swing = swing
+                self._show_swing()  # changed on the Seqtrak
+            self.swing = swing
+            self._swing_known = True
 
         # Tempo
         elif addr == Address.TEMPO and len(sysex_data) >= 2:
@@ -2181,6 +2196,16 @@ class SeqtrakBridge:
                 self.update_display()  # Restore normal display
             return
 
+        # UNDO: the Seqtrak's [UNDO/REDO] button, which toggles between undo and redo of the
+        # last sound/effect parameter change (guide §9.4). 01 10 1F 01 verified 2026-10-14.
+        if cc == BUTTONS['undo']:
+            self.set_button_led(cc, LED_ON if value > 0 else LED_DIM)
+            if value > 0:
+                self.protocol.undo_redo()
+                self._show_lcd_popup("UNDO/REDO", "")
+                print("Undo/Redo")
+            return
+
         # Shift + Track = Enter track selection overlay
         if cc == BUTTONS['track'] and value > 0 and self.shift_held:
             self.track_select_overlay = True
@@ -2591,7 +2616,7 @@ class SeqtrakBridge:
             if new_swing != self.swing:
                 self.swing = new_swing
                 self.protocol.set_swing(self.swing)
-                self.update_display()
+                self._show_swing()
                 print(f"Swing: {self.swing:+d} ticks ({self.protocol.swing_percent(self.swing)}%)")
 
         # Session mode: CC 71-78 encoders set pattern for selected slot
@@ -3124,6 +3149,10 @@ class SeqtrakBridge:
                 self.set_button_led(cc, LED_ON)
             else:
                 self.set_button_led(cc, LED_DIM)
+
+    def _show_swing(self):
+        """Swing popup: ticks (guide §4.5.2, -58..+58) and the app's % (50 % = straight)."""
+        self._show_lcd_popup("SWING", f"{self.swing:+d} {self.protocol.swing_percent(self.swing)}%")
 
     def _show_lcd_popup(self, title, value, duration=2.0):
         """Show a momentary LCD popup on line 4."""
@@ -4245,7 +4274,7 @@ class SeqtrakBridge:
             self.set_button_led(BUTTONS['octave_up'], LED_DIM)
             self.set_button_led(BUTTONS['octave_down'], LED_DIM)
             # Every other button that does something, so it can be found in the dark
-            for name in ('session', 'shift', 'delete', 'user', 'record', 'repeat', 'accent'):
+            for name in ('session', 'shift', 'delete', 'undo', 'user', 'record', 'repeat', 'accent'):
                 self.set_button_led(BUTTONS[name], LED_DIM)
 
             print()
