@@ -557,6 +557,7 @@ class SeqtrakBridge:
         self.track_states = [MuteState.UNMUTED] * 11
         self.track_muted = [False] * 11      # Seqtrak mute per track (30 5p 29)
         self.solo_track = 0                  # the one soloed track, 0 = none (30 40 68)
+        self.metronome_on = False            # Seqtrak click on/off (00 00 25)
         self._drum_solo_saved_mutes = {}     # SYNTH/DX/SAMPLER mutes to restore after DRUM bus solo
 
         # Selected track for keyboard input (default SYNTH 1)
@@ -909,6 +910,11 @@ class SeqtrakBridge:
             self._set_drum_step(addr[1] - 0x40 + 1, addr[2], bool(sysex_data))
 
         # Speaker master volume (Seqtrak volume buttons, or reply to our startup read): 00 00 00 [vv]
+        # Metronome (click) on/off: 00 00 25 (read at start, reported when changed on the Seqtrak)
+        elif addr == [0x00, 0x00, 0x25] and sysex_data:
+            self.metronome_on = bool(sysex_data[0])
+            self.set_button_led(BUTTONS['metronome'], LED_ON if self.metronome_on else LED_DIM)
+
         elif addr == Address.MASTER_VOLUME and sysex_data:
             changed = sysex_data[0] != self.master_volume
             self.master_volume = sysex_data[0]
@@ -1031,6 +1037,12 @@ class SeqtrakBridge:
         """Set pad LED color."""
         self.push_out.send(mido.Message('note_on', note=note, velocity=color))
 
+    def _update_mute_solo_leds(self):
+        """Mute / Solo buttons show the selected track's state."""
+        track = self.keyboard_track
+        self.set_button_led(BUTTONS['mute'], LED_ON if self.track_muted[track - 1] else LED_DIM)
+        self.set_button_led(BUTTONS['solo'], LED_ON if self.solo_track == track else LED_DIM)
+
     def set_button_led(self, cc, value):
         """Set button LED (0=off, 1=dim, 4=on)."""
         self.push_out.send(mido.Message('control_change', control=cc, value=value))
@@ -1046,6 +1058,7 @@ class SeqtrakBridge:
 
     def update_display(self):
         """Update LCD based on current mode."""
+        self._update_mute_solo_leds()
         # Clear all 4 lines first to prevent stale content
         self._clear_display()
 
@@ -2194,6 +2207,28 @@ class SeqtrakBridge:
                 self._show_delete_menu()
             else:
                 self.update_display()  # Restore normal display
+            return
+
+        # METRONOME: the Seqtrak's click on/off (00 00 25, SEQTRAK app capture 112-03)
+        if cc == BUTTONS['metronome']:
+            if value > 0:
+                self.metronome_on = not self.metronome_on
+                self.protocol.set_metronome(self.metronome_on)
+                self.set_button_led(cc, LED_ON if self.metronome_on else LED_DIM)
+                self._show_lcd_popup("METRONOME", "ON" if self.metronome_on else "OFF")
+                print(f"Metronome: {'ON' if self.metronome_on else 'OFF'}")
+            return
+
+        # MUTE / SOLO: mute or solo the selected track (the Seqtrak solos one track at a time)
+        if cc in (BUTTONS['mute'], BUTTONS['solo']):
+            if value > 0:
+                if cc == BUTTONS['mute']:
+                    self._toggle_track_mute_simple(self.keyboard_track)
+                else:
+                    self._toggle_track_solo(self.keyboard_track)
+                self._update_mute_solo_leds()
+                if self.current_mode != 'mixer':
+                    self.update_grid()
             return
 
         # UNDO: the Seqtrak's [UNDO/REDO] button, which toggles between undo and redo of the
@@ -3469,6 +3504,7 @@ class SeqtrakBridge:
         self.protocol.request_parameter(Address.PATTERN_SELECT_MODE)
         self.protocol.request_parameter(Address.SWING)
         self.protocol.request_parameter([0x30, 0x40, 0x68])
+        self.protocol.request_parameter([0x00, 0x00, 0x25])  # metronome
         for addr in self._cc_for_sysex:
             self.protocol.request_parameter(list(addr))
         for slot in range(8):
@@ -3860,6 +3896,7 @@ class SeqtrakBridge:
     # self.track_muted / self.solo_track hold that; self.track_states is derived for the LEDs.
 
     def _refresh_mute_solo_view(self):
+        self._update_mute_solo_leds()
         if self.current_mode == 'mixer':
             self._update_mixer_button_leds()
         else:
@@ -4274,7 +4311,8 @@ class SeqtrakBridge:
             self.set_button_led(BUTTONS['octave_up'], LED_DIM)
             self.set_button_led(BUTTONS['octave_down'], LED_DIM)
             # Every other button that does something, so it can be found in the dark
-            for name in ('session', 'shift', 'delete', 'undo', 'user', 'record', 'repeat', 'accent'):
+            for name in ('session', 'shift', 'delete', 'undo', 'metronome', 'mute', 'solo',
+                         'user', 'record', 'repeat', 'accent'):
                 self.set_button_led(BUTTONS[name], LED_DIM)
 
             print()

@@ -441,6 +441,10 @@ class SeqtrakProtocol:
     # Scale/Key
     # -------------------------------------------------------------------------
 
+    def set_metronome(self, on):
+        """Metronome (click) on/off: 00 00 25 [Click Switch] (Data List; SEQTRAK app capture 112-03)."""
+        self._send_sysex([0x00, 0x00, 0x25], [0x01 if on else 0x00])
+
     def undo_redo(self):
         """Press the Seqtrak's [UNDO/REDO]: 01 10 1F 01 (reported by the device when the button is
         pressed; sending it toggles undo/redo of the last sound/effect change, verified 2026-10-14)."""
