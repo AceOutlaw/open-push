@@ -476,6 +476,8 @@ BUTTONS = {
     'select': 48,
     'delete': 118,  # Hold for the delete menu
     'undo': 119,    # Seqtrak UNDO/REDO (sound and effect parameters)
+    'double_loop': 117,  # double the selected track's pattern length
+    'duplicate': 88,     # hold: copy a pattern to another pattern (Track / Drums / All)
     'user': 59,     # Shift+User = settings menu
 
     # 16 Buttons Below LCD
@@ -558,6 +560,14 @@ class SeqtrakBridge:
         self.track_muted = [False] * 11      # Seqtrak mute per track (30 5p 29)
         self.solo_track = 0                  # the one soloed track, 0 = none (30 40 68)
         self.metronome_on = False            # Seqtrak click on/off (00 00 25)
+
+        # Duplicate panel (hold Duplicate): copy From pattern -> To pattern for one track,
+        # the 7 drum tracks or all 11 (the Seqtrak itself only does one track or all).
+        self.duplicate_held = False
+        self.dup_scope = 'drums'     # 'track' | 'drums' | 'all'
+        self.dup_from = None         # None = each track's current pattern
+        self.dup_goto = True         # switch to the copy afterwards
+        self._timed_sends = []       # [(when, fn)] spaced-out Seqtrak messages, sent from the main loop
         self._drum_solo_saved_mutes = {}     # SYNTH/DX/SAMPLER mutes to restore after DRUM bus solo
 
         # Selected track for keyboard input (default SYNTH 1)
@@ -1258,6 +1268,107 @@ class SeqtrakBridge:
             return True
 
         return False
+
+    # -------------------------------------------------------------------------
+    # Duplicate panel
+    # -------------------------------------------------------------------------
+
+    DUP_SCOPES = ('track', 'drums', 'all')
+
+    def _dup_tracks(self):
+        if self.dup_scope == 'track':
+            return [self.keyboard_track]
+        return list(range(1, 8)) if self.dup_scope == 'drums' else list(range(1, 12))
+
+    def _show_duplicate_panel(self):
+        n = self.variation_mode
+        scope = {'track': Track.NAMES.get(self.keyboard_track, 'Track'), 'drums': 'Drums', 'all': 'All 11'}[self.dup_scope]
+        src = f"P{self.dup_from}" if self.dup_from else "current"
+        self.set_lcd_segments(1, "DUPLICATE", scope, f"From {src}", "To: bottom")
+        self.set_lcd_segments(2, "Top 1-%d: from" % n, "Bottom 1-%d: to" % n, "Top 7: what", "Btm 7: go %s" % ('ON' if self.dup_goto else 'OFF'))
+        self.set_lcd_segments(3, "", "", "", "")
+        self.set_lcd_segments(4, "", "", "", "")
+        for i in range(8):
+            upper, lower = 20 + i, 102 + i
+            if i < n:
+                self.set_button_led(upper, LED_ON if self.dup_from == i + 1 else LED_DIM)
+                self.set_button_led(lower, LED_DIM)
+            else:
+                self.set_button_led(upper, LED_OFF)
+                self.set_button_led(lower, LED_OFF)
+        self.set_button_led(26, LED_ON)                                   # what to copy
+        self.set_button_led(108, LED_ON if self.dup_goto else LED_DIM)   # go to the copy
+
+    def _close_duplicate_panel(self):
+        for cc in list(range(20, 28)) + list(range(102, 110)):
+            self.set_button_led(cc, LED_OFF)
+        if self.current_mode == 'mixer':
+            self._update_mixer_button_leds()
+        elif self.current_mode == 'track':
+            self.set_button_led(BUTTONS['upper_1'], LED_ON)
+            self.set_button_led(BUTTONS['lower_1'], LED_ON)
+        if self.current_mode != 'mixer':
+            self._update_bar_length_buttons()
+        self.update_display()
+
+    def _handle_duplicate_button(self, cc):
+        n = self.variation_mode
+        if cc == 26:
+            i = self.DUP_SCOPES.index(self.dup_scope)
+            self.dup_scope = self.DUP_SCOPES[(i + 1) % len(self.DUP_SCOPES)]
+        elif cc == 108:
+            self.dup_goto = not self.dup_goto
+        elif 20 <= cc < 20 + n:
+            pattern = cc - 20 + 1
+            self.dup_from = None if self.dup_from == pattern else pattern
+        elif 102 <= cc < 102 + n:
+            self._duplicate_patterns(cc - 102 + 1)
+            return
+        self._show_duplicate_panel()
+
+    def _duplicate_patterns(self, to_pattern):
+        """Copy From -> To on every track in scope, like the Seqtrak's copy/paste (guide §5.5).
+
+        Per track: select it on the Seqtrak, copy 77 01 20 [track] [from], paste 77 01 21 [track] [to]
+        (verified 2026-10-14 on PERC 2: notes and length copied, target replaced). The Seqtrak's copy
+        buffer holds one pattern, so tracks go one after another, spaced out from the main loop.
+        """
+        tracks = self._dup_tracks()
+        copied = []
+        delay = 0.0
+        for track in tracks:
+            src = self.dup_from or self.track_variation.get(track, 1)
+            if src == to_pattern:
+                continue
+            t = track - 1
+            for fn in (lambda t=t: self.protocol.select_track(t + 1),
+                       lambda t=t, s=src: self.protocol.send_parameter([0x77, 0x01, 0x20], [t, s - 1]),
+                       lambda t=t: self.protocol.send_parameter([0x77, 0x01, 0x21], [t, to_pattern - 1])):
+                self._timed_sends.append((time.time() + delay, fn))
+                delay += 0.06
+            copied.append(track)
+        if not copied:
+            self._show_lcd_popup("DUPLICATE", f"already on P{to_pattern}")
+            return
+        # Back to the selected track on the Seqtrak, then (optionally) show the copies
+        self._timed_sends.append((time.time() + delay, lambda: self._send_track_select(self.keyboard_track)))
+        delay += 0.06
+        if self.dup_goto:
+            for track in copied:
+                self._timed_sends.append((time.time() + delay, lambda tr=track: self.protocol.select_track_variation(tr, to_pattern)))
+                self.track_variation[track] = to_pattern
+                delay += 0.02
+        self._last_track_select_sent = time.time() + delay  # ignore the Seqtrak's track-select echoes
+        self._schedule_resync(delay=delay + 0.5)
+        names = {'track': Track.NAMES.get(self.keyboard_track, ''), 'drums': 'Drums', 'all': 'All'}[self.dup_scope]
+        src_label = f"P{self.dup_from}" if self.dup_from else "current"
+        self._show_lcd_popup("DUPLICATED", f"{names} {src_label}->P{to_pattern}", duration=3.0)
+        print(f"Duplicate: {names} {src_label} -> P{to_pattern} ({len(copied)} tracks)")
+
+    def _process_timed_sends(self):
+        now = time.time()
+        while self._timed_sends and self._timed_sends[0][0] <= now:
+            self._timed_sends.pop(0)[1]()
 
     def _show_delete_menu(self):
         """Display delete menu when DELETE button is held."""
@@ -2229,6 +2340,36 @@ class SeqtrakBridge:
                 self._update_mute_solo_leds()
                 if self.current_mode != 'mixer':
                     self.update_grid()
+            return
+
+        # DUPLICATE: hold for the copy panel (buttons below the LCD), release to close it
+        if cc == BUTTONS['duplicate']:
+            self.duplicate_held = value > 0
+            self.set_button_led(cc, LED_ON if self.duplicate_held else LED_DIM)
+            if self.duplicate_held:
+                self.dup_from = None
+                self._show_duplicate_panel()
+            else:
+                self._close_duplicate_panel()
+            return
+        if self.duplicate_held and (20 <= cc <= 27 or 102 <= cc <= 109):
+            if value > 0:
+                self._handle_duplicate_button(cc)
+            return
+
+        # DOUBLE LOOP: double the selected track's pattern length (max 128 steps). The Seqtrak
+        # copies the existing bars into the new ones itself (verified 2026-10-14 on PERC 2).
+        if cc == BUTTONS['double_loop']:
+            self.set_button_led(cc, LED_ON if value > 0 else LED_DIM)
+            if value > 0:
+                track = self.keyboard_track
+                steps = self._track_steps(track)
+                if steps * 2 > 128:
+                    self._show_lcd_popup("DOUBLE", f"max 128 ({steps})")
+                else:
+                    self._set_pattern_steps(track, steps * 2)
+                    self._schedule_resync()  # re-read once the Seqtrak has copied the bars
+                    self._show_lcd_popup("DOUBLE", f"{steps * 2} steps")
             return
 
         # UNDO: the Seqtrak's [UNDO/REDO] button, which toggles between undo and redo of the
@@ -4311,7 +4452,7 @@ class SeqtrakBridge:
             self.set_button_led(BUTTONS['octave_up'], LED_DIM)
             self.set_button_led(BUTTONS['octave_down'], LED_DIM)
             # Every other button that does something, so it can be found in the dark
-            for name in ('session', 'shift', 'delete', 'undo', 'metronome', 'mute', 'solo',
+            for name in ('session', 'shift', 'delete', 'undo', 'double_loop', 'duplicate', 'metronome', 'mute', 'solo',
                          'user', 'record', 'repeat', 'accent'):
                 self.set_button_led(BUTTONS[name], LED_DIM)
 
@@ -4371,6 +4512,7 @@ class SeqtrakBridge:
                             self.handle_seqtrak_message(msg)
 
                     # Send queued step reads (throttled)
+                    self._process_timed_sends()
                     self._process_resync()
                     self._process_record_reads()
                     self._process_step_reads()

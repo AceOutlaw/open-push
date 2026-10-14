@@ -67,6 +67,11 @@ Request (`F0 43 30 7F 1C 0C [H] [M] [L] F7`, the device replies with a Parameter
 To remove "pad p, step s": read `75 [g] 00, 01, …` until an empty reply, find the note whose position
 and note number match, send `74 [g] [index] 00`.
 
+### Pattern length and drum deletes (verified 2026-10-14 on PERC 2, from the Pi)
+- Writing a longer step count (`30 5p [16+2v]`, 16 → 32) makes the Seqtrak **copy the existing bars into the new
+  ones** (steps 1, 5, 11 appeared at 17, 21, 27), as the guide's copy table says (§5.2). Shortening keeps the data.
+- Drum removes `70 2t 00 [step]` act on the pattern selected over MIDI (`30 5p 0F`) — closes the ❓ in bug 1.
+
 ### Project load / delete / switch
 - Deleting the project on the device (user guide §4.4: [PROJECT↑]+[DELETE]+Drum key; leaves one KICK
   step) made the Seqtrak broadcast the whole project: `01 10 17 00`, `01 10 27/1E/1A/1B/1C`,

@@ -45,8 +45,8 @@ Message frame for all rows unless noted: Parameter Change `F0 43 10 7F 1C 0C [H 
 ### Pattern copy / paste and step keys
 | Address | Dir | Data | Meaning | Status |
 |---|---|---|---|---|
-| `77 01 20` | → | `00 [pattern]` | Copy pattern (0-based); ❓ the `00` is probably the track | 📱 |
-| `77 01 21` | → | `00 [pattern]` | Paste into pattern | 📱 |
+| `77 01 20` | → | `[track 0-10] [pattern 0-5]` | **Copy pattern** (0-based). Verified 2026-10-14 from the Pi on PERC 2 (`06 00`) with PERC 2 also selected on the device; the bridge selects the track first, so whether the track byte or the device's selected track counts is still 🟡 | ✅ |
+| `77 01 21` | → | `[track] [pattern]` | **Paste** into that pattern: notes **and the pattern length** are copied, the target's old content is replaced; the device reports the new length (`30 56 18 00 20`). Other tracks untouched (KICK checked) | ✅ |
 | `77 01 24` | ← | `00 00` | ❓ seen when the pattern editor changed page | 📥 |
 | `77 01 10 [x] 00 [step]` | ← | | A step key is held on the device | 🟡 |
 
