@@ -208,7 +208,7 @@ action each. The app can only add scenes and edit them; switching to Song mode w
 | `71 10 04 [scene]` | device → | 📱 **current scene**; changes as the song plays (0 → 1 → 2 during SG-16) and when a scene key is pressed |
 | `01 10 17 [mode]` | device → | 🟡 **Song mode state**: `00` normal, `02` song (seen when Ace switched modes and pressed scene keys). ❓ Scene mode value not captured (probably `01`) |
 | `71 50 00 01` / `00` | device → | ❓ toggles around each scene-key press (queued / pressed flag?) |
-| `71 10 06` | readable | ❓ `00`; `71 10 01…03` are also sent by the device when a scene popup opens |
+| `71 10 06 [0/1]` | app → | 📱 **whole-song loop** on/off (SONG loop button, SG-25/26). `71 10 01…03` are also sent by the device when a scene popup opens |
 | `01 10 20 01` / `00` | app → | Play / Stop (same as normal mode); in Song mode it plays the scenes in order |
 
 ⚠️ **This changes what we thought `01 10 17` meant.** `STEP-SEQUENCER.md` called `01 10 17 00` the start of a
@@ -217,7 +217,6 @@ which a project load re-broadcasts — so in Song mode the bridge would re-read 
 press. Needs a fix (KM-114 follow-up).
 
 **Not captured from the app:**
-- the whole-song loop button (§13.2.3, app-only): a screen overlay (Wispr Flow) blocked that spot twice
 - deleting a scene: the app has no control for it (right-click / long-press do nothing). Device only (§13.4)
 - scene length and AUTO (§13.5.2): device only ([PAGE] + [ALL] knob)
 - switching Song / Scene mode: device only; the app just shows it
@@ -283,8 +282,7 @@ press. Needs a fix (KM-114 follow-up).
 | — | HOME > VISUALIZER | separate 3D visual app; nothing relevant sent |
 
 ## Still to capture
-- Song mode: the whole-song loop button (blocked by a screen overlay); scene length, delete and Song/Scene
-  switching are device-only, so capture them with the Seqtrak's keys on the Pi. Track TYPE change is skipped
+- Song mode: scene length, delete and Song/Scene switching are device-only, so capture them with the Seqtrak's keys on the Pi. Track TYPE change is skipped
   (needs firmware 2.0; this unit runs 1.21.3).
 - fractional BPM; HPF range of the track filter; ARP types beyond 9; the sampler's sample rate (record a
   timed sample and read its End Point); block LE-02 was cut off when the Seqtrak powered down.

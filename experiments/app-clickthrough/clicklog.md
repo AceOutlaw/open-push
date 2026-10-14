@@ -392,3 +392,7 @@ One line per app action (local time). Correlate with MIDI Monitor spy capture.
 - 16:45:59 | SG-22 | SONG scene 1 restore: HAT2 SOLO off, HAT2 MUTE off, HAT2 pat 1, SNARE pat 1 (2s apart)
 - 16:46:39 | SG-23 | SONG: close popup; right-click scene tile 1 (nothing); long-press tile 1 2s (just opens popup); close popup. No scene delete found in app.
 - NOTE SG summary (device in SONG mode from SG-13): mode 01 10 17 (00 NORMAL, 02 SONG); current scene 71 10 04 nn (changes as song plays: 0->1->2 during app Play in SG-16); scene data read 71 40 nn (16 slots, 2 bytes + 11 track pattern idx 0-based); app '+' sends 71 00 00 nn; scene edit pattern = 71 1t 01 <scene> <pat0>; scene mute = 71 1t 02 <scene> 00/01; scene solo = 71 10 03 <scene> <track+1, 0=off>. App SONG page does not render device's existing scenes (shows only ones added in this app session). No delete-scene control found in app (right-click/long-press do nothing). Loop button not captured (Wispr Flow overlay blocks that spot).
+- 17:13:40 | SG-24 | NAV: SEQTRAK back after power loss; MIXER (KICK SOLO shown lit) -> SONG page (mode NORMAL, empty)
+- 17:13:57 | SG-25 | SONG loop button single click (off -> ON, icon orange)
+- 17:14:14 | SG-26 | SONG loop button single click (ON -> off, restored)
+- 17:14:21 | NOTE SG-25/26: SONG loop (whole-song repeat) = 71 10 06 01 on / 00 off. Device reverted to NORMAL mode after its power loss.

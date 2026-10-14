@@ -59,7 +59,7 @@ Message frame for all rows unless noted: Parameter Change `F0 43 10 7F 1C 0C [H 
 | `71 [10+t] 02` | → read | `[scene] [0/1]` | Mute track t in a scene | 📱 |
 | `71 10 03` | → read | `[scene] [track 1–11, 0 = off]` | Solo one track in a scene | 📱 |
 | `71 10 04` | ← read | `[scene]` | Current scene; follows playback | 📥 |
-| `71 10 06` | → read | `0/1` | ❓ written by the app's song loop button in 111-01 (whole-song loop, guide §13.2.3?) | 🟡 |
+| `71 10 06` | → read | `0/1` | **Whole-song loop** on/off (the app's SONG loop button, guide §13.2.3; SG-25/26: `01` on, `00` off) | 📱 |
 | `71 50 00` | ← read | `0/1` | ❓ flips around each scene-key press (scene queued?) | 📥 |
 
 ## 3. Device state (`01 10`, `01 00`, `00 60/61`)
