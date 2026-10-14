@@ -441,6 +441,15 @@ class SeqtrakProtocol:
     # Scale/Key
     # -------------------------------------------------------------------------
 
+    def select_project(self, project):
+        """Load project 1-8: Bank MSB 64, LSB 0, Program project-1 (Data List; channel ignored).
+        The Seqtrak saves the current project first and stops playback (guide §4.1)."""
+        if not 1 <= project <= 8:
+            return
+        self._send_cc(1, 0, 64)
+        self._send_cc(1, 32, 0)
+        self.port.send(mido.Message('program_change', channel=0, program=project - 1))
+
     def set_metronome(self, on):
         """Metronome (click) on/off: 00 00 25 [Click Switch] (Data List; SEQTRAK app capture 112-03)."""
         self._send_sysex([0x00, 0x00, 0x25], [0x01 if on else 0x00])

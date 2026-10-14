@@ -21,7 +21,7 @@ an Ableton Push 1 through the bridge.
 
 | Chapter | ✅ | 🔵 | 🟡 | ❌ |
 |---|---|---|---|---|
-| 4. Projects | 1 | 2 | 1 | 6 |
+| 4. Projects | 1 | 3 | 1 | 5 |
 | 5. Tracks and Patterns | 5 | 6 | 2 | 5 |
 | 6. Drum Tracks | 5 | 3 | 1 | 0 |
 | 7. Synth Tracks | 4 | 2 | 0 | 6 |
@@ -33,13 +33,13 @@ an Ableton Push 1 through the bridge.
 | 13. Song Mode | 0 | 10 | 0 | 0 |
 | 15. Connections | 0 | 0 | 0 | 1 |
 | 16. Settings | 1 | 0 | 0 | 5 |
-| **Device total (ch. 4–13, 15–16)** | **24** | **27** | **9** | **55** |
+| **Device total (ch. 4–13, 15–16)** | **24** | **28** | **9** | **54** |
 | 14. App-only (optional) | 0 | 0 | 0 | 6 |
 
 Rows marked — (physical or automatic) aren't counted.
 
-**Progress:** audit 2026-10-13 = 21 ✅ · 23 🟡 · 72 ❌. Now 2026-10-15 = 24 ✅ · 27 🔵 · 9 🟡 · 55 ❌
-(track type moved to — : needs firmware 2.0). Of the 55 missing, about 37 have a known command (📱/✅ in the Protocol
+**Progress:** audit 2026-10-13 = 21 ✅ · 23 🟡 · 72 ❌. Now 2026-10-15 = 24 ✅ · 28 🔵 · 9 🟡 · 54 ❌
+(track type moved to — : needs firmware 2.0). Of the 54 missing, about 36 have a known command (📱/✅ in the Protocol
 column) and are build work; the rest (❓) need a capture of the Seqtrak's own keys. Bug 14 (dead Mute/Solo buttons) is
 fixed too (`bb115a8`).
 
@@ -121,7 +121,7 @@ fixed too (`bb115a8`).
 
 | Feature | Guide § (page) | On Push | Protocol | Notes |
 |---|---|---|---|---|
-| Switch project (1–8) | §4.1 (p.23) | ❌ | ✅ | Bank MSB 64 / LSB 0 / PC 0–7 (Data List; the app sends it). Bridge re-reads on `01 10 15` (project switched, `ab1c99a`). Push control not built |
+| Switch project (1–8) | §4.1 (p.23) | 🔵 | ✅ | Push Browse button → project picker, top LCD buttons 1–8 load a project: Bank MSB 64 / LSB 0 / PC (Data List; the app sends it). Current project read from `01 10 15`; the Push re-reads after a switch |
 | Ext-clock project switch (bar-synced stop, MANUAL/AUTO start, on/off) | §4.1.1 (p.23–24) | ❌ | ❓ | AUTO/MANUAL is app-only |
 | Save project | §4.2 (p.24) | — | — | Automatic on switch / power-off |
 | Back up / restore via app | §4.3 (p.24) | — | ❓ | App-only (ch. 14) |

@@ -561,6 +561,7 @@ class SeqtrakBridge:
         self._resync_full = False    # True: everything; False: steps only
         self._seqtrak_ui_mode = 0    # 01 10 19: 00 idle, 03 step input, 04 Delete held
         self._seqtrak_project = None # 01 10 15: current project, 0-based (None = not heard yet)
+        self._project_known = False  # first 01 10 15 (startup read) only sets it, no re-read
 
         # Variation mode: 3 or 6 variations available (global setting)
         self.variation_mode = 3  # Default: 3 variations
@@ -573,6 +574,7 @@ class SeqtrakBridge:
 
         # Duplicate panel (hold Duplicate): copy From pattern -> To pattern for one track,
         # the 7 drum tracks or all 11 (the Seqtrak itself only does one track or all).
+        self.project_picker = False  # Browse: pick project 1-8 with the buttons above the pads
         self.duplicate_held = False
         self.dup_scope = 'drums'     # 'track' | 'drums' | 'all'
         self.dup_from = None         # None = each track's current pattern
@@ -691,6 +693,8 @@ class SeqtrakBridge:
         self.song_mute_held = False  # Mute / Solo held = modifiers for pads in Song view
         self.song_solo_held = False
         self._last_scene_press = (None, 0.0)
+        self._stale_step_tracks = set()  # tracks whose steps changed during song playback, not re-read yet
+        self._enc_accum = {}             # cc -> (ticks, time): encoder ticks gathered into coarse steps
 
         # Isomorphic layout (same as Reason app)
         self.layout = IsomorphicLayout()
@@ -886,7 +890,13 @@ class SeqtrakBridge:
             variation = sysex_data[0] + 1
             if self.track_variation.get(track) != variation:
                 self.track_variation[track] = variation
-                self._request_track_steps(track)
+                # In Song mode every scene change switches patterns on all tracks; re-reading all
+                # of them mid-playback floods the Seqtrak, so only the track on the pads is read
+                # now and the rest when playback stops (or when they are shown).
+                if self.song_mode and self.is_playing and track != self._step_grid_track():
+                    self._stale_step_tracks.add(track)
+                else:
+                    self._request_track_steps(track)
                 if track == self.keyboard_track:
                     self.update_display()
 
@@ -902,9 +912,14 @@ class SeqtrakBridge:
         # Project switched on the Seqtrak: it sends the new project number, 01 10 15 [0-7]
         # (seen 2026-10-14). Its parameters aren't broadcast, so re-read everything.
         elif addr == [0x01, 0x10, 0x15] and sysex_data:
-            if sysex_data[0] != self._seqtrak_project:
+            if self._seqtrak_project is None and not self._project_known:
+                self._seqtrak_project = sysex_data[0]  # startup read: just remember it
+                self._project_known = True
+            elif sysex_data[0] != self._seqtrak_project:
                 self._seqtrak_project = sysex_data[0]
                 self._schedule_resync(full=True, delay=1.0)
+            if self.project_picker:
+                self._show_project_picker()
 
         # 01 10 00 00 ends the burst the Seqtrak sends after a project delete and after it
         # (re)connects (seen 2026-10-13/14); the bridge never requests it, so it is always that.
@@ -1411,6 +1426,24 @@ class SeqtrakBridge:
         src_label = f"P{self.dup_from}" if self.dup_from else "current"
         self._show_lcd_popup("DUPLICATED", f"{names} {src_label}->P{to_pattern}", duration=3.0)
         print(f"Duplicate: {names} {src_label} -> P{to_pattern} ({len(copied)} tracks)")
+
+    def _show_project_picker(self):
+        current = self._seqtrak_project
+        names = [f"[{i}]" if current == i - 1 else f" {i} " for i in range(1, 9)]
+        self.set_lcd_segments(1, "PROJECTS", f"Now: {current + 1}" if current is not None else "Now: ?", "", "Browse = close")
+        self.set_lcd_segments(2, "", "", "", "")
+        self.set_lcd_segments(3, f"{names[0]:^8s}{names[1]:^9s}", f"{names[2]:^8s}{names[3]:^9s}",
+                              f"{names[4]:^8s}{names[5]:^9s}", f"{names[6]:^8s}{names[7]:^9s}")
+        self.set_lcd_segments(4, "Press a button", "above to load it", "(saves the current", "one, stops play)")
+        for i in range(8):
+            self.set_button_led(20 + i, LED_ON if current == i else LED_DIM)
+            self.set_button_led(102 + i, LED_OFF)
+        self.set_button_led(BUTTONS['browse'], LED_ON)
+
+    def _close_project_picker(self):
+        self.project_picker = False
+        self.set_button_led(BUTTONS['browse'], LED_DIM)
+        self._close_duplicate_panel()  # restores the LCD buttons and display
 
     def _process_timed_sends(self):
         now = time.time()
@@ -2210,8 +2243,22 @@ class SeqtrakBridge:
         self.song_selected_track = track
         self._refresh_song_view()
 
+    def _coarse_steps(self, cc, delta, ticks_per_step):
+        """Gather an encoder's small ticks into whole steps (the Push sends ~40 ticks per turn)."""
+        now = time.time()
+        ticks, last = self._enc_accum.get(cc, (0, 0.0))
+        if now - last > 0.6 or (ticks and (ticks > 0) != (delta > 0)):
+            ticks = 0  # pause or change of direction starts afresh
+        ticks += delta
+        steps = int(ticks / ticks_per_step)
+        self._enc_accum[cc] = (ticks - steps * ticks_per_step, now)
+        return steps
+
     def _handle_session_encoder(self, encoder_index, delta):
         """Encoder over a column: that track's pattern in the selected scene."""
+        delta = self._coarse_steps(71 + encoder_index, delta, 8)
+        if not delta:
+            return
         tracks = self._scene_tracks_on_page()
         scene = self.song_selected_scene
         data = self.song_scenes.get(scene)
@@ -2219,7 +2266,7 @@ class SeqtrakBridge:
             return
         track = tracks[encoder_index]
         current = data['patterns'][track - 1]
-        new = max(0, min(self.variation_mode - 1, current + (1 if delta > 0 else -1)))
+        new = max(0, min(self.variation_mode - 1, current + delta))
         if new != current:
             data['patterns'][track - 1] = new
             self.protocol.send_parameter([0x71, 0x10 + track - 1, 0x01], [scene, new])
@@ -2229,10 +2276,11 @@ class SeqtrakBridge:
 
     def _adjust_scene_length(self, delta):
         """Master encoder in Song view: selected scene's length, AUTO or 1-96 bars."""
+        delta = self._coarse_steps(79, delta, 3)
         data = self.song_scenes.get(self.song_selected_scene)
-        if not data:
+        if not data or not delta:
             return
-        new = max(0, min(96, data['length'] + (1 if delta > 0 else -1)))
+        new = max(0, min(96, data['length'] + delta))
         if new != data['length']:
             data['length'] = new
             self.protocol.send_parameter([0x71, 0x10, 0x00], [self.song_selected_scene, new >> 7, new & 0x7F])
@@ -2258,11 +2306,16 @@ class SeqtrakBridge:
             print(f"  Scene {scene + 1} loop: {'ON' if self.scene_loop else 'off'}")
             self._last_scene_press = (None, 0.0)
         else:
-            self.protocol.send_parameter([0x71, 0x10, 0x04], [scene])
-            if not self.is_playing:
+            if self.is_playing:
+                # Like a scene key on the Seqtrak while playing: queue it (71 10 05); it starts when
+                # the current scene ends (Song mode) or at launch quantize (Scene mode), guide §13.2.1
+                self.protocol.send_parameter([0x71, 0x10, 0x05], [scene])
+                print(f"  Song: queue scene {scene + 1}")
+            else:
+                self.protocol.send_parameter([0x71, 0x10, 0x04], [scene])
                 self.current_scene = scene
+                print(f"  Song: go to scene {scene + 1}")
             self.next_scene = scene
-            print(f"  Song: go to scene {scene + 1}")
             self._last_scene_press = (scene, now)
         self.song_selected_scene = scene
         self._refresh_song_view()
@@ -2441,6 +2494,28 @@ class SeqtrakBridge:
                 self._update_mute_solo_leds()
                 if self.current_mode != 'mixer':
                     self.update_grid()
+            return
+
+        # BROWSE: project picker. The 8 buttons below the LCD (top row) load project 1-8.
+        if cc == BUTTONS['browse']:
+            if value > 0:
+                if self.project_picker:
+                    self._close_project_picker()
+                else:
+                    self.project_picker = True
+                    self._show_project_picker()
+            return
+        if self.project_picker and 20 <= cc <= 27:
+            if value > 0:
+                project = cc - 20 + 1
+                if project - 1 == self._seqtrak_project:
+                    self._show_lcd_popup("PROJECT", f"{project} is loaded")
+                else:
+                    self.protocol.select_project(project)
+                    self._seqtrak_project = None  # the Seqtrak's 01 10 15 report triggers the re-read
+                    print(f"Project -> {project}")
+                    self._close_project_picker()
+                    self._show_lcd_popup("PROJECT", f"loading {project}", duration=3.0)
             return
 
         # DUPLICATE: hold for the copy panel (buttons below the LCD), release to close it
@@ -3522,6 +3597,9 @@ class SeqtrakBridge:
                 # Shift+Pad = select this drum track for step sequencer
                 old_selected = self.selected_drum_track
                 self.selected_drum_track = track
+                if track in self._stale_step_tracks:
+                    self._stale_step_tracks.discard(track)
+                    self._request_track_steps(track)
 
                 # Update visual feedback for old and new selection
                 self.update_grid()
@@ -3675,7 +3753,13 @@ class SeqtrakBridge:
     def _playhead_start(self, steps_played=0.0):
         self._playhead_origin = (time.time(), steps_played, self.tempo or 120)
 
+    def _read_stale_step_tracks(self):
+        for track in sorted(self._stale_step_tracks):
+            self._request_track_steps(track)
+        self._stale_step_tracks.clear()
+
     def _playhead_stop(self):
+        self._read_stale_step_tracks()
         if self._playhead_origin is not None:
             self._playhead_stopped_at = self._playhead_steps()
         self._playhead_origin = None
@@ -3813,6 +3897,7 @@ class SeqtrakBridge:
         self.protocol.request_parameter(Address.SWING)
         self.protocol.request_parameter([0x30, 0x40, 0x68])
         self.protocol.request_parameter([0x00, 0x00, 0x25])  # metronome
+        self.protocol.request_parameter([0x01, 0x10, 0x15])  # current project
         self._request_song()
         for addr in self._cc_for_sysex:
             self.protocol.request_parameter(list(addr))
@@ -4622,7 +4707,7 @@ class SeqtrakBridge:
             self.set_button_led(BUTTONS['octave_up'], LED_DIM)
             self.set_button_led(BUTTONS['octave_down'], LED_DIM)
             # Every other button that does something, so it can be found in the dark
-            for name in ('session', 'shift', 'delete', 'undo', 'double_loop', 'duplicate', 'metronome', 'mute', 'solo',
+            for name in ('session', 'shift', 'delete', 'undo', 'double_loop', 'duplicate', 'browse', 'metronome', 'mute', 'solo',
                          'user', 'record', 'repeat', 'accent'):
                 self.set_button_led(BUTTONS[name], LED_DIM)
 
