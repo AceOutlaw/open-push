@@ -2126,7 +2126,7 @@ class SeqtrakBridge:
         for cc in (BUTTONS['up'], BUTTONS['down']):
             self.set_button_led(cc, LED_OFF)
         self.update_grid()
-        self.update_display()
+        self._close_duplicate_panel()  # give the LCD buttons back to the current mode (and redraw)
 
     def _request_song(self):
         """Read the song: mode, current scene, loops and all 16 scenes."""
@@ -2189,6 +2189,8 @@ class SeqtrakBridge:
         self.set_button_led(BUTTONS['page_right'], LED_ON if self.session_page == 0 else LED_DIM)
         self.set_button_led(BUTTONS['up'], LED_ON if self.scene_page > 0 else LED_DIM)
         self.set_button_led(BUTTONS['down'], LED_ON if self.scene_page == 0 else LED_DIM)
+        for cc in list(range(21, 27)) + list(range(102, 110)):
+            self.set_button_led(cc, LED_OFF)                               # unused in Song view
         self.set_button_led(BUTTONS['upper_1'], LED_ON)                       # mode
         self.set_button_led(BUTTONS['upper_8'], LED_ON if self.song_loop else LED_DIM)  # song loop
 
@@ -2531,6 +2533,16 @@ class SeqtrakBridge:
         if self.duplicate_held and (20 <= cc <= 27 or 102 <= cc <= 109):
             if value > 0:
                 self._handle_duplicate_button(cc)
+            return
+
+        # SONG VIEW owns the 16 buttons below the LCD (otherwise the patch, bar-length and track
+        # handlers further down would act on the other modes): [1] = Normal/Song/Scene, [8] = song loop
+        if self.session_mode and (20 <= cc <= 27 or 102 <= cc <= 109):
+            if value > 0:
+                if cc == BUTTONS['upper_1']:
+                    self._cycle_song_mode()
+                elif cc == BUTTONS['upper_8']:
+                    self._toggle_song_loop()
             return
 
         # DOUBLE LOOP: double the selected track's pattern length (max 128 steps). The Seqtrak
