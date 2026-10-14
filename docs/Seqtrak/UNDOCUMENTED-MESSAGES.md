@@ -53,19 +53,19 @@ Message frame for all rows unless noted: Parameter Change `F0 43 10 7F 1C 0C [H 
 ## 2. Song mode (`71`)
 | Address | Dir | Data | Meaning | Status |
 |---|---|---|---|---|
-| `71 00 00` | → ← | `[scene]` | **Add a scene** in slot `scene` (0–15); the selected scene is copied (guide §13.3). The device sends the same when you press an unlit scene key (2026-10-14 Pi capture) | 📱 |
-| `71 20 00` | ← | `[scene]` | **Delete a scene** ([DELETE] + red scene key, guide §13.4): deleting scenes 6, 5, 4 sent `71 20 00 05`, `… 04`, `… 03`. ❓ untested as a command | 📥 |
-| `71 10 00` | ← | `[scene] [len hi] [len lo]` | **Scene length** ([PAGE] + [ALL] knob, §13.5.2): one message per knob click, e.g. scene 1 went `00 01` … `00 21` and back; `00 00` = **AUTO**. Value = **bars**: one bar up on the device (Ace, 23:56) went `00 01` → `00 02`. Range **AUTO (`00 00`), 1–96 bars**: turned to the end, the Seqtrak stopped at `00 60` = 96 (2026-10-15 00:00). ❓ whether it works as a command | 📥 |
+| `71 00 00` | → ← | `[scene]` | **Add a scene** in slot `scene` (0–15); the selected scene is copied (guide §13.3). The device sends the same when you press an unlit scene key. **Works as a command** (2026-10-15: slot 3 added as a copy of the current scene 0) | ✅ |
+| `71 20 00` | → ← | `[scene]` | **Delete a scene** ([DELETE] + red scene key, guide §13.4): deleting scenes 6, 5, 4 sent `71 20 00 05`, `… 04`, `… 03`. **Works as a command** (2026-10-15 from the Pi: added slot 3, deleted it, readback empty) | ✅ |
+| `71 10 00` | ← | `[scene] [len hi] [len lo]` | **Scene length** ([PAGE] + [ALL] knob, §13.5.2): one message per knob click, e.g. scene 1 went `00 01` … `00 21` and back; `00 00` = **AUTO**. Value = **bars**: one bar up on the device (Ace, 23:56) went `00 01` → `00 02`. Range **AUTO (`00 00`), 1–96 bars**: turned to the end, the Seqtrak stopped at `00 60` = 96 (2026-10-15 00:00). **Works as a command** (scene 2 set to 4 bars and back to AUTO, confirmed by `71 40` readback) | ✅ |
 | `71 40 [scene]` | read / ← | `[len hi] [len lo]` + 11 bytes; no data = empty slot | **Scene contents**: the scene length (same value as `71 10 00`, `00 00` = AUTO — confirmed by readback 2026-10-14: scene 1 `00 01`, scene 2 `00 00`) then one pattern number per track (0-based, KICK … SAMPLER) | ✅ |
 | `71 [10+t] 01` | → read | `[scene] [pattern]` | Set track t's pattern in a scene | 📱 |
 | `71 [10+t] 02` | → read | `[scene] [0/1]` | Mute track t in a scene | 📱 |
 | `71 10 03` | → read | `[scene] [track 1–11, 0 = off]` | Solo one track in a scene | 📱 |
-| `71 10 04` | ← read | `[scene]` | Current scene; follows playback | 📥 |
+| `71 10 04` | → ← read | `[scene]` | Current scene; follows playback. **Works as a command** (stopped: set 1, then 0, readback matched). ❓ behaviour while playing (jump vs. queue) | ✅ |
 | `71 10 05` | ← | `[scene]` | **Next scene** (queued: pressing a scene key while playing; it starts when the current one ends, §13.2.1) | 📥 |
 | `71 10 07` | ← read | `0/1` | **Scene loop** on/off (double-tap a scene key while playing, §13.2.2) | 📥 |
 | `01 10 29` | ← | `00` | Sent each time a scene ends and the next (or the same, looping) starts — a scene-boundary tick | 🟡 |
 | `71 10 06` | → read | `0/1` | **Whole-song loop** on/off (the app's SONG loop button, guide §13.2.3; SG-25/26: `01` on, `00` off) | 📱 |
-| `71 50 00` | ← read | `0/1` | 🟡 **Scene mode** on/off. Every [ALL] + [PROJECT↑] into Scene mode sent `01`; leaving it sent `00`, followed by `01 10 17` = `02` (back to Song) or `00` (out of Song mode). Earlier read as "scene-key flag" | 🟡 |
+| `71 50 00` | → ← read | `0/1` | ✅ **Scene mode** on/off — works as a command (2026-10-15). ⚠️ Sending `00` leaves Song mode too (`01 10 17` → `00`), like the device's exit route; to go back to Song mode send `01 10 17 02` afterwards. Every [ALL] + [PROJECT↑] into Scene mode sent `01`; leaving it sent `00`, followed by `01 10 17` = `02` (back to Song) or `00` (out of Song mode). Earlier read as "scene-key flag" | 🟡 |
 
 ## 3. Device state (`01 10`, `01 00`, `00 60/61`)
 `01 10` is shared state; `01 1p` (p = 1…A) repeats some of it per track, and `01 1[e]` per sampler pad (see §4).
@@ -80,7 +80,7 @@ Message frame for all rows unless noted: Parameter Change `F0 43 10 7F 1C 0C [H 
 | `01 10 09 / 0B / 0D / 0F / 11 / 13` | read | 2 bytes each (e.g. `0F 19`, `06 66`) | 🟡 memory meters on the PROJECT/SOUND MANAGER page | 📥 |
 | `01 10 15` | ← read | `[project 0-7]` | **Current project, 0-based** (project 8 = `07`). Sent by the Seqtrak on its own when the project is switched on the device (14:29: `07` → `00`, and it was the only project message). The bridge re-reads everything when it changes | 📥 |
 | `01 10 16` | read | ~88 bytes, zeros | ❓ (project name? empty in this project) | 📥 |
-| `01 10 17` | ← read | `00` normal, `02` song | **Song mode state**; also re-sent at the start of a project load. Scene mode is `71 50 00` on top of Song mode, not a value here. ❓ whether sending it switches the mode | 🟡 |
+| `01 10 17` | → ← read | `00` normal, `02` song | **Song mode on/off** — works as a command (2026-10-15: `02` → readback 02, `00` → 00); also re-sent at the start of a project load. Scene mode is `71 50 00` on top of Song mode | ✅ |
 | `01 10 18` | ← read | `00`, `03`, `08`, `13`, `15`, `16` | Device display mode (`03` step held, `08` micro timing shown, `00` normal; others ❓) | 🟡 |
 | `01 10 19` | ← | `00` idle, `03` step input, `04` Delete held | Device UI mode | 🟡 |
 | `01 10 1F` | → ← | `01` | **[UNDO/REDO] button**: the Seqtrak sends it when the button is pressed, then reports the restored value (as the knob's CC). Sending it from the Pi toggled undo/redo of the last sound/effect change (2026-10-14: KICK attack CC 73 went 64 → 109 → 64). Guide §9.4 | ✅ |

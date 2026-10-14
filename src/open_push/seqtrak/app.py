@@ -664,14 +664,23 @@ class SeqtrakBridge:
 
         # Session view state (clip-launcher style)
         self.session_mode = False
-        self.session_page = 0  # 0 or 1 (like mixer_page)
-        self.session_selected_col = 0  # Currently selected column (0-7)
-        self.session_selected_row = 0  # Currently selected row (0-5)
-        # Pattern assignments: session_patterns[mixer_pos][row] = pattern (1-6)
-        # 12 mixer positions × 6 rows. Default: row N launches pattern N+1, so
-        # every launch button does something useful before any editing.
-        self.session_patterns = [[row + 1 for row in range(6)] for _ in range(12)]
-        self.session_launched_row = None  # Last launched row (highlighted)
+        self.session_page = 0        # tracks 1-8 / 9-11
+        self.scene_page = 0          # scenes 1-8 / 9-16
+        # The Seqtrak's song (read from it): scene -> {'length': bars (0 = AUTO), 'patterns': [11 x 0-5]}
+        self.song_scenes = {}
+        self.song_mode = False       # 01 10 17 = 02
+        self.scene_mode = False      # 71 50 00 (on top of Song mode)
+        self.current_scene = None    # 71 10 04
+        self.next_scene = None       # 71 10 05 (queued)
+        self.song_loop = False       # 71 10 06
+        self.scene_loop = False      # 71 10 07
+        self.song_selected_scene = 0
+        self.song_selected_track = 1
+        self.scene_mutes = {}        # (scene, track) -> muted, as set from the Push (not readable)
+        self.scene_solo = {}         # scene -> soloed track (0 = none), as set from the Push
+        self.song_mute_held = False  # Mute / Solo held = modifiers for pads in Song view
+        self.song_solo_held = False
+        self._last_scene_press = (None, 0.0)
 
         # Isomorphic layout (same as Reason app)
         self.layout = IsomorphicLayout()
@@ -815,6 +824,11 @@ class SeqtrakBridge:
         # Extract address (bytes 5-7) and data (byte 8+)
         addr = list(data[5:8])
         sysex_data = list(data[8:])
+
+        # Song mode state (also kept when the Song view isn't open)
+        if addr[0] == 0x71 or addr == [0x01, 0x10, 0x17]:
+            if self._handle_song_sysex(addr, sysex_data):
+                return
 
         # A Sound Design value the Push shows (volume, pan, sends, EQ, pitch, ...): keep the
         # Push's copy in step with the Seqtrak so the first encoder turn doesn't jump
@@ -2021,214 +2035,260 @@ class SeqtrakBridge:
     # Session Mode - Clip-Launcher Style Variation Selector
     # -------------------------------------------------------------------------
 
+    # Session view = the Seqtrak's song (guide §13). Rows = scenes (top row = first scene on the
+    # page, Up/Down = scenes 1-8 / 9-16), columns = tracks 1-8 / 9-11 (Page buttons), pad
+    # colour = that track's pattern in the scene. Messages: UNDOCUMENTED-MESSAGES.md §2, all
+    # verified as commands from the Pi on 2026-10-15 except loop (71 10 07) and queueing.
+
+    SCENE_PATTERN_COLORS = [COLOR_RED, COLOR_ORANGE, COLOR_YELLOW, COLOR_GREEN, COLOR_CYAN, COLOR_BLUE]
+
     def _enter_session_mode(self):
-        """Enter session view - clip-launcher style.
-
-        Layout matches mixer exactly:
-        - Columns = Tracks (using MIXER_TRACK_ORDER)
-        - Rows 0-5 = Variation slots
-        - Rows 6-7 = unused (off)
-
-        Behavior:
-        - Press pad to SELECT slot
-        - Turn encoder to SET pattern for selected slot
-        - Press CC 36-43 buttons to LAUNCH that row's patterns
-        """
         self.session_mode = True
-        self.session_page = 0  # Start on page 0
-        self.session_selected_col = 0  # Default selection
-        self.session_selected_row = 0
-        print("Entering Session mode")
-
-        # Light session button
+        self.session_page = 0
+        self.scene_page = 0
+        print("Entering Song view")
         self.set_button_led(BUTTONS['session'], LED_ON)
-
-        # Enable page buttons (like mixer mode)
-        self.set_button_led(BUTTONS['page_left'], LED_DIM)  # On page 0
-        self.set_button_led(BUTTONS['page_right'], LED_ON)  # Can go to page 1
-
-        self._update_session_grid()
-        self._update_session_display()
+        self._request_song()
+        self._refresh_song_view()
 
     def _exit_session_mode(self):
-        """Exit session view."""
         self.session_mode = False
-        print("Exiting Session mode")
-
-        # Dim session button
+        print("Exiting Song view")
         self.set_button_led(BUTTONS['session'], LED_DIM)
-
-        # Restore normal grid and display
+        for cc in range(36, 44):
+            self.set_button_led(cc, LED_OFF)
+        for cc in (BUTTONS['up'], BUTTONS['down']):
+            self.set_button_led(cc, LED_OFF)
         self.update_grid()
         self.update_display()
 
+    def _request_song(self):
+        """Read the song: mode, current scene, loops and all 16 scenes."""
+        for addr in ([0x01, 0x10, 0x17], [0x71, 0x50, 0x00], [0x71, 0x10, 0x04],
+                     [0x71, 0x10, 0x06], [0x71, 0x10, 0x07]):
+            self.protocol.request_parameter(addr)
+        for scene in range(16):
+            self.protocol.request_parameter([0x71, 0x40, scene])
+
+    def _song_mode_label(self):
+        if self.scene_mode:
+            return "SCENE MODE"
+        return "SONG MODE" if self.song_mode else "NORMAL"
+
+    def _scene_tracks_on_page(self):
+        return list(range(1, 9)) if self.session_page == 0 else [9, 10, 11]
+
+    def _first_empty_scene(self):
+        for scene in range(16):
+            if scene not in self.song_scenes:
+                return scene
+        return None
+
+    def _refresh_song_view(self):
+        if not self.session_mode:
+            return
+        self._update_session_grid()
+        self._update_session_display()
+
     def _update_session_grid(self):
-        """Update pad grid for session view - matches mixer layout exactly.
-
-        Layout (matches MIXER_TRACK_ORDER):
-           Col0    Col1    Col2    Col3    Col4    Col5    Col6    Col7
-           SYN1    SYN2    DX      KICK    SNAR    CLAP    HAT1    HAT2
-        Row 5:    [slot]  [slot]  [slot]  [slot]  [slot]  [slot]  [slot]  [slot]
-        Row 4:    [slot]  [slot]  [slot]  [slot]  [slot]  [slot]  [slot]  [slot]
-        ...
-        Row 0:    [slot]  [slot]  [slot]  [slot]  [slot]  [slot]  [slot]  [slot]
-        Rows 6-7: unused (off)
-
-        Colors:
-        - Green (21): Currently selected slot
-        - White (3): Available slot (brighter)
-        - Yellow (13): DRUM bus column
-        - Off (0): Invalid or unused
-        """
-        base_pos = self.session_page * 8  # Page 0: positions 0-7, Page 1: positions 8-11
-
-        for col in range(8):
-            mixer_pos = base_pos + col
-
-            for row in range(8):
-                note = 36 + (row * 8) + col
-
-                if row < 6 and mixer_pos < len(MIXER_TRACK_ORDER):
-                    track = MIXER_TRACK_ORDER[mixer_pos]
-
-                    # Determine color
-                    if col == self.session_selected_col and row == self.session_selected_row:
-                        color = COLOR_GREEN  # Selected slot
-                    elif track is None:
-                        color = COLOR_YELLOW  # DRUM bus - distinctive color
-                    elif row == self.session_launched_row:
-                        color = COLOR_BLUE  # Last launched row (playing)
+        tracks = self._scene_tracks_on_page()
+        empty = self._first_empty_scene()
+        for vrow in range(8):
+            scene = self.scene_page * 8 + vrow
+            data = self.song_scenes.get(scene)
+            for col in range(8):
+                note = 36 + (7 - vrow) * 8 + col
+                color = COLOR_OFF
+                if data and col < len(tracks):
+                    track = tracks[col]
+                    pattern = data['patterns'][track - 1]
+                    if (scene, track) == (self.song_selected_scene, self.song_selected_track):
+                        color = COLOR_WHITE
+                    elif self.scene_solo.get(scene) == track:
+                        color = COLOR_PURPLE
+                    elif self.scene_mutes.get((scene, track)):
+                        color = COLOR_DIM
                     else:
-                        color = COLOR_WHITE  # Available slot (brighter)
-                else:
-                    color = COLOR_OFF  # Rows 6-7 or invalid position
-
+                        color = self.SCENE_PATTERN_COLORS[pattern % 6]
+                elif scene == empty and col == 0:
+                    color = COLOR_DIM  # "+": press to add a scene
                 self.push_out.send(mido.Message('note_on', note=note, velocity=color, channel=0))
+            # Scene launch buttons: on = playing scene, dim = scene exists, off = empty
+            cc = 43 - vrow
+            if data:
+                self.set_button_led(cc, LED_ON if scene == self.current_scene else LED_DIM)
+            else:
+                self.set_button_led(cc, LED_OFF)
+        self.set_button_led(BUTTONS['page_left'], LED_ON if self.session_page > 0 else LED_DIM)
+        self.set_button_led(BUTTONS['page_right'], LED_ON if self.session_page == 0 else LED_DIM)
+        self.set_button_led(BUTTONS['up'], LED_ON if self.scene_page > 0 else LED_DIM)
+        self.set_button_led(BUTTONS['down'], LED_ON if self.scene_page == 0 else LED_DIM)
+        self.set_button_led(BUTTONS['upper_1'], LED_ON)                       # mode
+        self.set_button_led(BUTTONS['upper_8'], LED_ON if self.song_loop else LED_DIM)  # song loop
 
     def _update_session_display(self):
-        """Update LCD for session mode - match mixer format exactly."""
-        base_pos = self.session_page * 8
-
-        # Line 1: Track names (EXACT same format as mixer)
-        def format_segment_names(idx):
-            pos1 = base_pos + idx
-            pos2 = base_pos + idx + 1
-            name1 = MIXER_DISPLAY_NAMES[pos1] if pos1 < len(MIXER_DISPLAY_NAMES) else ""
-            name2 = MIXER_DISPLAY_NAMES[pos2] if pos2 < len(MIXER_DISPLAY_NAMES) else ""
-            return f"{name1:^8s}{name2:^9s}"
-
-        self.set_lcd_segments(1,
-            format_segment_names(0), format_segment_names(2),
-            format_segment_names(4), format_segment_names(6))
-
-        # Line 2: Pattern number for each track in the selected row
-        def format_segment_patterns(idx):
-            pos1 = base_pos + idx
-            pos2 = base_pos + idx + 1
-            pat1 = str(self.session_patterns[pos1][self.session_selected_row]) if pos1 < len(MIXER_TRACK_ORDER) else ""
-            pat2 = str(self.session_patterns[pos2][self.session_selected_row]) if pos2 < len(MIXER_TRACK_ORDER) else ""
-            return f"{pat1:^8s}{pat2:^9s}"
-
-        self.set_lcd_segments(2,
-            format_segment_patterns(0), format_segment_patterns(2),
-            format_segment_patterns(4), format_segment_patterns(6))
-
-        # Line 3: Selection indicator
-        selected_mixer_pos = base_pos + self.session_selected_col
-        if selected_mixer_pos < len(MIXER_DISPLAY_NAMES):
-            sel_name = MIXER_DISPLAY_NAMES[selected_mixer_pos]
-            sel_pattern = self.session_patterns[selected_mixer_pos][self.session_selected_row]
-            self.set_lcd_segments(3, f"{sel_name} Row{self.session_selected_row + 1}", f"Pattern {sel_pattern}", "", "")
-        else:
-            self.set_lcd_segments(3, "", "", "", "")
-
-        # Line 4: Empty (clean interface)
-        self.set_lcd_segments(4, "", "", "", "")
+        tracks = self._scene_tracks_on_page()
+        names = [MIXER_TRACK_ABBREV.get(t, f"T{t}") for t in tracks] + [""] * (8 - len(tracks))
+        scene = self.song_selected_scene
+        data = self.song_scenes.get(scene)
+        pats = [str(data['patterns'][t - 1] + 1) if data else "" for t in tracks] + [""] * (8 - len(tracks))
+        count = len(self.song_scenes)
+        length = (("AUTO" if data['length'] == 0 else f"{data['length']} bar") if data else "-")
+        playing = f"Play S{self.current_scene + 1}" if self.current_scene is not None else ""
+        if self.next_scene is not None and self.next_scene != self.current_scene:
+            playing += f">S{self.next_scene + 1}"
+        self.set_lcd_segments(1, self._song_mode_label(), f"Scene {scene + 1}/{count}",
+                              f"Len {length}", playing)
+        self.set_lcd_segments(2, f"{names[0]:^8s}{names[1]:^9s}", f"{names[2]:^8s}{names[3]:^9s}",
+                              f"{names[4]:^8s}{names[5]:^9s}", f"{names[6]:^8s}{names[7]:^9s}")
+        self.set_lcd_segments(3, f"{pats[0]:^8s}{pats[1]:^9s}", f"{pats[2]:^8s}{pats[3]:^9s}",
+                              f"{pats[4]:^8s}{pats[5]:^9s}", f"{pats[6]:^8s}{pats[7]:^9s}")
+        loop = "Loop scn ON" if self.scene_loop else ""
+        self.set_lcd_segments(4, "[1] mode", f"Scenes {self.scene_page * 8 + 1}-{self.scene_page * 8 + 8}",
+                              loop, f"[8] SongLoop {'ON' if self.song_loop else 'off'}")
 
     def _handle_session_pad(self, row, col):
-        """Handle pad press in session mode - SELECT the slot only.
-
-        Does NOT change patterns. Just selects which slot is active.
-        Use encoder or buttons to change the pattern for the selected slot.
-        """
-        if row >= 6:  # Rows 6-7 unused
+        """Pad: select a scene+track; hold Mute / Solo to mute / solo it in that scene;
+        the dim pad below the last scene adds a scene (a copy of the current one)."""
+        vrow = 7 - row
+        scene = self.scene_page * 8 + vrow
+        tracks = self._scene_tracks_on_page()
+        if scene not in self.song_scenes:
+            if scene == self._first_empty_scene() and col == 0:
+                self.protocol.send_parameter([0x71, 0x00, 0x00], [scene])
+                print(f"  Song: add scene {scene + 1}")
+                self.protocol.request_parameter([0x71, 0x40, scene])
+                self.song_selected_scene = scene
             return
-
-        base_pos = self.session_page * 8
-        mixer_pos = base_pos + col
-
-        if mixer_pos >= len(MIXER_TRACK_ORDER):
-            return  # Invalid position
-
-        # Update selection
-        self.session_selected_col = col
-        self.session_selected_row = row
-
-        name = MIXER_DISPLAY_NAMES[mixer_pos]
-        pattern = self.session_patterns[mixer_pos][row]
-        print(f"  Selected: {name} Row {row + 1} (Pattern {pattern})")
-
-        self._update_session_grid()
-        self._update_session_display()
+        if col >= len(tracks):
+            return
+        track = tracks[col]
+        if self.song_mute_held:
+            muted = not self.scene_mutes.get((scene, track), False)
+            self.scene_mutes[(scene, track)] = muted
+            self.protocol.send_parameter([0x71, 0x10 + track - 1, 0x02], [scene, 0x01 if muted else 0x00])
+            print(f"  Scene {scene + 1} {MIXER_TRACK_ABBREV.get(track)}: {'muted' if muted else 'unmuted'}")
+        elif self.song_solo_held:
+            solo = 0 if self.scene_solo.get(scene) == track else track
+            self.scene_solo[scene] = solo
+            self.protocol.send_parameter([0x71, 0x10, 0x03], [scene, solo])
+            print(f"  Scene {scene + 1} solo: {MIXER_TRACK_ABBREV.get(solo, 'off')}")
+        self.song_selected_scene = scene
+        self.song_selected_track = track
+        self._refresh_song_view()
 
     def _handle_session_encoder(self, encoder_index, delta):
-        """Handle encoder turn in session mode - set pattern for selected slot.
-
-        Only responds if encoder matches selected column.
-        """
-        if encoder_index != self.session_selected_col:
-            return  # Only respond to encoder for selected column
-
-        base_pos = self.session_page * 8
-        mixer_pos = base_pos + encoder_index
-
-        if mixer_pos >= len(MIXER_TRACK_ORDER):
+        """Encoder over a column: that track's pattern in the selected scene."""
+        tracks = self._scene_tracks_on_page()
+        scene = self.song_selected_scene
+        data = self.song_scenes.get(scene)
+        if not data or encoder_index >= len(tracks):
             return
+        track = tracks[encoder_index]
+        current = data['patterns'][track - 1]
+        new = max(0, min(self.variation_mode - 1, current + (1 if delta > 0 else -1)))
+        if new != current:
+            data['patterns'][track - 1] = new
+            self.protocol.send_parameter([0x71, 0x10 + track - 1, 0x01], [scene, new])
+            self.song_selected_track = track
+            print(f"  Scene {scene + 1} {MIXER_TRACK_ABBREV.get(track)}: pattern {new + 1}")
+            self._refresh_song_view()
 
-        row = self.session_selected_row
-        current_pattern = self.session_patterns[mixer_pos][row]
-
-        # Adjust pattern (1-6)
-        if delta > 0:
-            new_pattern = min(6, current_pattern + 1)
-        else:
-            new_pattern = max(1, current_pattern - 1)
-
-        if new_pattern != current_pattern:
-            self.session_patterns[mixer_pos][row] = new_pattern
-            name = MIXER_DISPLAY_NAMES[mixer_pos]
-            print(f"  {name} Row {row + 1}: Pattern {new_pattern}")
+    def _adjust_scene_length(self, delta):
+        """Master encoder in Song view: selected scene's length, AUTO or 1-96 bars."""
+        data = self.song_scenes.get(self.song_selected_scene)
+        if not data:
+            return
+        new = max(0, min(96, data['length'] + (1 if delta > 0 else -1)))
+        if new != data['length']:
+            data['length'] = new
+            self.protocol.send_parameter([0x71, 0x10, 0x00], [self.song_selected_scene, new >> 7, new & 0x7F])
+            self._show_lcd_popup("LENGTH", "AUTO" if new == 0 else f"{new} bars")
             self._update_session_display()
 
-    def _handle_session_row_launch(self, row):
-        """Handle CC 36-43 button press in session mode - LAUNCH this row.
-
-        Sends per-track variation for each track based on session_patterns.
-        Each track can have a different variation assigned in the session grid.
-        """
-        if row >= 6:
+    def _handle_session_row_launch(self, vrow):
+        """Scene launch button: go to the scene (in Song mode while playing the Seqtrak plays it
+        next); press again within 0.4 s to loop it; Delete + button deletes the scene."""
+        scene = self.scene_page * 8 + vrow
+        if scene not in self.song_scenes:
             return
+        if self.delete_held:
+            self.protocol.send_parameter([0x71, 0x20, 0x00], [scene])
+            print(f"  Song: delete scene {scene + 1}")
+            self._request_song()  # later scenes move up
+            return
+        now = time.time()
+        last_scene, last_time = self._last_scene_press
+        if last_scene == scene and now - last_time < 0.4:
+            self.scene_loop = not self.scene_loop
+            self.protocol.send_parameter([0x71, 0x10, 0x07], [0x01 if self.scene_loop else 0x00])
+            print(f"  Scene {scene + 1} loop: {'ON' if self.scene_loop else 'off'}")
+            self._last_scene_press = (None, 0.0)
+        else:
+            self.protocol.send_parameter([0x71, 0x10, 0x04], [scene])
+            if not self.is_playing:
+                self.current_scene = scene
+            self.next_scene = scene
+            print(f"  Song: go to scene {scene + 1}")
+            self._last_scene_press = (scene, now)
+        self.song_selected_scene = scene
+        self._refresh_song_view()
 
-        # Send variation to EVERY track (both session pages), not just the
-        # 8 visible columns - otherwise a row launch only half-happens.
-        launched_tracks = []
-        for mixer_pos, track in enumerate(MIXER_TRACK_ORDER):
-            if track is None:  # Skip DRUM bus
-                continue
-            pattern = self.session_patterns[mixer_pos][row]
-            self.protocol.select_track_variation(track, pattern)
-            self.track_variation[track] = pattern
-            self._request_track_steps(track)
-            launched_tracks.append(f"{MIXER_DISPLAY_NAMES[mixer_pos]}:{pattern}")
+    def _cycle_song_mode(self):
+        """Normal -> Song -> Scene -> Normal (01 10 17, 71 50 00; leaving Scene mode also
+        leaves Song mode on the Seqtrak)."""
+        if not self.song_mode:
+            self.protocol.send_parameter([0x01, 0x10, 0x17], [0x02])
+            self.song_mode, self.scene_mode = True, False
+        elif not self.scene_mode:
+            self.protocol.send_parameter([0x71, 0x50, 0x00], [0x01])
+            self.scene_mode = True
+        else:
+            self.protocol.send_parameter([0x71, 0x50, 0x00], [0x00])
+            self.song_mode, self.scene_mode = False, False
+        self._show_lcd_popup("MODE", self._song_mode_label())
+        print(f"  {self._song_mode_label()}")
+        self._refresh_song_view()
 
-        self.session_launched_row = row
-        print(f"  Launched Row {row + 1}: {', '.join(launched_tracks)}")
-        self._update_session_grid()
-        self._update_session_display()
+    def _toggle_song_loop(self):
+        self.song_loop = not self.song_loop
+        self.protocol.send_parameter([0x71, 0x10, 0x06], [0x01 if self.song_loop else 0x00])
+        print(f"  Song loop: {'ON' if self.song_loop else 'off'}")
+        self._refresh_song_view()
 
-        # Start playback if not already playing
-        if not self.is_playing:
-            self.protocol.start()
+    def _handle_song_sysex(self, addr, data):
+        """Song state from the Seqtrak (replies and its own reports). True if handled."""
+        if addr == [0x01, 0x10, 0x17] and data:
+            self.song_mode = data[0] == 0x02
+        elif addr == [0x71, 0x50, 0x00] and data:
+            self.scene_mode = bool(data[0])
+        elif addr == [0x71, 0x10, 0x04] and data:
+            self.current_scene = data[0]
+            self.next_scene = None
+        elif addr == [0x71, 0x10, 0x05] and data:
+            self.next_scene = data[0]
+        elif addr == [0x71, 0x10, 0x06] and data:
+            self.song_loop = bool(data[0])
+        elif addr == [0x71, 0x10, 0x07] and data:
+            self.scene_loop = bool(data[0])
+        elif addr[:2] == [0x71, 0x40]:
+            scene = addr[2]
+            if len(data) >= 13:
+                self.song_scenes[scene] = {'length': (data[0] << 7) | data[1], 'patterns': list(data[2:13])}
+            else:
+                self.song_scenes.pop(scene, None)
+        elif addr == [0x71, 0x10, 0x00] and len(data) >= 3 and data[0] in self.song_scenes:
+            self.song_scenes[data[0]]['length'] = (data[1] << 7) | data[2]
+        elif addr[0] == 0x71 and 0x10 <= addr[1] <= 0x1A and addr[2] == 0x01 and len(data) >= 2:
+            if data[0] in self.song_scenes:
+                self.song_scenes[data[0]]['patterns'][addr[1] - 0x10] = data[1]
+        elif addr in ([0x71, 0x00, 0x00], [0x71, 0x20, 0x00]):
+            self._request_song()  # scene added / deleted on the Seqtrak: scenes may have moved
+        else:
+            return False
+        self._refresh_song_view()
+        return True
+
     # -------------------------------------------------------------------------
     # Mode Switching (matching Reason app pattern)
     # -------------------------------------------------------------------------
@@ -2331,6 +2391,14 @@ class SeqtrakBridge:
             return
 
         # MUTE / SOLO: mute or solo the selected track (the Seqtrak solos one track at a time)
+        if cc in (BUTTONS['mute'], BUTTONS['solo']) and self.session_mode:
+            # Song view: hold Mute / Solo and press a pad = mute / solo that track in that scene
+            if cc == BUTTONS['mute']:
+                self.song_mute_held = value > 0
+            else:
+                self.song_solo_held = value > 0
+            self.set_button_led(cc, LED_ON if value > 0 else LED_DIM)
+            return
         if cc in (BUTTONS['mute'], BUTTONS['solo']):
             if value > 0:
                 if cc == BUTTONS['mute']:
@@ -2594,6 +2662,10 @@ class SeqtrakBridge:
             self._set_mode('device')
         elif cc == BUTTONS['note']:
             self._set_mode('note')
+        elif cc == BUTTONS['session'] and self.shift_held:
+            if not self.session_mode:
+                self._enter_session_mode()
+            self._cycle_song_mode()
         elif cc == BUTTONS['session']:
             # Toggle session view
             if self.session_mode:
@@ -2606,38 +2678,17 @@ class SeqtrakBridge:
             else:
                 self._enter_scale_mode()
 
-        # Session mode: Upper buttons (CC 20-27) increment pattern, Lower (CC 102-109) decrement
-        elif self.session_mode and 20 <= cc <= 27:
-            button_index = cc - 20
-            if button_index == self.session_selected_col:
-                # Increment pattern for selected slot
-                base_pos = self.session_page * 8
-                mixer_pos = base_pos + self.session_selected_col
-                if mixer_pos < len(MIXER_TRACK_ORDER):
-                    row = self.session_selected_row
-                    current = self.session_patterns[mixer_pos][row]
-                    new_pattern = min(6, current + 1)
-                    if new_pattern != current:
-                        self.session_patterns[mixer_pos][row] = new_pattern
-                        name = MIXER_DISPLAY_NAMES[mixer_pos]
-                        print(f"  {name} Row {row + 1}: Pattern {new_pattern}")
-                        self._update_session_display()
+        # Song view: [1] = Normal / Song / Scene mode, [8] = loop the whole song
+        elif self.session_mode and (20 <= cc <= 27 or 102 <= cc <= 109):
+            if cc == BUTTONS['upper_1']:
+                self._cycle_song_mode()
+            elif cc == BUTTONS['upper_8']:
+                self._toggle_song_loop()
 
-        elif self.session_mode and 102 <= cc <= 109:
-            button_index = cc - 102
-            if button_index == self.session_selected_col:
-                # Decrement pattern for selected slot
-                base_pos = self.session_page * 8
-                mixer_pos = base_pos + self.session_selected_col
-                if mixer_pos < len(MIXER_TRACK_ORDER):
-                    row = self.session_selected_row
-                    current = self.session_patterns[mixer_pos][row]
-                    new_pattern = max(1, current - 1)
-                    if new_pattern != current:
-                        self.session_patterns[mixer_pos][row] = new_pattern
-                        name = MIXER_DISPLAY_NAMES[mixer_pos]
-                        print(f"  {name} Row {row + 1}: Pattern {new_pattern}")
-                        self._update_session_display()
+        # Song view: Up / Down = scenes 1-8 / 9-16
+        elif self.session_mode and cc in (BUTTONS['up'], BUTTONS['down']):
+            self.scene_page = 0 if cc == BUTTONS['up'] else 1
+            self._refresh_song_view()
 
         # Mixer mode: Upper buttons (CC 20-27) = Solo, Lower buttons (CC 102-109) = Mute
         # Uses MIXER_TRACK_ORDER for display order
@@ -2800,6 +2851,10 @@ class SeqtrakBridge:
         elif self.session_mode and 71 <= cc <= 78:
             encoder_index = cc - 71  # 0-7
             self._handle_session_encoder(encoder_index, delta)
+
+        # Song view: master encoder = selected scene's length (Shift = master volume as usual)
+        elif self.session_mode and cc == 79 and not self.shift_held:
+            self._adjust_scene_length(delta)
 
         # Track mode: CC 78 = variation selection (1-6)
         # Shift+CC 78 = toggle between 3 and 6 variation modes
@@ -3646,6 +3701,7 @@ class SeqtrakBridge:
         self.protocol.request_parameter(Address.SWING)
         self.protocol.request_parameter([0x30, 0x40, 0x68])
         self.protocol.request_parameter([0x00, 0x00, 0x25])  # metronome
+        self._request_song()
         for addr in self._cc_for_sysex:
             self.protocol.request_parameter(list(addr))
         for slot in range(8):
