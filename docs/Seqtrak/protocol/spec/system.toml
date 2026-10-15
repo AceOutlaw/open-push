@@ -1,0 +1,276 @@
+# System block 00 00 xx (Data List "System"; global, not per project) and nearby device settings.
+
+[[message]]
+id = "system.speaker_volume"
+name = "Speaker master volume"
+area = "system"
+kind = "parameter"
+address = "00 00 00"
+data = "1 byte, 0–127"
+dir = ["command", "report", "readable"]
+status = "verified"
+meaning = "Speaker / headphone master volume (the device's volume buttons). Default 100."
+guide = "§16.4"
+evidence = ["Bridge master encoder since 2025; read at start and followed (PARITY ch.16 ✅)", "Data List System General"]
+
+[[message]]
+id = "system.headphone_volume"
+name = "Headphone master volume"
+area = "system"
+kind = "parameter"
+address = "00 00 01"
+data = "1 byte, 0–127 (default 32)"
+dir = ["command", "readable"]
+status = "official"
+meaning = "Headphone master volume."
+guide = "§16.4"
+evidence = ["Data List System General"]
+
+[[message]]
+id = "system.legacy_midi_tx"
+name = "MIDI cable port: transmit channel / CC-bank-PC / SysEx"
+area = "system"
+kind = "parameter"
+address = "00 00 0A"
+also = ["00 00 0B", "00 00 0C"]
+data = "0A channel messages 00/01 · 0B bit mask (40 CC, 20 Bank, 10 PC; 70 = all) · 0C SysEx 00/01 (addresses 0A–0C)"
+dir = ["command", "readable"]
+status = "app"
+meaning = "Per-port MIDI output filters for the MIDI conversion cable port (app SETTINGS > MIDI > ADVANCED)."
+guide = "§16.3.2"
+evidence = ["App click-through 112-08 (MIDI CABLE port, each toggle twice)"]
+notes = "Same layout for USB at 00 00 0E/0F/10 and Bluetooth at 00 00 12/13/14."
+
+[[message]]
+id = "system.usb_midi_tx"
+name = "USB port: transmit channel / CC-bank-PC / SysEx"
+area = "system"
+kind = "parameter"
+address = "00 00 0E"
+also = ["00 00 0F", "00 00 10"]
+data = "0E channel messages · 0F bit mask (70 all, 30 no CC, 50 no Bank, 60 no PC) · 10 SysEx"
+dir = ["command", "readable"]
+status = "app"
+meaning = "USB MIDI output filters. ⚠️ Turning SysEx off stops the Seqtrak reporting to the bridge. The app turns all three on whenever it connects."
+guide = "§16.3.2"
+evidence = ["App click-through 112-10; LE-02 (app re-asserts 0E 01, 0F 70, 10 01 on reconnect)"]
+
+[[message]]
+id = "system.bt_midi_tx"
+name = "Bluetooth port: transmit channel / CC-bank-PC / SysEx"
+area = "system"
+kind = "parameter"
+address = "00 00 12"
+also = ["00 00 13", "00 00 14"]
+data = "12 channel messages · 13 bit mask · 14 SysEx"
+dir = ["command", "readable"]
+status = "app"
+meaning = "Bluetooth MIDI output filters."
+guide = "§16.3.2"
+evidence = ["App click-through 112-09"]
+
+[[message]]
+id = "system.midi_thru"
+name = "MIDI Thru (cable / USB / Bluetooth)"
+area = "system"
+kind = "parameter"
+address = "00 00 22"
+also = ["00 00 23", "00 00 24"]
+data = "00 off, 03 on — 22 cable, 23 USB (to host), 24 Bluetooth"
+dir = ["command", "readable"]
+status = "app"
+meaning = "Pass incoming MIDI through to the port."
+guide = "§16.3.3"
+evidence = ["App click-through 112-08/09/10"]
+
+[[message]]
+id = "system.usb_audio_gain"
+name = "USB audio output gain"
+area = "system"
+kind = "parameter"
+address = "00 00 15"
+values = { "00" = "−6 dB", "01" = "0 dB", "02" = "+6 dB", "03" = "+12 dB" }
+dir = ["command", "readable"]
+status = "app"
+meaning = "Output gain of the USB audio stream."
+evidence = ["App click-through 109-05b"]
+
+[[message]]
+id = "system.wireless_lan"
+name = "Wireless LAN on/off"
+area = "system"
+kind = "parameter"
+address = "00 00 16"
+data = "00 off / 01 on"
+dir = ["command", "readable"]
+status = "official"
+meaning = "Wi-Fi on/off."
+guide = "§15.1.3"
+evidence = ["Data List System General (FUNCTIONALITY-MAP §4)"]
+
+[[message]]
+id = "system.analog_gain"
+name = "Speaker/phones output gain"
+area = "system"
+kind = "parameter"
+address = "00 00 18"
+values = { "00" = "−6 dB", "01" = "0 dB", "02" = "+6 dB", "03" = "+12 dB" }
+dir = ["command", "readable"]
+status = "app"
+meaning = "Analog output gain (HOME > SETTINGS > HARDWARE)."
+evidence = ["App click-through 109-05a"]
+
+[[message]]
+id = "system.sampling_source"
+name = "Sampling source"
+area = "sampler"
+kind = "parameter"
+address = "00 00 19"
+values = { "00" = "USB", "01" = "MIC / LINE IN", "02" = "RESAMPLING" }
+dir = ["command", "readable"]
+status = "app"
+meaning = "Where the SAMPLER records from."
+guide = "§8.3, §8.4"
+evidence = ["App click-through 106-04"]
+
+[[message]]
+id = "system.sampling_count_in"
+name = "Sampling count-in"
+area = "sampler"
+kind = "parameter"
+address = "00 00 1B"
+data = "00 off / 01 on"
+dir = ["command", "readable"]
+status = "app"
+meaning = "Count-in before sampling / MIDI recording (app: COUNT-IN MIDI RECORDING)."
+guide = "§8.6"
+evidence = ["App click-through 112-04"]
+
+[[message]]
+id = "system.auto_normalize"
+name = "Auto-normalize"
+area = "sampler"
+kind = "parameter"
+address = "00 00 1C"
+data = "00 off / 01 on"
+dir = ["command", "readable"]
+status = "app"
+meaning = "Normalize new samples."
+guide = "§8.8"
+evidence = ["App click-through 106-03"]
+
+[[message]]
+id = "system.project_resume"
+name = "Playback mode after project switch"
+area = "system"
+kind = "parameter"
+address = "00 00 1D"
+also = ["00 00 1E"]
+data = "1D Project Resume Switch + 1E Auto Trigger: OFF = 1D 00; MANUAL / AUTO set 1D 01 with 1E 00 / 01"
+dir = ["command", "readable"]
+status = "app"
+meaning = "What happens to playback after switching projects (app ADVANCED)."
+guide = "§4.1.1"
+evidence = ["App click-through 112-06"]
+
+[[message]]
+id = "system.record_quantize"
+name = "Live record quantize"
+area = "system"
+kind = "parameter"
+address = "00 00 1F"
+values = { "00" = "OFF", "01" = "1/32", "02" = "1/16T", "03" = "1/16", "04" = "1/8T", "05" = "1/8" }
+dir = ["command", "readable"]
+status = "app"
+meaning = "Quantize for real-time recording."
+guide = "§7.2"
+evidence = ["App click-through 105-13"]
+
+[[message]]
+id = "system.pad_velocity"
+name = "Input velocity"
+area = "system"
+kind = "parameter"
+address = "00 00 20"
+data = "1 byte, 1–127 (default 100)"
+dir = ["command", "readable"]
+status = "app"
+meaning = "Fixed velocity for notes entered on the device keys."
+evidence = ["App click-through 112-05", "Data List Pad Velocity"]
+
+[[message]]
+id = "system.sound_design_mode"
+name = "Advanced sound design"
+area = "system"
+kind = "parameter"
+address = "00 00 21"
+data = "00 / 01"
+dir = ["command", "readable"]
+status = "app"
+meaning = "Enables the advanced sound design pages on the device."
+evidence = ["App click-through 112-04"]
+
+[[message]]
+id = "system.metronome"
+name = "Metronome on/off, type, volume"
+area = "system"
+kind = "parameter"
+address = "00 00 25"
+also = ["00 00 26", "00 00 27"]
+data = "25 switch 00/01 · 26 type 00–04 (A–E) · 27 volume 0–127"
+dir = ["command", "report", "readable"]
+status = "app"
+meaning = "Click / metronome."
+guide = "§4.5.3"
+evidence = ["App click-through 112-03", "Bridge Metronome button bb115a8 (awaiting hardware test)"]
+
+[[message]]
+id = "system.midi_sync"
+name = "MIDI sync / start-stop send / clock out"
+area = "system"
+kind = "parameter"
+address = "00 00 2A"
+also = ["00 00 2B", "00 00 2D"]
+data = "2A sync 00 internal / 01 auto · 2B transmit sequencer control 00/01 · 2D clock out 00/01"
+dir = ["command", "readable"]
+status = "app"
+meaning = "Clock and transport sync settings."
+guide = "§16.3.1"
+evidence = ["App click-through 112-07", "Read 2026-10-12 on pibridge: 2A=1, 2B=1, 2D=0"]
+
+[[message]]
+id = "system.knob_sensitivity"
+name = "Track knob sensitivity"
+area = "system"
+kind = "parameter"
+address = "00 00 2F"
+values = { "01" = "FAST", "02" = "NORMAL", "03" = "SLOW" }
+dir = ["command", "readable"]
+status = "app"
+meaning = "Knob sensitivity (Data List names it Pattern Select Sensitivity)."
+guide = "§16.2"
+evidence = ["App click-through 112-13a"]
+
+[[message]]
+id = "system.wifi_country"
+name = "Wi-Fi country"
+area = "system"
+kind = "parameter"
+address = "00 60 06"
+data = "2 ASCII bytes, e.g. 55 53 = \"US\""
+dir = ["command", "readable"]
+status = "inferred"
+meaning = "Wi-Fi country code shown on the app's HARDWARE page."
+evidence = ["App P0-NAV read + write on opening HARDWARE"]
+
+[[message]]
+id = "system.hardware_unknown"
+name = "Other HARDWARE-page settings"
+area = "system"
+kind = "parameter"
+address = "00 6n nn"
+data = "00 60 00 = 00, 00 60 01 = 00, 00 61 02 = 00"
+dir = ["readable"]
+status = "unknown"
+meaning = "Read by the app on the HARDWARE page (Wi-Fi mode?)."
+evidence = ["App P0-NAV"]

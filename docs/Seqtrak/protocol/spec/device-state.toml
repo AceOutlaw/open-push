@@ -1,0 +1,161 @@
+# Device / UI state (01 xx): not in Yamaha's Data List. Mostly reports the device or app uses for its UI.
+
+[[message]]
+id = "state.firmware"
+name = "Firmware version"
+area = "device-state"
+kind = "parameter"
+address = "01 00 00"
+data = "01 02 01 03 (app showed 1.21.3)"
+dir = ["readable", "report"]
+status = "inferred"
+meaning = "Firmware version; also sent when the Seqtrak (re)connects."
+evidence = ["App P0-NAV", "Pi capture 2026-10-13 04:54 (reconnect)"]
+
+[[message]]
+id = "state.unknown_01_00_04"
+name = "01 00 04"
+area = "device-state"
+kind = "parameter"
+address = "01 00 04"
+data = "01"
+dir = ["readable"]
+status = "unknown"
+meaning = "Read by the app on the project manager page."
+evidence = ["App P0-NAV"]
+
+[[message]]
+id = "state.burst_end"
+name = "End of a state burst"
+area = "device-state"
+kind = "parameter"
+address = "01 10 00"
+data = "00"
+dir = ["report", "readable"]
+status = "verified"
+meaning = "Ends the burst the Seqtrak sends after a project delete and after it (re)connects. Never sent otherwise unless requested."
+evidence = ["Pi captures 2026-10-13 (delete 04:19, reconnect 04:54)", "Mac log 2026-10-14 (reconnects)"]
+
+[[message]]
+id = "state.app_page"
+name = "App page state"
+area = "device-state"
+kind = "parameter"
+address = "01 10 01"
+data = "00 / 01"
+dir = ["command", "report", "readable"]
+status = "unknown"
+meaning = "Written by the app on the PROJECT/SOUND MANAGER page (with 01 10 2F)."
+evidence = ["App P0-NAV, 102-02"]
+
+[[message]]
+id = "state.auto_power_off"
+name = "Auto power off"
+area = "system"
+kind = "parameter"
+address = "01 10 03"
+values = { "00" = "off", "01" = "5 min", "02" = "10 min", "03" = "15 min", "04" = "30 min", "05" = "60 min", "06" = "120 min" }
+dir = ["command", "readable"]
+status = "app"
+meaning = "Power off after inactivity (the Seqtrak also sleeps on USB power from a computer)."
+evidence = ["App click-through 112-13b"]
+
+[[message]]
+id = "state.memory"
+name = "Memory meters"
+area = "device-state"
+kind = "parameter"
+address = "01 10 09"
+also = ["01 10 0B", "01 10 0D", "01 10 0F", "01 10 11", "01 10 13"]
+data = "2 bytes each"
+dir = ["readable"]
+status = "inferred"
+meaning = "Memory usage shown on the app's PROJECT/SOUND MANAGER page."
+evidence = ["App P0-NAV, 102-02"]
+
+[[message]]
+id = "state.project_name_buf"
+name = "01 10 16"
+area = "device-state"
+kind = "parameter"
+address = "01 10 16"
+data = "~88 bytes (zeros so far)"
+dir = ["readable"]
+status = "unknown"
+meaning = "Possibly the current project's name."
+evidence = ["App P0-NAV"]
+
+[[message]]
+id = "state.display_mode"
+name = "Device display mode"
+area = "device-state"
+kind = "parameter"
+address = "01 10 18"
+data = "00 normal, 03 step key held, 08 micro timing shown, 01 project select; 13/15/16 seen"
+dir = ["report", "readable"]
+status = "reported"
+meaning = "What the Seqtrak's display (Global Meter / keys) currently shows."
+evidence = ["Pi captures 2026-10-13", "Mac log 2026-10-14 14:29 (project switch: 01)"]
+
+[[message]]
+id = "state.ui_mode"
+name = "Device UI mode"
+area = "device-state"
+kind = "parameter"
+address = "01 10 19"
+values = { "00" = "idle", "03" = "step input", "04" = "DELETE held" }
+dir = ["report", "readable"]
+status = "reported"
+meaning = "Device UI state; the bridge re-reads steps when DELETE is released."
+evidence = ["Pi captures 2026-10-13"]
+
+[[message]]
+id = "state.edit_flags"
+name = "Edit / indicator state"
+area = "device-state"
+kind = "parameter"
+address = "01 10 2D"
+also = ["01 10 2E"]
+data = "2D: 00 00, 01 01, 04 04 (around edits) · 2E: indicator 01, 03, 05, 06, 09 (volume), 11"
+dir = ["report"]
+status = "reported"
+meaning = "UI state broadcasts around device edits; not needed to make edits work."
+evidence = ["Pi captures 2026-10-13", "STEP-SEQUENCER §2 item 4"]
+
+[[message]]
+id = "state.track_ui"
+name = "Per-track UI state"
+area = "device-state"
+kind = "parameter"
+address = "01 1p 30"
+also = ["01 1p 36", "01 1p 39", "01 1p 3C", "01 1p 50", "01 1p 51", "01 1p 52", "01 1p 56", "01 1p 57", "01 1p 58"]
+data = "30 GUIDE panel page (00–04) · 39 knob display (01 01, 00 00) · 36, 3C (read on select) · 50–52 / 56–58 app page and sub-tab"
+dir = ["command", "report", "readable"]
+status = "reported"
+meaning = "UI state per track used by the app and the device."
+evidence = ["App P0-NAV, EX-08…17, LE-07…10", "Pi captures"]
+
+[[message]]
+id = "state.unknown_01_10_27_burst"
+name = "01 10 1A/1B/1C/1E (project burst)"
+area = "device-state"
+kind = "parameter"
+address = "01 10 1A"
+also = ["01 10 1B", "01 10 1C", "01 10 1E"]
+data = "00"
+dir = ["report"]
+status = "unknown"
+meaning = "Part of the project-load / delete burst."
+evidence = ["Pi capture 2026-10-13 04:19"]
+
+[[message]]
+id = "state.pattern_browse"
+name = "01 10 2C"
+area = "device-state"
+kind = "parameter"
+address = "01 10 2C"
+data = "00–06"
+dir = ["report"]
+status = "unknown"
+meaning = "Sent while a knob was turned with SYNTH 1 selected (values 02, 06, 05, 04, 02, 01, 00); maybe a pattern being browsed. The bridge has an old constant for it (PATTERN_VAR_B)."
+evidence = ["Pi capture 2026-10-14 23:35"]

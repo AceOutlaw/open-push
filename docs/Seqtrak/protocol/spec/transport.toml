@@ -1,0 +1,62 @@
+# Transport, recording, undo.
+
+[[message]]
+id = "transport.realtime"
+name = "Start / Continue / Stop / Clock"
+area = "transport"
+kind = "realtime"
+form = "FA start · FB continue · FC stop · F8 clock"
+dir = ["command", "report"]
+status = "verified"
+meaning = "MIDI realtime transport. The Seqtrak sends Start/Stop when its own PLAY is pressed (Transmit Sequencer Control on); clock only if Clock Out is on."
+evidence = ["Bridge playhead follows them (150927a, hardware-tested 2026-10-13)", "Pi captures"]
+
+[[message]]
+id = "transport.play_state"
+name = "Play / Stop"
+area = "transport"
+kind = "parameter"
+address = "01 10 20"
+data = "01 playing / 00 stopped"
+dir = ["command", "report", "readable"]
+status = "app"
+meaning = "Transport state; the app's Play/Stop sends it, the Seqtrak reports it."
+evidence = ["App click-through 112-11, EX-02, SG-16", "Pi captures (device reports)"]
+
+[[message]]
+id = "transport.record_state"
+name = "Record on / off"
+area = "transport"
+kind = "parameter"
+address = "01 10 21"
+data = "01 on / 00 off"
+dir = ["command", "report", "readable"]
+status = "app"
+meaning = "Real-time recording. Stop while recording also sends 00."
+evidence = ["App click-through EX-02 (PAD/KEY record circle)", "Pi capture 2026-10-13 (device reports)"]
+
+[[message]]
+id = "transport.sample_record"
+name = "Sample record on / off"
+area = "sampler"
+kind = "parameter"
+address = "01 10 22"
+data = "01 start / 00 stop"
+dir = ["command", "report"]
+status = "verified"
+meaning = "Starts / stops sampling into the selected SAMPLER pad (select it first with 01 10 28)."
+guide = "§8.2"
+evidence = ["Bridge Shift+Record samples a pad (PARITY ch.8 ✅)"]
+
+[[message]]
+id = "transport.undo_redo"
+name = "UNDO / REDO"
+area = "transport"
+kind = "parameter"
+address = "01 10 1F"
+data = "01"
+dir = ["command", "report"]
+status = "verified"
+meaning = "Same as the [UNDO/REDO] button: each press toggles undo / redo of the last sound or effect parameter change. The restored value is then reported as the knob's CC."
+guide = "§9.4"
+evidence = ["Pi capture 2026-10-14 22:52 (device button)", "Sent from the Pi twice: KICK attack CC 73 went 64 → 109 → 64"]

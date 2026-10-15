@@ -1,0 +1,87 @@
+# Bulk transfers. Request F0 43 20 7F 1C 0C [H M L] F7; reply pages
+# F0 43 00 7F 1C [count hi lo] 0C [H M L] [total pages hi lo] [page hi lo] [data] [checksum] F7.
+# The app acknowledges each page with a bulk message to 01 22 00 carrying [H M L] 00 [page] 00 00.
+
+[[message]]
+id = "bulk.official_blocks"
+name = "Official bulk dumps (project / sound / sample)"
+area = "bulk"
+kind = "bulk"
+address = "11 nn nn"
+data = "Bulk Header 11 [mm] [nn] … Footer 12 [mm] [nn]; blocks per the Data List Bulk Dump Block table"
+dir = ["command", "report"]
+status = "official"
+meaning = "Whole project, sound or sampler element as a dump."
+evidence = ["Data List p. 120–121"]
+
+[[message]]
+id = "bulk.page_ack"
+name = "Bulk page acknowledge"
+area = "bulk"
+kind = "bulk"
+address = "01 22 00"
+data = "[H M L of the dump] 00 [page] 00 00"
+dir = ["command"]
+status = "app"
+meaning = "The app confirms each received page before the next is sent."
+evidence = ["App P0-NAV, EX-18…20, 106-16"]
+
+[[message]]
+id = "bulk.project_list"
+name = "Project list"
+area = "bulk"
+kind = "bulk"
+address = "0B 00 00"
+data = "1 page"
+dir = ["readable"]
+status = "inferred"
+meaning = "Project list (PROJECT/SOUND MANAGER, project-name popup)."
+evidence = ["App P0-NAV, 102-01, LE-04"]
+
+[[message]]
+id = "bulk.sound_list"
+name = "Sound list"
+area = "bulk"
+kind = "bulk"
+address = "0C nn nn"
+data = "0C [type][cat]: type 0x = drum / synth / DX (00/01/02), 1x = a category list (KICK 0C 10 00, SYNTH BASS 0C 11 00, DX 0C 12 01); up to 8 pages of names + categories"
+dir = ["readable"]
+status = "inferred"
+meaning = "Sounds for the SOUND picker."
+evidence = ["App P0-NAV, EX-18…20"]
+
+[[message]]
+id = "bulk.sample_list"
+name = "Sample list"
+area = "bulk"
+kind = "bulk"
+address = "0D nn nn"
+data = "0D [type][cat], e.g. RISER = 0D 02 04 (2 pages)"
+dir = ["readable"]
+status = "inferred"
+meaning = "Samples for the SAMPLER picker."
+evidence = ["App 106-16"]
+
+[[message]]
+id = "bulk.favourite"
+name = "Favourite a sound"
+area = "bulk"
+kind = "bulk"
+address = "10 01 03"
+data = "[bank LSB] [program] [0/1]"
+dir = ["command"]
+status = "inferred"
+meaning = "The heart in the SOUND picker."
+evidence = ["App EX-18"]
+
+[[message]]
+id = "bulk.reconnect_01_40"
+name = "01 40 00"
+area = "bulk"
+kind = "bulk"
+address = "01 40 00"
+data = "00 07"
+dir = ["report"]
+status = "unknown"
+meaning = "Sent once by the Seqtrak right after reconnecting (current project?)."
+evidence = ["Mac log 2026-10-14 11:00"]

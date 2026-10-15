@@ -1,0 +1,166 @@
+# Song mode (guide §13): up to 16 scenes. Scene mode is a flag on top of Song mode.
+
+[[message]]
+id = "song.mode"
+name = "Song mode on / off"
+area = "song"
+kind = "parameter"
+address = "01 10 17"
+values = { "00" = "normal", "02" = "Song mode" }
+dir = ["command", "report", "readable"]
+status = "verified"
+meaning = "Song mode. Re-sent at the start of a project load. NOT a 'project loaded' signal."
+guide = "§13.1"
+evidence = ["Device keys captured 2026-10-14", "2026-10-15 from the Pi: 02 → readback 02, 00 → 00"]
+
+[[message]]
+id = "song.scene_mode"
+name = "Scene mode on / off"
+area = "song"
+kind = "parameter"
+address = "71 50 00"
+data = "01 on / 00 off"
+dir = ["command", "report", "readable"]
+status = "verified"
+meaning = "Scene mode (loop one scene). Turning it off also leaves Song mode (01 10 17 → 00), like the device's exit route."
+guide = "§13.1.1"
+evidence = ["Device keys captured 2026-10-14", "2026-10-15 from the Pi"]
+
+[[message]]
+id = "song.scene_add"
+name = "Add scene"
+area = "song"
+kind = "parameter"
+address = "71 00 00"
+data = "[scene 0–15]"
+dir = ["command", "report"]
+status = "verified"
+meaning = "Add a scene; the current scene is copied into it."
+guide = "§13.3"
+evidence = ["App SG-04/05", "Device unlit scene key", "2026-10-15 from the Pi"]
+
+[[message]]
+id = "song.scene_delete"
+name = "Delete scene"
+area = "song"
+kind = "parameter"
+address = "71 20 00"
+data = "[scene]"
+dir = ["command", "report"]
+status = "verified"
+meaning = "Delete a scene; later scenes move up."
+guide = "§13.4"
+evidence = ["Device DELETE + scene key 2026-10-14", "2026-10-15 from the Pi"]
+
+[[message]]
+id = "song.scene_data"
+name = "Scene data"
+area = "song"
+kind = "parameter"
+address = "71 40 nn"
+data = "[len hi] [len lo] + 11 bytes (pattern 0–5 per track, KICK … SAMPLER); no data = empty slot"
+dir = ["readable", "report"]
+status = "verified"
+meaning = "Read a scene."
+evidence = ["App P0-NAV / SG", "Readback 2026-10-15"]
+
+[[message]]
+id = "song.scene_length"
+name = "Scene length"
+area = "song"
+kind = "parameter"
+address = "71 10 00"
+data = "[scene] [hi] [lo] = AUTO (00 00) or 1–96 bars"
+dir = ["command", "report"]
+status = "verified"
+meaning = "Length of a scene."
+guide = "§13.5.2"
+evidence = ["Device [PAGE] + [ALL] knob 2026-10-14/15 (max 96)", "2026-10-15 from the Pi (4 bars, back to AUTO)"]
+
+[[message]]
+id = "song.scene_pattern"
+name = "Scene pattern / mute per track"
+area = "song"
+kind = "parameter"
+address = "71 1n 0n"
+data = "71 [10+t] 01 [scene] [pattern 0–5]; 71 [10+t] 02 [scene] [mute 0/1]"
+dir = ["command"]
+status = "app"
+meaning = "A track's pattern / mute in a scene."
+guide = "§13.5.1"
+evidence = ["App SG-07, SG-18…22"]
+
+[[message]]
+id = "song.scene_solo"
+name = "Scene solo"
+area = "song"
+kind = "parameter"
+address = "71 10 03"
+data = "[scene] [track 1–11, 00 off]"
+dir = ["command"]
+status = "app"
+meaning = "The soloed track in a scene."
+evidence = ["App SG-21/22"]
+
+[[message]]
+id = "song.current_scene"
+name = "Current scene"
+area = "song"
+kind = "parameter"
+address = "71 10 04"
+data = "[scene]"
+dir = ["command", "report", "readable"]
+status = "verified"
+meaning = "The playing / selected scene; follows playback. As a command it selects the scene when stopped."
+evidence = ["2026-10-15 from the Pi (stopped)", "Pi capture 00:36: while playing, writing it did not change the song order"]
+
+[[message]]
+id = "song.next_scene"
+name = "Next (queued) scene"
+area = "song"
+kind = "parameter"
+address = "71 10 05"
+data = "[scene]"
+dir = ["command", "report"]
+status = "reported"
+meaning = "Scene queued by a scene key during playback; starts when the current one ends (Song) or at launch quantize (Scene mode)."
+guide = "§13.2.1"
+evidence = ["Device captures 2026-10-14", "Bridge sends it as a command since 5d7a386 (untested)"]
+
+[[message]]
+id = "song.loop_song"
+name = "Loop whole song"
+area = "song"
+kind = "parameter"
+address = "71 10 06"
+data = "01 on / 00 off"
+dir = ["command", "readable"]
+status = "app"
+meaning = "Loop the song after the last scene (app-only setting)."
+guide = "§13.2.3"
+evidence = ["App SG-25/26"]
+
+[[message]]
+id = "song.loop_scene"
+name = "Loop scene"
+area = "song"
+kind = "parameter"
+address = "71 10 07"
+data = "01 / 00"
+dir = ["report", "readable"]
+status = "reported"
+meaning = "Scene loop (double-tap a playing scene's key)."
+guide = "§13.2.2"
+evidence = ["Device captures 2026-10-14"]
+
+[[message]]
+id = "song.scene_end"
+name = "Scene end tick"
+area = "song"
+kind = "parameter"
+address = "01 10 29"
+data = "00"
+dir = ["report"]
+status = "inferred"
+meaning = "Sent each time a scene ends and the next (or the same, looping) starts."
+evidence = ["Device captures 2026-10-14"]

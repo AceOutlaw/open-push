@@ -1,0 +1,179 @@
+# Per-track settings: Project Track 30 5p xx, track select, sound select.
+
+[[message]]
+id = "track.volume"
+name = "Track volume"
+area = "mixer"
+kind = "parameter"
+address = "30 5p 00"
+data = "0–127"
+dir = ["command", "report", "readable"]
+status = "app"
+meaning = "Track volume (same as CC 7 on the track's channel)."
+guide = "§11.2"
+evidence = ["App 107-03, 109-01", "Bridge reads it at start (dcfc4b3)"]
+
+[[message]]
+id = "track.pan"
+name = "Track pan"
+area = "mixer"
+kind = "parameter"
+address = "30 5p 01"
+data = "1–127, 64 = centre"
+dir = ["command", "report", "readable"]
+status = "app"
+meaning = "Track pan (same as CC 10)."
+guide = "§11.2"
+evidence = ["App 107-02, 107-22, EX-07"]
+
+[[message]]
+id = "track.choke_group"
+name = "Drum choke group"
+area = "track"
+kind = "parameter"
+address = "30 5p 08"
+values = { "00" = "off", "7E" = "HAT pair (HAT1 + HAT2)", "7F" = "PERC pair (PERC1 + PERC2)" }
+dir = ["command", "readable"]
+status = "app"
+meaning = "Choke groups between hats / percs (app SETTINGS > DRUM CHOKE; written to both tracks). Data List: Group Number."
+evidence = ["App click-through 113-13, 113-14"]
+
+[[message]]
+id = "track.octave"
+name = "Track octave"
+area = "track"
+kind = "parameter"
+address = "30 5p 0C"
+data = "3E–42 = −2…+2 (guide says +2…−3)"
+dir = ["command", "readable"]
+status = "official"
+meaning = "Octave of the Seqtrak's own Synth keys for the track."
+guide = "§7.3"
+evidence = ["Data List Project Track General"]
+
+[[message]]
+id = "track.pattern_select"
+name = "Pattern select"
+area = "patterns"
+kind = "parameter"
+address = "30 5p 0F"
+data = "0–5 = pattern 1–6"
+dir = ["command", "report", "readable"]
+status = "verified"
+meaning = "Selected pattern (variation) of a track. In Song mode it changes on every scene change."
+guide = "§5.1"
+evidence = ["Bridge Track mode encoder 8 since 2025; device changes followed", "App 103-01/02"]
+
+[[message]]
+id = "track.pattern_length"
+name = "Pattern length (pattern 1–6)"
+area = "patterns"
+kind = "parameter"
+address = "30 5p ss"
+data = "ss = 16, 18, 1A, 1C, 1E, 20 for patterns 1–6; 2 bytes, 1–128 steps"
+dir = ["command", "report", "readable"]
+status = "verified"
+meaning = "Step count of each pattern. Lengthening copies existing bars into the new ones; shortening keeps the data."
+guide = "§5.2"
+evidence = ["Readback at start (bridge)", "2026-10-15 PERC 2: 16 → 32 copied steps 1/5/11 to 17/21/27"]
+
+[[message]]
+id = "track.mute"
+name = "Track mute"
+area = "mixer"
+kind = "parameter"
+address = "30 5p 29"
+values = { "00" = "unmuted", "7D" = "muted" }
+dir = ["command", "report", "readable"]
+status = "app"
+meaning = "Track mute (same as CC 23)."
+guide = "§5.8.1"
+evidence = ["App click-through 110-01", "Data List: 0 off, 125 on"]
+
+[[message]]
+id = "track.select"
+name = "Selected track"
+area = "track"
+kind = "parameter"
+address = "01 10 27"
+data = "0–10 = track 1–11"
+dir = ["command", "report", "readable"]
+status = "verified"
+meaning = "The track selected on the Seqtrak. The device echoes a select."
+guide = "§5.6"
+evidence = ["Bridge track select both ways since 2025 (echo guard 0.5 s)"]
+
+[[message]]
+id = "track.sampler_pad_select"
+name = "Selected SAMPLER pad"
+area = "sampler"
+kind = "parameter"
+address = "01 10 28"
+data = "0–6 = pad 1–7"
+dir = ["command", "report", "readable"]
+status = "verified"
+meaning = "Selected sample pad (Synth key on the SAMPLER track)."
+guide = "§8.2"
+evidence = ["Bridge pad select both ways (PARITY ch.8 ✅)"]
+
+[[message]]
+id = "track.global_pattern"
+name = "Global pattern indicator"
+area = "patterns"
+kind = "parameter"
+address = "01 10 2A"
+data = "0–5"
+dir = ["report"]
+status = "reported"
+meaning = "Sent when all tracks switch to one pattern (ALL knob)."
+evidence = ["Pi captures; bridge follows it"]
+
+[[message]]
+id = "track.sound_select"
+name = "Select a track's sound"
+area = "track"
+kind = "program"
+form = "B[ch] 00 3F, B[ch] 20 [bank], C[ch] [program] (ch = track 1–10)"
+data = "Bank MSB 63; LSB 00–1F presets, 20–2F user"
+dir = ["command", "report"]
+status = "verified"
+meaning = "Choose the sound of a drum / synth / DX track."
+guide = "§5.7"
+evidence = ["Bridge patch cycling since 2025 (PARITY ch.5 ✅)", "App EX-18/19/20", "Data List"]
+
+[[message]]
+id = "track.sound_name"
+name = "Current sound name"
+area = "track"
+kind = "parameter"
+address = "01 1p 35"
+data = "Yamaha 7-bit packed text (8-byte groups: high bits + 7 chars)"
+dir = ["readable", "report"]
+status = "verified"
+meaning = "Name of the sound loaded on track p, e.g. 'TS_RNB_kick_rnb'."
+evidence = ["Bridge reads names per track (PARITY ch.5)", "App P0-NAV"]
+
+[[message]]
+id = "track.sound_id"
+name = "Current sound bank / program"
+area = "track"
+kind = "parameter"
+address = "01 1p 33"
+data = "[bank LSB] [program]"
+dir = ["readable"]
+status = "inferred"
+meaning = "Bank LSB and program of the loaded sound (KICK read 20 51 = the sound the picker selected with LSB 20, PC 51)."
+evidence = ["App P0-NAV + EX-18"]
+
+[[message]]
+id = "track.clear"
+name = "Clear a track's pattern"
+area = "steps"
+kind = "parameter"
+address = "01 1p 37"
+data = "00"
+dir = ["command", "report"]
+status = "verified"
+meaning = "Like DELETE + track knob: clears the pattern SHOWN on the Seqtrak (not the MIDI-selected one)."
+guide = "§5.4"
+evidence = ["STEP-SEQUENCER §2 item 8 (sampler, 2026-10-12)"]

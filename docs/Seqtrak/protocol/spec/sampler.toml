@@ -1,0 +1,88 @@
+# SAMPLER pads: SAMPLER Sample 50 eA xx, element 41 eA / 42 eA, pad state 01 1e xx.
+
+[[message]]
+id = "sampler.start_end"
+name = "Sample start / end point"
+area = "sampler"
+kind = "parameter"
+address = "50 eA 66"
+also = ["50 eA 6A"]
+data = "66 start, 6A end; 4 bytes × 7 bits, in sample frames. End max = sample length − 17"
+dir = ["command", "readable"]
+status = "app"
+meaning = "Trim a pad's sample (e = pad − 1)."
+guide = "§9.1.5"
+evidence = ["App 106-06/07, LE-09 (pads 1, 2, 7)"]
+
+[[message]]
+id = "sampler.loop"
+name = "Sample loop on / length"
+area = "sampler"
+kind = "parameter"
+address = "50 eA 5F"
+also = ["50 eA 60"]
+data = "5F loop 00/01; 60 loop length, 4 × 7-bit frames (loop ends at the end point)"
+dir = ["command", "readable"]
+status = "app"
+meaning = "Loop on/off and loop length."
+evidence = ["App 106-08, LE-09/11"]
+
+[[message]]
+id = "sampler.length"
+name = "Sample length"
+area = "sampler"
+kind = "parameter"
+address = "01 1e 40"
+data = "4 × 7-bit frames (pad 1 = 01 10, pad 7 = 01 16)"
+dir = ["readable"]
+status = "inferred"
+meaning = "Length of the pad's sample in frames (pad 1: 21,360). Sample rate unknown."
+evidence = ["App reads it when the sample editor opens (106-06…); 17 more than the End Point max on 3 pads"]
+
+[[message]]
+id = "sampler.name"
+name = "Sample name"
+area = "sampler"
+kind = "parameter"
+address = "01 1e 46"
+data = "Yamaha 7-bit packed text"
+dir = ["readable"]
+status = "inferred"
+meaning = "Name of the pad's sample ('Female Count 1')."
+evidence = ["App reads it with the sample editor (106-06…)"]
+
+[[message]]
+id = "sampler.element"
+name = "Pad pitch / mode / pan / level / envelopes"
+area = "sampler"
+kind = "parameter"
+address = "41 eA nn"
+data = "4F coarse tune (40 = 0) · 08 trigger/gate (00 trigger, 01 gate) · 0B pan · 2E level · 33 AEG attack · 35 AEG decay 2 · 37 AEG release (the app's DECAY) · 58 PEG attack time · 59 PEG decay 1 time · 5E/60/62/64 PEG levels (2 bytes, 128 + value)"
+dir = ["command", "readable"]
+status = "app"
+meaning = "Per-pad sound parameters."
+evidence = ["App 106-09…18, LE-06…11, 109-03"]
+
+[[message]]
+id = "sampler.element_eq"
+name = "Pad EQ gain"
+area = "sampler"
+kind = "parameter"
+address = "42 eA nn"
+data = "36 EQ low gain, 39 EQ high gain (40 = 0 dB)"
+dir = ["command", "readable"]
+status = "app"
+meaning = "Per-pad EQ (GUIDE panel page 3)."
+evidence = ["App LE-08 (order of knobs → 36 low, 39 high is inferred)"]
+
+[[message]]
+id = "sampler.sample_select"
+name = "Choose a pad's sample"
+area = "sampler"
+kind = "program"
+form = "B[pad−1] 00 3E, B[pad−1] 20 [bank], C[pad−1] [program]"
+dir = ["command"]
+status = "app"
+meaning = "Bank MSB 62 = sampler element; channel = pad."
+guide = "§5.7"
+evidence = ["App 106-16", "Data List (channel = element number)", "Bridge sample cycling"]

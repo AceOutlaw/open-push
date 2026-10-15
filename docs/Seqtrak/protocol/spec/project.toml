@@ -1,0 +1,182 @@
+# Project-wide settings: Project Common 30 40 xx, scales 30 4D, project select.
+
+[[message]]
+id = "project.select"
+name = "Load project 1–8"
+area = "project"
+kind = "program"
+form = "B0 00 40, B0 20 00, C0 [project−1]"
+dir = ["command"]
+status = "app"
+meaning = "Bank MSB 64 / LSB 0 / Program 0–7 loads project 1–8 (program 8 = temporary project). Channel ignored. The Seqtrak saves the current project first and stops playback."
+guide = "§4.1"
+evidence = ["Data List Bank Select / Program Change", "App 102-01 and LE-04 re-select the current project with C0 07", "Bridge Browse picker 5d7a386 (awaiting first real switch)"]
+
+[[message]]
+id = "project.current"
+name = "Current project"
+area = "project"
+kind = "parameter"
+address = "01 10 15"
+data = "0–7 (project 1–8)"
+dir = ["report", "readable"]
+status = "verified"
+meaning = "Which project is loaded. Sent by the Seqtrak on its own when the project is switched on the device."
+evidence = ["Read 07 all night 2026-10-14, then 00 after a device switch at 14:29 (Mac capture)", "Bridge re-reads on change (ab1c99a)"]
+
+[[message]]
+id = "project.name"
+name = "Project name"
+area = "project"
+kind = "parameter"
+address = "30 40 00"
+data = "88 bytes UTF-8, 7-bit encoded (addresses 00–57)"
+dir = ["command", "readable"]
+status = "official"
+meaning = "Project name."
+evidence = ["Data List Project Common General"]
+
+[[message]]
+id = "project.sampler_mute"
+name = "Sampler pad mutes"
+area = "sampler"
+kind = "parameter"
+address = "30 40 63"
+data = "bit mask, bit 0 = pad 1 … bit 6 = pad 7"
+dir = ["command", "report", "readable"]
+status = "app"
+meaning = "Mute individual SAMPLER pads."
+guide = "§8.11"
+evidence = ["App click-through 109-03b", "Data List"]
+
+[[message]]
+id = "project.pan"
+name = "Project pan"
+area = "mixer"
+kind = "parameter"
+address = "30 40 65"
+data = "1–127, 64 = centre"
+dir = ["command", "readable"]
+status = "official"
+meaning = "Project (ALL knob) pan."
+guide = "§11.2"
+evidence = ["Data List Project Common General"]
+
+[[message]]
+id = "project.volume"
+name = "Project volume"
+area = "mixer"
+kind = "parameter"
+address = "30 40 66"
+data = "0–127 (default 127)"
+dir = ["command", "readable"]
+status = "verified"
+meaning = "Project (ALL knob) volume = the app's MASTER Overview VOLUME. Not the speaker volume (00 00 00)."
+guide = "§11.2"
+evidence = ["P0-PROBE: app 127 → 98 → 127 sent 66 66/62/7F", "Data List"]
+
+[[message]]
+id = "project.solo"
+name = "Solo track"
+area = "mixer"
+kind = "parameter"
+address = "30 40 68"
+data = "00 off, 01–0B track 1–11"
+dir = ["command", "report", "readable"]
+status = "app"
+meaning = "The one soloed track (only one at a time). Same as CC 24."
+guide = "§5.8.2"
+evidence = ["App click-through 110-02", "Data List"]
+
+[[message]]
+id = "project.tempo"
+name = "Tempo"
+area = "project"
+kind = "parameter"
+address = "30 40 76"
+data = "2 bytes (7-bit pair), 5–300 BPM; e.g. 00 64 = 100"
+dir = ["command", "report", "readable"]
+status = "verified"
+meaning = "Project tempo."
+guide = "§4.5.1"
+evidence = ["Bridge tempo encoder + readback (PARITY ch.4)", "App 111-02 / 112-02"]
+notes = "Typing 60.5 in the app sent 02 2C (= 300); fractional BPM encoding unknown."
+
+[[message]]
+id = "project.pattern_select_mode"
+name = "3 / 6 patterns"
+area = "patterns"
+kind = "parameter"
+address = "30 40 79"
+values = { "00" = "3 patterns", "01" = "6 patterns" }
+dir = ["command", "readable"]
+status = "app"
+meaning = "Number of patterns per track (Data List: Pattern Select Mode Normal / Advanced)."
+guide = "§5.3"
+evidence = ["App click-through 103-04", "Bridge Shift+encoder 8 (dcfc4b3)"]
+
+[[message]]
+id = "project.launch_quantize"
+name = "Launch quantize"
+area = "patterns"
+kind = "parameter"
+address = "30 40 7A"
+data = "2 bytes, steps 1–128 (app: 1, 4, 16, 32)"
+dir = ["command", "readable"]
+status = "app"
+meaning = "Launch quantize length (Data List: Pattern Master Step)."
+guide = "§5.1.3"
+evidence = ["App click-through 103-05"]
+
+[[message]]
+id = "project.swing"
+name = "Swing"
+area = "project"
+kind = "parameter"
+address = "30 40 7C"
+data = "2 bytes = 128 + offset in ticks, offset −58…+58 (01 00 = straight). App % = (120 + offset)/240"
+dir = ["command", "report", "readable"]
+status = "verified"
+meaning = "Swing of even steps."
+guide = "§4.5.2"
+evidence = ["App 112-01 (68 % = 01 2C)", "Bridge swing encoder confirmed on hardware by Ace 2026-10-14"]
+notes = "The app also writes the same value to each synth's arp swing (31 5p 16)."
+
+[[message]]
+id = "project.scale"
+name = "Scale (slot)"
+area = "project"
+kind = "parameter"
+address = "30 40 7E"
+data = "0–7 = the project's scale slot"
+dir = ["command", "report", "readable"]
+status = "app"
+meaning = "Selected scale. Each project has 8 scale slots (30 4D)."
+guide = "§7.4"
+evidence = ["App click-through 105-11"]
+
+[[message]]
+id = "project.key"
+name = "Key"
+area = "project"
+kind = "parameter"
+address = "30 40 7F"
+data = "40–4B = C … B (0x40 + semitone)"
+dir = ["command", "report", "readable"]
+status = "app"
+meaning = "Key (half steps)."
+guide = "§7.5"
+evidence = ["App click-through 105-10", "Data List range 40–4B"]
+
+[[message]]
+id = "project.scale_slot_notes"
+name = "Scale slot notes"
+area = "project"
+kind = "parameter"
+address = "30 4D nn"
+data = "nn = 16 × slot + pad (pad 0–6); value = MIDI note"
+dir = ["command", "readable"]
+status = "app"
+meaning = "The 7 pad notes of each of the 8 scale slots (MINOR = 3C 3E 3F 41 43 44 46 …)."
+guide = "§7.4 note"
+evidence = ["App P0-NAV reads all 56", "App 105-12 rewrites slot 8 (30 4D 70–76)"]

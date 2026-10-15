@@ -4,6 +4,9 @@ Complete MIDI protocol documentation for Yamaha Seqtrak, combining official Yama
 
 *Source: Yamaha SEQTRAK User Guide (MIDI section) + live MIDI capture logs*
 
+> **⭐ The structured protocol spec now lives in `docs/Seqtrak/protocol/`** (`spec/*.toml` = source of truth,
+> `PROTOCOL.md` = generated reference, each message with status + evidence). New findings go there first.
+>
 > **Read this before using this file (updated 2026-10-13).** The Seqtrak is not in any AI model's training
 > data; this file is the reference for what each message does. Status key: ✅ verified on hardware ·
 > 🟡 observed, not fully verified · ❓ unknown — anything unmarked from Dec 2025 should be treated as 🟡.

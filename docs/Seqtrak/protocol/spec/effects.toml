@@ -1,0 +1,91 @@
+# Effects: sends 30 41/42, master effects 30 43–46, master EQ 30 47, track effect 31 2p, effect CCs.
+# Effect types are 2-byte MSB LSB codes from the Data List Effect Type List (md 14), matched in captures.
+
+[[message]]
+id = "fx.reverb"
+name = "Send 1 (reverb)"
+area = "effects"
+kind = "parameter"
+address = "30 41 nn"
+data = "00 type (2 bytes, e.g. 01 01 R3 HALL) · 03, 05, … params 1–16 (2 bytes each) · 44 return level"
+dir = ["command", "readable"]
+status = "verified"
+meaning = "Send reverb. Types: HD HALL 01 03, HD ROOM 01 13, HD PLATE 01 21, REV-X HALL 01 00, REV-X ROOM 01 10, R3 HALL 01 01, R3 ROOM 01 11, R3 PLATE 01 20, SPX HALL 01 02, SPX ROOM 01 12, SPX STAGE 01 30, SPACE SIMULATOR 01 40."
+guide = "§11.3"
+evidence = ["App 108-30…32: every type matched the Data List Effect Type List (two sources agree)"]
+
+[[message]]
+id = "fx.delay"
+name = "Send 2 (delay)"
+area = "effects"
+kind = "parameter"
+address = "30 42 nn"
+data = "00 type (2 bytes) · 03, 05, … params · 44 return level"
+dir = ["command", "readable"]
+status = "verified"
+meaning = "Send delay. Types: CROSS 02 00, TEMPO CROSS 02 10, TEMPO MONO 02 20, TEMPO STEREO 02 28, CONTROL 02 30, LR 02 40, LCR 02 50, ANALOG RETRO 02 60, ANALOG MODERN 02 68."
+guide = "§11.3"
+evidence = ["App 108-40…42: types matched the Data List"]
+
+[[message]]
+id = "fx.master"
+name = "Master effect / effect 1 / effect 2 / comp"
+area = "effects"
+kind = "parameter"
+address = "30 4n nn"
+data = "n = 3 MASTER EFFECT, 4 EFFECT 1, 5 EFFECT 2, 6 COMP. 00 type (2 bytes) · 03, 05, … params (2 bytes; dry/wet = param 10 at 15) · 43 side-chain part (00 = KICK, 7F off) · 30 46 47 comp on/off"
+dir = ["command", "readable"]
+status = "verified"
+meaning = "The four master effect slots. Any type from the Effect Type List per slot (the app limits EFFECT 1/2 to a short list)."
+guide = "§10.2"
+evidence = ["App 108-01…21, 108-50…52: every type matched the Data List"]
+
+[[message]]
+id = "fx.master_eq"
+name = "Master 5-band EQ"
+area = "effects"
+kind = "parameter"
+address = "30 47 nn"
+data = "band n: gain 4(n−1) (34 = −12 dB, 40 = 0, 4C = +12), freq +1, Q +2 (01 = 0.1 … 78 = 12.0); shape 03 / 13 (shelf / peak); 14 EQ on/off"
+dir = ["command", "readable"]
+status = "app"
+meaning = "Master EQ."
+guide = "§10.1.3"
+evidence = ["App 108-60a…h", "Data List Master EQ"]
+
+[[message]]
+id = "fx.track_effect"
+name = "Track (single) effect"
+area = "effects"
+kind = "parameter"
+address = "31 2p nn"
+data = "00 type (2 bytes) · 03, 05, … params (2 bytes) · 43 side-chain part"
+dir = ["command", "readable"]
+status = "verified"
+meaning = "Per-track insertion effect (Insertion A)."
+guide = "§10.1.1"
+evidence = ["App 108-70…73, 106-21/22: types matched the Data List"]
+
+[[message]]
+id = "fx.knob_map"
+name = "Track FX knob mapping"
+area = "effects"
+kind = "parameter"
+address = "01 1p 5n"
+data = "53/54/55 and 5C/5D/5E"
+dir = ["command", "readable"]
+status = "inferred"
+meaning = "Which effect parameter the device's FX knob controls (written by the app's overview DRY/WET slider and MAP popup)."
+evidence = ["App 108-73b/c, 108-74"]
+
+[[message]]
+id = "fx.cc"
+name = "Effect parameter CCs"
+area = "effects"
+kind = "cc"
+form = "CC 102–104 master effect 1 params 1–3, 105 master effect 2, 106 master effect 3 (ch 1); 107–109 single effect params 1–3 (track channel); 110–112 send reverb, 113–115 send delay (ch 1)"
+dir = ["command"]
+status = "official"
+meaning = "Assigned effect parameters as CCs."
+guide = "§18.3.2"
+evidence = ["User guide §18.3.2"]

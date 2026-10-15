@@ -1,0 +1,70 @@
+# Plain MIDI: notes, Sound Design CCs (guide §18.3.1), mute/solo CCs, others. Channel = track 1–11.
+
+[[message]]
+id = "midi.drum_notes"
+name = "Drum notes"
+area = "notes"
+kind = "note"
+form = "9[t] 3C vel / 8[t] 3C 00 (channel 1–7)"
+dir = ["command", "report"]
+status = "verified"
+meaning = "Play a drum track (note 60 on its channel); the Seqtrak sends the same when it plays."
+evidence = ["Bridge drum pads since 2025", "App EX-01", "Pi captures"]
+
+[[message]]
+id = "midi.synth_notes"
+name = "Synth / DX notes"
+area = "notes"
+kind = "note"
+form = "9[ch] note vel (ch 8 SYNTH 1, 9 SYNTH 2, 10 DX)"
+dir = ["command", "report"]
+status = "verified"
+meaning = "Play melodic tracks."
+evidence = ["Bridge keyboard since 2025", "App EX-02…04"]
+
+[[message]]
+id = "midi.sampler_notes"
+name = "SAMPLER pad notes"
+area = "notes"
+kind = "note"
+form = "9A 3C+pad−1 vel (channel 11)"
+dir = ["command", "report"]
+status = "verified"
+meaning = "Pad 1 = note 60 … pad 7 = 66."
+evidence = ["Bridge sampler pads (PARITY ch.8 ✅)", "App EX-04"]
+
+[[message]]
+id = "midi.sound_cc"
+name = "Sound Design CCs"
+area = "midi"
+kind = "cc"
+form = "7 volume, 10 pan (1–127), 25 drum pitch (40–88), 26 mono/poly/chord (0–2), 73 attack, 75 decay/release, 74 cutoff, 71 resonance, 91 reverb, 94 delay, 20 EQ high, 21 EQ low (40–88), 5 porta time, 65 porta switch (0/1), 27 arp type (0–16), 28 arp gate, 29 arp speed (0–9), 116–119 FM algorithm / mod amount / mod freq / feedback (ch 10)"
+dir = ["command", "report"]
+status = "verified"
+meaning = "Per-track sound parameters on the track's channel. The Seqtrak also sends these when its own knobs turn (and after UNDO/REDO)."
+guide = "§18.3.1"
+evidence = ["Bridge Device mode since 2025 (PARITY ch.9)", "Pi capture 2026-10-14 (device knob → CC 73)"]
+
+[[message]]
+id = "midi.mute_solo_cc"
+name = "Mute / solo CCs"
+area = "midi"
+kind = "cc"
+form = "CC 23 mute (0–63 off, 64–127 on, track channel); CC 24 solo (value = track 1–11, 0 off, any channel)"
+dir = ["command"]
+status = "verified"
+meaning = "Receive only (the device doesn't send them); state is readable as 30 5p 29 / 30 40 68."
+guide = "§18.3.3"
+evidence = ["Bridge mixer mute since 2025 (PARITY ch.5 ✅)"]
+
+[[message]]
+id = "midi.other_cc"
+name = "Damper / sostenuto / expression"
+area = "midi"
+kind = "cc"
+form = "CC 64 damper (ch 8–11), 66 sostenuto (ch 8, 9, 11), 11 expression (ch 1–11)"
+dir = ["command"]
+status = "official"
+meaning = "Receive only."
+guide = "§18.3.4"
+evidence = ["User guide §18.3.4"]

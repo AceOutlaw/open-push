@@ -1,0 +1,184 @@
+# Step data. Drum tracks = a fixed grid (70 xx); SYNTH 1/2, DX, SAMPLER = an ordered note list (72–76 g).
+# t = drum track 0–6; g = group 00 SYNTH 1, 10 SYNTH 2, 20 DX, 30 SAMPLER. 120 ticks per step.
+
+[[message]]
+id = "steps.drum_add"
+name = "Drum step add"
+area = "steps"
+kind = "parameter"
+address = "70 0t 00"
+data = "[step] [note] [vel] [len hi] [len lo] — e.g. [step] 3C 64 00 78"
+dir = ["command", "report"]
+status = "verified"
+meaning = "Turn a drum step on (the device sends the same when you enter a step). Acts on the MIDI-selected pattern."
+guide = "§6.1"
+evidence = ["STEP-SEQUENCER §1 (Dec 2025 + Oct 2026)", "Bridge step grid"]
+
+[[message]]
+id = "steps.drum_remove"
+name = "Drum step remove"
+area = "steps"
+kind = "parameter"
+address = "70 2t 00"
+data = "[step] 0–127"
+dir = ["command", "report"]
+status = "verified"
+meaning = "Turn a drum step off. Acts on the MIDI-selected pattern."
+evidence = ["STEP-SEQUENCER §1", "2026-10-15 PERC 2 pattern 2 cleared while selected over MIDI"]
+
+[[message]]
+id = "steps.drum_edit"
+name = "Drum step edit (micro timing / substep / probability)"
+area = "steps"
+kind = "parameter"
+address = "70 1t nn"
+data = "nn = param; data [step] [value]. 00 micro timing: 60 + offset (−60…+59) · 03 substep: 00 none, 01 ×2, 04 ×3 8th triplet, 02 ×3 16th triplet, 03 ×4 · 04 probability: 00 = 100 % … 07 (8 levels; 01 = 87 %, 04 = 49 %, 07 = 10 %)"
+dir = ["command", "report"]
+status = "verified"
+meaning = "Edit one step. The device reports the same when you edit on its keys."
+guide = "§6.3, §6.4, §6.6"
+evidence = ["App 104-03", "2026-10-15 from the Pi on PERC 2: micro +30 → readback 5A, substep ×4 → 03, probability → 70 66 = 04 / 07"]
+
+[[message]]
+id = "steps.drum_read"
+name = "Drum step read"
+area = "steps"
+kind = "parameter"
+address = "70 4t ss"
+data = "reply: [note] [vel] [substep] [60 + micro] [len hi] [len lo]; no data = empty step. Live-recorded length = key hold time"
+dir = ["readable"]
+status = "verified"
+meaning = "Read one step of the MIDI-selected pattern."
+evidence = ["STEP-SEQUENCER live recording section (2026-10-13)"]
+
+[[message]]
+id = "steps.drum_prob_read"
+name = "Drum step probability"
+area = "steps"
+kind = "parameter"
+address = "70 6t ss"
+data = "1 byte: 00 = 100 % … 07; no reply for an empty step"
+dir = ["readable"]
+status = "verified"
+meaning = "Probability of a step (not in the 70 4t readback)."
+evidence = ["2026-10-15 from the Pi: set 04 / 07, read back 04 / 07"]
+
+[[message]]
+id = "steps.drum_table_5"
+name = "Drum step table 5"
+area = "steps"
+kind = "parameter"
+address = "70 5t ss"
+dir = ["readable"]
+status = "unknown"
+meaning = "Never answered so far. The app reads it for every step; maybe parameter locks."
+evidence = ["App P0-NAV"]
+
+[[message]]
+id = "steps.note_add"
+name = "Note add (synth / sampler)"
+area = "steps"
+kind = "parameter"
+address = "72 g0 00"
+data = "8 bytes: [tick hi] [tick lo] 00 [note] [vel] 00 [len hi] [len lo] (sampler note = 3C + pad − 1)"
+dir = ["command", "report"]
+status = "verified"
+meaning = "Add a note to the list. A note reaching the next note on the same pad/key removes it; the Seqtrak stops a sample when the note ends."
+evidence = ["STEP-SEQUENCER §2 (SAMPLER, SYNTH 1)"]
+
+[[message]]
+id = "steps.note_read"
+name = "Note read"
+area = "steps"
+kind = "parameter"
+address = "75 g0 nn"
+data = "nn = index; reply 8-byte note, no data = past the end"
+dir = ["readable"]
+status = "verified"
+meaning = "Notes in time order (0 = earliest); the list renumbers after a remove."
+evidence = ["STEP-SEQUENCER §2"]
+
+[[message]]
+id = "steps.note_remove"
+name = "Note remove"
+area = "steps"
+kind = "parameter"
+address = "74 g0 nn"
+data = "nn = index in the ADDRESS; data 00 or nothing"
+dir = ["command"]
+status = "verified"
+meaning = "Remove note index nn."
+evidence = ["STEP-SEQUENCER §2 item 6", "App LE-03 sent 74 00 00 without a data byte"]
+
+[[message]]
+id = "steps.note_removed_report"
+name = "Note removed (report only)"
+area = "steps"
+kind = "parameter"
+address = "74 7g 00"
+data = "8-byte note"
+dir = ["report"]
+status = "verified"
+meaning = "The device's report of a removed note. NOT a command: sending it does nothing."
+evidence = ["STEP-SEQUENCER §2 item 4 (tested exact bytes and wrapped)"]
+
+[[message]]
+id = "steps.note_find"
+name = "Note find (by position + pitch)"
+area = "steps"
+kind = "parameter"
+address = "76 g0 00"
+data = "[tick hi] [tick lo] 00 [note] 00 00 → reply 76 [g+1] 00 + the same + 2 bytes (the index)"
+dir = ["command", "report"]
+status = "app"
+meaning = "Find a note; the app then replaces (73) or removes (74) the index the Seqtrak returns."
+evidence = ["App LE-03"]
+
+[[message]]
+id = "steps.note_replace"
+name = "Note replace"
+area = "steps"
+kind = "parameter"
+address = "73 g0 00"
+data = "8-byte note"
+dir = ["command"]
+status = "app"
+meaning = "Replace the note found with 76 (the app's drag-to-move)."
+evidence = ["App LE-03"]
+
+[[message]]
+id = "steps.pattern_copy"
+name = "Pattern copy / paste"
+area = "patterns"
+kind = "parameter"
+address = "77 01 2n"
+data = "20 copy, 21 paste; data [track 0–10] [pattern 0–5]"
+dir = ["command"]
+status = "verified"
+meaning = "Copy a pattern, then paste it into another (notes and length; the target is replaced). Select the track on the device first (the track byte vs. the device's selected track is not separated yet)."
+guide = "§5.5"
+evidence = ["App 103-03", "2026-10-15 from the Pi: PERC 2 P1 → P2 copied 6 steps + length 32; KICK untouched"]
+
+[[message]]
+id = "steps.key_held"
+name = "Step key held"
+area = "device-state"
+kind = "parameter"
+address = "77 01 10"
+data = "[x] 00 [step]"
+dir = ["report"]
+status = "reported"
+meaning = "A step key is held on the device."
+evidence = ["Pi capture 2026-10-13"]
+
+[[message]]
+id = "steps.unknown_77_24"
+name = "77 01 24"
+area = "device-state"
+kind = "parameter"
+address = "77 01 24"
+data = "00 00"
+dir = ["report"]
+status = "unknown"
+meaning = "Seen when the app's pattern editor changed page."
+evidence = ["App 104-04"]
