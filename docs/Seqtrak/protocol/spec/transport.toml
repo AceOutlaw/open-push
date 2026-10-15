@@ -45,6 +45,7 @@ address = "01 10 22"
 data = "01 start / 00 stop"
 dir = ["command", "report"]
 status = "verified"
+test = { skip = "action message: not requested by --probe, in case a request at an action address isn't harmless" }
 meaning = "Starts / stops sampling into the selected SAMPLER pad (select it first with 01 10 28)."
 guide = "§8.2"
 evidence = ["Bridge Shift+Record samples a pad (PARITY ch.8 ✅)"]
@@ -58,6 +59,7 @@ address = "01 10 1F"
 data = "01"
 dir = ["command", "report"]
 status = "verified"
+test = { skip = "action message: not requested by --probe, in case a request at an action address isn't harmless" }
 meaning = "Same as the [UNDO/REDO] button: each press toggles undo / redo of the last sound or effect parameter change. The restored value is then reported as the knob's CC."
 guide = "§9.4"
 evidence = ["Pi capture 2026-10-14 22:52 (device button)", "Sent from the Pi twice: KICK attack CC 73 went 64 → 109 → 64"]

@@ -132,7 +132,7 @@ data = "0–5"
 dir = ["report"]
 status = "reported"
 meaning = "Sent when all tracks switch to one pattern (ALL knob)."
-evidence = ["Pi captures; bridge follows it"]
+evidence = ["Pi captures; bridge follows it", "Pi probe 2026-10-15 (runs/2026-10-15-probe.json): no reply to a request — report only"]
 
 [[message]]
 id = "track.sound_select"
@@ -181,6 +181,7 @@ address = "01 1p 37"
 data = "00"
 dir = ["command", "report"]
 status = "verified"
+test = { skip = "action message: not requested by --probe, in case a request at an action address isn't harmless" }
 meaning = "Like DELETE + track knob: clears the pattern SHOWN on the Seqtrak (not the MIDI-selected one)."
 guide = "§5.4"
 evidence = ["STEP-SEQUENCER §2 item 8 (sampler, 2026-10-12)"]

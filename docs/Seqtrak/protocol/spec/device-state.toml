@@ -117,10 +117,10 @@ kind = "parameter"
 address = "01 10 2D"
 also = ["01 10 2E"]
 data = "2D: 00 00, 01 01, 04 04 (around edits) · 2E: indicator 01, 03, 05, 06, 09 (volume), 11"
-dir = ["report"]
+dir = ["report", "readable"]
 status = "reported"
 meaning = "UI state broadcasts around device edits; not needed to make edits work."
-evidence = ["Pi captures 2026-10-13", "STEP-SEQUENCER §2 item 4"]
+evidence = ["Pi captures 2026-10-13", "STEP-SEQUENCER §2 item 4", "Pi probe 2026-10-15 (runs/2026-10-15-probe.json): answers a Parameter Request — 01 10 2D = 00, 01 10 2E = 01 (idle)"]
 
 [[message]]
 id = "state.track_ui"
@@ -143,10 +143,10 @@ kind = "parameter"
 address = "01 10 1A"
 also = ["01 10 1B", "01 10 1C", "01 10 1E"]
 data = "00"
-dir = ["report"]
+dir = ["report", "readable"]
 status = "unknown"
 meaning = "Part of the project-load / delete burst."
-evidence = ["Pi capture 2026-10-13 04:19"]
+evidence = ["Pi capture 2026-10-13 04:19", "Pi probe 2026-10-15 (runs/2026-10-15-probe.json): 01 10 1A/1B/1C/1E all answer a request, 00 (idle)"]
 
 [[message]]
 id = "state.pattern_browse"
@@ -158,4 +158,4 @@ data = "00–06"
 dir = ["report"]
 status = "unknown"
 meaning = "Sent while a knob was turned with SYNTH 1 selected (values 02, 06, 05, 04, 02, 01, 00); maybe a pattern being browsed. The bridge has an old constant for it (PATTERN_VAR_B)."
-evidence = ["Pi capture 2026-10-14 23:35"]
+evidence = ["Pi capture 2026-10-14 23:35", "Pi probe 2026-10-15 (runs/2026-10-15-probe.json): no reply to a request — report only"]

@@ -35,6 +35,7 @@ address = "71 00 00"
 data = "[scene 0–15]"
 dir = ["command", "report"]
 status = "verified"
+test = { skip = "action message: not requested by --probe, in case a request at an action address isn't harmless" }
 meaning = "Add a scene; the current scene is copied into it."
 guide = "§13.3"
 evidence = ["App SG-04/05", "Device unlit scene key", "2026-10-15 from the Pi"]
@@ -48,6 +49,7 @@ address = "71 20 00"
 data = "[scene]"
 dir = ["command", "report"]
 status = "verified"
+test = { skip = "action message: not requested by --probe, in case a request at an action address isn't harmless" }
 meaning = "Delete a scene; later scenes move up."
 guide = "§13.4"
 evidence = ["Device DELETE + scene key 2026-10-14", "2026-10-15 from the Pi"]
@@ -76,7 +78,7 @@ dir = ["command", "report"]
 status = "verified"
 meaning = "Length of a scene."
 guide = "§13.5.2"
-evidence = ["Device [PAGE] + [ALL] knob 2026-10-14/15 (max 96)", "2026-10-15 from the Pi (4 bars, back to AUTO)"]
+evidence = ["Device [PAGE] + [ALL] knob 2026-10-14/15 (max 96)", "2026-10-15 from the Pi (4 bars, back to AUTO)", "Pi probe 2026-10-15 (runs/2026-10-15-probe.json): a request at 71 10 00 gets an empty reply (the scene number is part of the data)"]
 
 [[message]]
 id = "song.scene_pattern"
@@ -89,7 +91,7 @@ dir = ["command"]
 status = "app"
 meaning = "A track's pattern / mute in a scene."
 guide = "§13.5.1"
-evidence = ["App SG-07, SG-18…22"]
+evidence = ["App SG-07, SG-18…22", "Pi probe 2026-10-15 (runs/2026-10-15-probe.json): a request at 71 10 00 gets an empty reply"]
 
 [[message]]
 id = "song.scene_solo"
@@ -101,7 +103,7 @@ data = "[scene] [track 1–11, 00 off]"
 dir = ["command"]
 status = "app"
 meaning = "The soloed track in a scene."
-evidence = ["App SG-21/22"]
+evidence = ["App SG-21/22", "Pi probe 2026-10-15 (runs/2026-10-15-probe.json): a request at 71 10 03 gets an empty reply"]
 
 [[message]]
 id = "song.current_scene"
@@ -126,7 +128,7 @@ dir = ["command", "report"]
 status = "reported"
 meaning = "Scene queued by a scene key during playback; starts when the current one ends (Song) or at launch quantize (Scene mode)."
 guide = "§13.2.1"
-evidence = ["Device captures 2026-10-14", "Bridge sends it as a command since 5d7a386 (untested)"]
+evidence = ["Device captures 2026-10-14", "Bridge sends it as a command since 5d7a386 (untested)", "Pi probe 2026-10-15 (runs/2026-10-15-probe.json): a request at 71 10 05 gets an empty reply"]
 
 [[message]]
 id = "song.loop_song"
@@ -166,4 +168,4 @@ data = "00"
 dir = ["report"]
 status = "inferred"
 meaning = "Sent each time a scene ends and the next (or the same, looping) starts."
-evidence = ["Device captures 2026-10-14"]
+evidence = ["Device captures 2026-10-14", "Pi probe 2026-10-15 (runs/2026-10-15-probe.json): no reply to a request — report only"]

@@ -10,6 +10,7 @@ address = "70 0t 00"
 data = "[step] [note] [vel] [len hi] [len lo] — e.g. [step] 3C 64 00 78"
 dir = ["command", "report"]
 status = "verified"
+test = { skip = "action message: not requested by --probe, in case a request at an action address isn't harmless" }
 meaning = "Turn a drum step on (the device sends the same when you enter a step). Acts on the MIDI-selected pattern."
 guide = "§6.1"
 evidence = ["STEP-SEQUENCER §1 (Dec 2025 + Oct 2026)", "Bridge step grid"]
@@ -23,6 +24,7 @@ address = "70 2t 00"
 data = "[step] 0–127"
 dir = ["command", "report"]
 status = "verified"
+test = { skip = "action message: not requested by --probe, in case a request at an action address isn't harmless" }
 meaning = "Turn a drum step off. Acts on the MIDI-selected pattern."
 evidence = ["STEP-SEQUENCER §1", "2026-10-15 PERC 2 pattern 2 cleared while selected over MIDI"]
 
@@ -35,6 +37,7 @@ address = "70 1t nn"
 data = "nn = param; data [step] [value]. 00 micro timing: 60 + offset (−60…+59) · 03 substep: 00 none, 01 ×2, 04 ×3 8th triplet, 02 ×3 16th triplet, 03 ×4 · 04 probability: 00 = 100 % … 07 (8 levels; 01 = 87 %, 04 = 49 %, 07 = 10 %)"
 dir = ["command", "report"]
 status = "verified"
+test = { skip = "action message: not requested by --probe, in case a request at an action address isn't harmless" }
 meaning = "Edit one step. The device reports the same when you edit on its keys."
 guide = "§6.3, §6.4, §6.6"
 evidence = ["App 104-03", "2026-10-15 from the Pi on PERC 2: micro +30 → readback 5A, substep ×4 → 03, probability → 70 66 = 04 / 07"]
@@ -86,6 +89,7 @@ address = "72 g0 00"
 data = "8 bytes: [tick hi] [tick lo] 00 [note] [vel] 00 [len hi] [len lo] (sampler note = 3C + pad − 1)"
 dir = ["command", "report"]
 status = "verified"
+test = { skip = "action message: not requested by --probe, in case a request at an action address isn't harmless" }
 meaning = "Add a note to the list. A note reaching the next note on the same pad/key removes it; the Seqtrak stops a sample when the note ends."
 evidence = ["STEP-SEQUENCER §2 (SAMPLER, SYNTH 1)"]
 
@@ -111,6 +115,7 @@ address = "74 g0 nn"
 data = "nn = index in the ADDRESS; data 00 or nothing"
 dir = ["command"]
 status = "verified"
+test = { skip = "action message: not requested by --probe, in case a request at an action address isn't harmless" }
 meaning = "Remove note index nn."
 evidence = ["STEP-SEQUENCER §2 item 6", "App LE-03 sent 74 00 00 without a data byte"]
 
@@ -124,7 +129,7 @@ data = "8-byte note"
 dir = ["report"]
 status = "verified"
 meaning = "The device's report of a removed note. NOT a command: sending it does nothing."
-evidence = ["STEP-SEQUENCER §2 item 4 (tested exact bytes and wrapped)"]
+evidence = ["STEP-SEQUENCER §2 item 4 (tested exact bytes and wrapped)", "Pi probe 2026-10-15 (runs/2026-10-15-probe.json): no reply to a request at 74 70 00 — report only"]
 
 [[message]]
 id = "steps.note_find"
@@ -135,6 +140,7 @@ address = "76 g0 00"
 data = "[tick hi] [tick lo] 00 [note] 00 00 → reply 76 [g+1] 00 + the same + 2 bytes (the index)"
 dir = ["command", "report"]
 status = "app"
+test = { skip = "action message: not requested by --probe, in case a request at an action address isn't harmless" }
 meaning = "Find a note; the app then replaces (73) or removes (74) the index the Seqtrak returns."
 evidence = ["App LE-03"]
 
@@ -147,6 +153,7 @@ address = "73 g0 00"
 data = "8-byte note"
 dir = ["command"]
 status = "app"
+test = { skip = "action message: not requested by --probe, in case a request at an action address isn't harmless" }
 meaning = "Replace the note found with 76 (the app's drag-to-move)."
 evidence = ["App LE-03"]
 
@@ -159,6 +166,7 @@ address = "77 01 2n"
 data = "20 copy, 21 paste; data [track 0–10] [pattern 0–5]"
 dir = ["command"]
 status = "verified"
+test = { skip = "action message: not requested by --probe, in case a request at an action address isn't harmless" }
 meaning = "Copy a pattern, then paste it into another (notes and length; the target is replaced). Select the track on the device first (the track byte vs. the device's selected track is not separated yet)."
 guide = "§5.5"
 evidence = ["App 103-03", "2026-10-15 from the Pi: PERC 2 P1 → P2 copied 6 steps + length 32; KICK untouched"]
@@ -173,7 +181,7 @@ data = "[x] 00 [step]"
 dir = ["report"]
 status = "reported"
 meaning = "A step key is held on the device."
-evidence = ["Pi capture 2026-10-13"]
+evidence = ["Pi capture 2026-10-13", "Pi probe 2026-10-15 (runs/2026-10-15-probe.json): no reply to a request — report only"]
 
 [[message]]
 id = "steps.unknown_77_24"
@@ -185,4 +193,4 @@ data = "00 00"
 dir = ["report"]
 status = "unknown"
 meaning = "Seen when the app's pattern editor changed page."
-evidence = ["App 104-04"]
+evidence = ["App 104-04", "Pi probe 2026-10-15 (runs/2026-10-15-probe.json): no reply to a request — report only"]

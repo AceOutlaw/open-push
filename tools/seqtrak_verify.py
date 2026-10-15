@@ -111,7 +111,7 @@ def run(args):
         for a in addrs:
             data = dev.read(parse(a))
             results.append({"id": e["id"], "address": a, "test": "read", "claims_readable": readable,
-                            "status": e["status"], "result": "answered" if data is not None else "no reply",
+                            "status": e["status"], "result": "no reply" if data is None else "answered" if data else "empty reply",
                             "data": hexs(data) if data is not None else None})
             time.sleep(args.gap)
 
@@ -171,6 +171,8 @@ def print_report(report):
          and r["result"] == "no reply"),
         ("Answers, but the spec doesn't say readable (add 'readable' to dir)", lambda r: r["test"] == "read"
          and not r.get("claims_readable") and r["result"] == "answered"),
+        ("Empty reply: the address exists but returns no value (it may need data, e.g. a scene number)",
+         lambda r: r["test"] == "read" and r["result"] == "empty reply"),
         ("Write + readback passed (evidence for 'verified')", lambda r: r["test"] == "write"
          and r["result"] == "pass"),
         ("Write FAILED or not restored", lambda r: r["test"] == "write" and r["result"] in ("FAIL", "NOT RESTORED")),
