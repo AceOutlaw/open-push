@@ -456,6 +456,8 @@ def bank_program_to_preset(bank_lsb, program):
 LED_OFF = 0
 LED_DIM = 1
 LED_ON = 4
+# Note and Session light much dimmer than Play at LED_ON (user report 2026-10-14); full value for these two
+LED_ON_NOTE_SESSION = 127
 
 # Button CCs (matching Reason app)
 BUTTONS = {
@@ -1134,7 +1136,11 @@ class SeqtrakBridge:
         # Clear all 4 lines first to prevent stale content
         self._clear_display()
 
-        if self.current_mode == 'welcome':
+        if self.session_mode:
+            # Song view owns the LCD and the buttons below it until it's closed (like Scale mode)
+            self._update_session_display()
+            self._update_session_buttons()
+        elif self.current_mode == 'welcome':
             self._update_welcome_display()
         elif self.current_mode == 'scale':
             self._update_scale_display()
@@ -1789,7 +1795,9 @@ class SeqtrakBridge:
 
     def update_grid(self):
         """Update pad grid based on current mode."""
-        if self.current_mode == 'mute':
+        if self.session_mode:
+            self._update_session_grid()
+        elif self.current_mode == 'mute':
             self._update_mute_grid()
         else:
             self._update_note_grid()
@@ -1961,6 +1969,8 @@ class SeqtrakBridge:
             track_name = Track.NAMES.get(self.keyboard_track, f"T{self.keyboard_track}")
             print(f"Scale mode not available for {track_name} (only Synth/DX tracks)")
             return
+        if self.session_mode:
+            self._exit_session_mode()
 
         self.previous_mode = self.current_mode
         self.current_mode = 'scale'
@@ -2113,7 +2123,7 @@ class SeqtrakBridge:
         self.session_page = 0
         self.scene_page = 0
         print("Entering Song view")
-        self.set_button_led(BUTTONS['session'], LED_ON)
+        self.set_button_led(BUTTONS['session'], LED_ON_NOTE_SESSION)
         self._request_song()
         self._refresh_song_view()
 
@@ -2185,6 +2195,10 @@ class SeqtrakBridge:
                 self.set_button_led(cc, LED_ON if scene == self.current_scene else LED_DIM)
             else:
                 self.set_button_led(cc, LED_OFF)
+        self._update_session_buttons()
+
+    def _update_session_buttons(self):
+        """Song view's buttons: page left/right = tracks, up/down = scenes, [1] mode, [8] song loop."""
         self.set_button_led(BUTTONS['page_left'], LED_ON if self.session_page > 0 else LED_DIM)
         self.set_button_led(BUTTONS['page_right'], LED_ON if self.session_page == 0 else LED_DIM)
         self.set_button_led(BUTTONS['up'], LED_ON if self.scene_page > 0 else LED_DIM)
@@ -2397,7 +2411,7 @@ class SeqtrakBridge:
         # Update button LEDs for mode buttons
         self.set_button_led(BUTTONS['volume'], LED_ON if mode == 'mixer' else LED_DIM)
         self.set_button_led(BUTTONS['device'], LED_ON if mode == 'device' else LED_DIM)
-        self.set_button_led(BUTTONS['note'], LED_ON if mode == 'note' else LED_DIM)
+        self.set_button_led(BUTTONS['note'], LED_ON_NOTE_SESSION if mode == 'note' else LED_DIM)
         self.set_button_led(BUTTONS['scale'], LED_ON if mode == 'scale' else LED_DIM)
         self.set_button_led(BUTTONS['track'], LED_ON if mode == 'track' else LED_DIM)
 
@@ -3186,6 +3200,8 @@ class SeqtrakBridge:
         Since bar length cycles through [1, 2, 4, 8] bars,
         both buttons are always active (no min/max boundaries).
         """
+        if self.session_mode:
+            return  # Song view owns these buttons
         # CC 24 (decrement) and CC 106 (increment) - always active for cycling
         self.set_button_led(24, LED_ON)   # Bar length down
         self.set_button_led(106, LED_ON)  # Bar length up
@@ -4422,6 +4438,8 @@ class SeqtrakBridge:
 
         Uses MIXER_TRACK_ORDER for display order. Handles DRUM bus specially.
         """
+        if self.session_mode:
+            return  # Song view owns these buttons
         base_pos = self.mixer_page * 8  # 0 or 8
 
         for i in range(8):
