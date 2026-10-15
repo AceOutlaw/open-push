@@ -219,11 +219,11 @@ address = "00 00 25"
 also = ["00 00 26", "00 00 27"]
 data = "25 switch 00/01 · 26 type 00–04 (A–E) · 27 volume 0–127"
 dir = ["command", "report", "readable"]
-status = "app"
+status = "verified"
 test = { write = ["01", "00"] }
 meaning = "Click / metronome."
 guide = "§4.5.3"
-evidence = ["App click-through 112-03", "Bridge Metronome button bb115a8 (awaiting hardware test)"]
+evidence = ["App click-through 112-03", "Bridge Metronome button bb115a8 (awaiting hardware test)", "Pi verify --write 2026-10-15: 00 00 25 wrote 01, read back 01, restored 00 (runs/2026-10-15-write.json)"]
 
 [[message]]
 id = "system.midi_sync"

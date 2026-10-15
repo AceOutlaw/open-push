@@ -8,11 +8,11 @@ kind = "parameter"
 address = "30 5p 00"
 data = "0–127"
 dir = ["command", "report", "readable"]
-status = "app"
+status = "verified"
 test = { address = ["30 50 00"], write = ["50", "60"] }
 meaning = "Track volume (same as CC 7 on the track's channel)."
 guide = "§11.2"
-evidence = ["App 107-03, 109-01", "Bridge reads it at start (dcfc4b3)"]
+evidence = ["App 107-03, 109-01", "Bridge reads it at start (dcfc4b3)", "Pi verify --write 2026-10-15: 30 50 00 wrote 50, read back 50, restored 64 (runs/2026-10-15-write.json)"]
 
 [[message]]
 id = "track.pan"
@@ -22,11 +22,11 @@ kind = "parameter"
 address = "30 5p 01"
 data = "1–127, 64 = centre"
 dir = ["command", "report", "readable"]
-status = "app"
+status = "verified"
 test = { address = ["30 50 01"], write = ["30", "40"] }
 meaning = "Track pan (same as CC 10)."
 guide = "§11.2"
-evidence = ["App 107-02, 107-22, EX-07"]
+evidence = ["App 107-02, 107-22, EX-07", "Pi verify --write 2026-10-15: 30 50 01 wrote 30, read back 30, restored 40 (runs/2026-10-15-write.json)"]
 
 [[message]]
 id = "track.choke_group"

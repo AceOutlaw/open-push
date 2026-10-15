@@ -136,11 +136,11 @@ kind = "parameter"
 address = "71 10 06"
 data = "01 on / 00 off"
 dir = ["command", "readable"]
-status = "app"
+status = "verified"
 test = { write = ["01", "00"] }
 meaning = "Loop the song after the last scene (app-only setting)."
 guide = "§13.2.3"
-evidence = ["App SG-25/26"]
+evidence = ["App SG-25/26", "Pi verify --write 2026-10-15: 71 10 06 wrote 00, read back 00, restored 01 (runs/2026-10-15-write.json)"]
 
 [[message]]
 id = "song.loop_scene"

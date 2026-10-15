@@ -101,7 +101,7 @@ status = "verified"
 test = { write = ["00 7B", "00 64"] }
 meaning = "Project tempo."
 guide = "§4.5.1"
-evidence = ["Bridge tempo encoder + readback (PARITY ch.4)", "App 111-02 / 112-02"]
+evidence = ["Bridge tempo encoder + readback (PARITY ch.4)", "App 111-02 / 112-02", "Pi verify --write 2026-10-15: 30 40 76 wrote 00 7B, read back 00 7B, restored 00 46 (runs/2026-10-15-write.json)"]
 notes = "Typing 60.5 in the app sent 02 2C (= 300); fractional BPM encoding unknown."
 
 [[message]]
@@ -142,7 +142,7 @@ status = "verified"
 test = { write = ["01 05", "01 00"] }
 meaning = "Swing of even steps."
 guide = "§4.5.2"
-evidence = ["App 112-01 (68 % = 01 2C)", "Bridge swing encoder confirmed on hardware by Ace 2026-10-14"]
+evidence = ["App 112-01 (68 % = 01 2C)", "Bridge swing encoder confirmed on hardware by Ace 2026-10-14", "Pi verify --write 2026-10-15: 30 40 7C wrote 01 05, read back 01 05, restored 01 26 (runs/2026-10-15-write.json)"]
 notes = "The app also writes the same value to each synth's arp swing (31 5p 16)."
 
 [[message]]
