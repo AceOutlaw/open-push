@@ -489,9 +489,10 @@ class SeqtrakProtocol:
         Seqtrak replies with a 110-byte Parameter Change on the same address.
 
         Args:
-            track: Track number (1-11)
+            track: Track number (1-10). The SAMPLER (11) has no sound name: 01 1A 35 never
+            answers (4 tries, Pi 2026-10-15), so it isn't asked.
         """
-        if not 1 <= track <= 11:
+        if not 1 <= track <= 10:
             return
         self.request_parameter([0x01, 0x10 + (track - 1), 0x35])
 

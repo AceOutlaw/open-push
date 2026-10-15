@@ -158,7 +158,7 @@ data = "Yamaha 7-bit packed text (8-byte groups: high bits + 7 chars)"
 dir = ["readable", "report"]
 status = "verified"
 meaning = "Name of the sound loaded on track p, e.g. 'TS_RNB_kick_rnb'."
-evidence = ["Bridge reads names per track (PARITY ch.5)", "App P0-NAV"]
+evidence = ["Bridge reads names per track (PARITY ch.5)", "App P0-NAV", "Pi 2026-10-15: SAMPLER 01 1A 35 never answers a request (4 tries) — the sampler has no sound name"]
 
 [[message]]
 id = "track.sound_id"

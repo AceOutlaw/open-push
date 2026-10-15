@@ -49,18 +49,23 @@ python3 src/open_push/reason/app.py
 ```
 
 ### Seqtrak Bridge
-Complete control of Yamaha Seqtrak groovebox from Push. **Deployed on Raspberry Pi for standalone, headless operation.**
+Controls a Yamaha SEQTRAK from the Push, running headless on a Raspberry Pi. **Actively developed:** the goal is
+that everything in Yamaha's user guide can be done from the Push. It isn't there yet; `docs/Seqtrak/PARITY.md`
+tracks every feature as tested on hardware, built but untested, partial, or missing.
 
-**Features:**
-- ✅ Full hardware control via MIDI SysEx protocol
-- ✅ Step sequencer editing (11 tracks: 7 drum, 3 melodic, 1 sampler)
-- ✅ Pattern/variation launching (6 variations per track)
-- ✅ Mixer mode (volume, mute, solo per track)
-- ✅ Device mode (preset selection and navigation)
-- ✅ Note repeat
-- ✅ Sample recording via USB audio
-- ✅ **iPad bidirectional audio** (sample from iPad, record to iPad)
-- ✅ **Raspberry Pi deployment** (auto-start on boot, headless)
+**Tested on the hardware:**
+- Isomorphic keyboard for the SYNTH and DX tracks, octave, mono/poly/chord, real-time play and record
+- Drum step sequencer (steps on/off, pages, playhead, shows steps entered on the Seqtrak) and the sampler's steps
+- Playing and sampling into the 7 sampler pads
+- Pattern switching per track, track mute, swing
+- Sound selection, Sound Design parameter pages, track filter, EQ and effect sends
+- Auto-start on boot on a Raspberry Pi, no screen needed
+
+**Built, being tested on the hardware:** Song view (Song and Scene mode), step micro timing / substep /
+probability, pattern length, solo, metronome, undo, Duplicate and Double Loop, project switching.
+
+**Not yet:** step input for the SYNTH 1/2 and DX tracks, most effect editing, and several project and sampler
+functions; see `PARITY.md`.
 
 **Quick Start:**
 ```bash
@@ -83,9 +88,9 @@ python3 src/open_push/seqtrak/app.py
 
 | Hardware | Status | Notes |
 |----------|--------|-------|
-| **Push 1** | ✅ Full support | Character LCD via MIDI SysEx |
+| **Push 1** | ✅ Working | Character LCD via MIDI SysEx |
 | **Push 2/3** | 🔜 Planned | Pixel display requires USB protocol |
-| **Yamaha Seqtrak** | ✅ Full support | Complete SysEx protocol implementation |
+| **Yamaha Seqtrak** | 🟡 Partial, actively developed | See `docs/Seqtrak/PARITY.md` |
 | **Reason Studios** | ✅ Working | Lua Remote codec integration |
 
 The MIDI protocol (pads, buttons, encoders, LEDs) is the same across Push 1/2/3. Only the display differs.
@@ -99,8 +104,8 @@ pip3 install mido python-rtmidi
 ```
 
 ### Platform Support
-- **macOS** - Full support
-- **Linux** - Full support (including Raspberry Pi)
+- **macOS** - Used for development
+- **Linux** - Raspberry Pi OS on a Pi 4 (the Seqtrak rig)
 - **Windows** - Planned
 
 ### Hardware Requirements
@@ -174,15 +179,18 @@ Push 1's display isn't a continuous 68-character line. It's **4 segments of 17 c
 
 This affects text layout and alignment - important for clean display formatting.
 
-### Seqtrak SysEx Protocol
-Full reverse-engineered MIDI SysEx protocol for Yamaha Seqtrak, documented in `docs/Seqtrak/sysex-protocol-reference.md`. Enables complete hardware control without Seqtrak's iOS app.
+### Seqtrak MIDI Protocol
+Yamaha documents only part of the SEQTRAK's MIDI protocol. `docs/Seqtrak/protocol/` describes it on its own,
+for any software to use: every known message with its status (verified on the hardware, sent by Yamaha's app,
+official, reported by the device, inferred, unknown) and the evidence behind it. `tools/seqtrak_verify.py`
+re-checks it against a real SEQTRAK.
 
 ## Roadmap
 
 ### Near Term
 - [ ] Push 2/3 support (USB display protocol)
 - [ ] More DAW integrations (Logic, Bitwig, Cubase)
-- [ ] Standalone mode (no computer, just Push + synth)
+- [x] Standalone mode for the Seqtrak (Push + Pi + Seqtrak, no computer)
 - [ ] Windows support
 
 ### Future
@@ -205,7 +213,7 @@ This is an open project. Contributions welcome:
 
 - **General**: `docs/open-push-master-reference.md` - Complete Push 1 hardware reference
 - **Reason**: `docs/Reason/reason-bridge-reference.md` - Reason integration guide
-- **Seqtrak**: `docs/Seqtrak/sysex-protocol-reference.md` - Complete SysEx protocol
+- **Seqtrak**: `docs/Seqtrak/protocol/` - the protocol spec; `docs/Seqtrak/PARITY.md` - what works
 - See `docs/` for additional integration guides and protocol documentation
 
 ## License
