@@ -51,7 +51,7 @@ address = "70 4t ss"
 data = "reply: [note] [vel] [substep] [60 + micro] [len hi] [len lo]; no data = empty step. Live-recorded length = key hold time"
 dir = ["readable"]
 status = "verified"
-test = { skip = "an empty step sends no reply, so a read-only run proves nothing; verified by step edits (STEP-SEQUENCER.md)" }
+test = { skip = "an empty step answers with no data bytes, so a read-only run on an empty pattern proves little; verified by step edits (STEP-SEQUENCER.md)" }
 meaning = "Read one step of the MIDI-selected pattern."
 evidence = ["STEP-SEQUENCER live recording section (2026-10-13)"]
 

@@ -71,3 +71,15 @@ status = "official"
 meaning = "Receive only."
 guide = "§18.3.4"
 evidence = ["User guide §18.3.4"]
+
+[[message]]
+id = "midi.all_sound_off_on_load"
+name = "All Sound Off on project load"
+area = "midi"
+kind = "cc"
+form = "B[ch] 78 00 on channels 1–11, sent by the Seqtrak just before 01 10 15 when a project starts loading"
+cc = [120]
+dir = ["report"]
+status = "reported"
+meaning = "The Seqtrak silences every track as it loads a project. While it is loading it drops many Parameter Requests (about 200 of 1,000 answered), so read the project after it settles and retry what matters."
+evidence = ["Pi capture 2026-10-15 05:36: CC 120 on ch 1–11 before each 01 10 15; 1048 requests sent during two loads, 217 replies, tempo unanswered twice"]

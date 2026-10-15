@@ -29,6 +29,7 @@ from open_push.seqtrak.protocol import (
     find_seqtrak_port
 )
 from open_push.seqtrak.presets import get_preset_name_short
+from open_push.seqtrak.requests import RequestQueue
 
 # =============================================================================
 # PUSH CONSTANTS (matching Reason app)
@@ -559,6 +560,8 @@ class SeqtrakBridge:
         # After a project load or a delete, re-read the Seqtrak like at power-on.
         self._resync_at = 0.0        # when to re-read (0 = not scheduled)
         self._resync_full = False    # True: everything; False: steps only
+        self._steps_read_due = False # read the drum steps once a full re-read has been answered
+        self.requests = RequestQueue()  # paced Parameter Requests; send is set when the port opens
         self._seqtrak_ui_mode = 0    # 01 10 19: 00 idle, 03 step input, 04 Delete held
         self._seqtrak_project = None # 01 10 15: current project, 0-based (None = not heard yet)
         self._project_known = False  # first 01 10 15 (startup read) only sets it, no re-read
@@ -587,18 +590,19 @@ class SeqtrakBridge:
         self.patch_name = ""  # Patch name (updated from Seqtrak feedback)
         self.track_preset_names = {}  # {track: name} read from Seqtrak (01 1p 35)
         self._last_track_select_sent = 0.0  # time of our own track select (echo guard)
-        self._step_read_queue = []          # pending step/note read addresses (throttled)
-        self._last_step_read_sent = 0.0
+        self._step_read_queue = []          # pending step/note reads, fed to self.requests when it has room
         # Mirror of the Seqtrak's sampler note list, in index order: [(tick, note, length), ...].
         # Read with 75 30 [index]; the index is what a remove (74 30 [index] 00) needs.
         self.sampler_notes = []
         self._sampler_read_buf = {}         # index -> (tick, note) while a read is in flight
         self._sampler_read_next = 0         # next index to queue
         self._sampler_read_done = True
+        self._sampler_read_end = None       # lowest index that answered "no note" (end of the list)
         self._sampler_resync_at = 0.0       # when to re-read the list (0 = not scheduled)
 
         # Active notes for proper note-off
         self.active_notes = {}  # {pad_note: midi_note}
+        self.sounding = {}      # {pad_note: (track, midi_note)}: where each held pad's note-on went
 
         # Scale settings
         self.scale_index = 1  # Minor
@@ -837,6 +841,7 @@ class SeqtrakBridge:
 
         # Extract address (bytes 5-7) and data (byte 8+)
         addr = list(data[5:8])
+        self.requests.answered(addr)
         sysex_data = list(data[8:])
 
         # Song mode state (also kept when the Song view isn't open)
@@ -917,6 +922,15 @@ class SeqtrakBridge:
                 self._project_known = True
             elif sysex_data[0] != self._seqtrak_project:
                 self._seqtrak_project = sysex_data[0]
+                # A new project is loading: drop the previous one's unfinished reads, and wait
+                # while the Seqtrak loads (it drops requests meanwhile); the full re-read follows
+                self._step_read_queue = []
+                self._steps_read_due = False
+                self.requests.clear()
+                self.requests.pause(1.0)
+                if self._timed_sends:  # a Duplicate still in progress belongs to the old project
+                    self._timed_sends = []
+                    self._show_lcd_popup("DUPLICATE", "cancelled")
                 self._schedule_resync(full=True, delay=1.0)
             if self.project_picker:
                 self._show_project_picker()
@@ -3535,10 +3549,31 @@ class SeqtrakBridge:
             self.lcd_popup_active = False
             self.update_display()  # Restore normal display
 
+    def _sound_note(self, pad, track, midi_note, velocity):
+        """Note-on for a pad, remembering where it went so the release follows it."""
+        self.protocol.trigger_note(track, midi_note, velocity)
+        self.sounding[pad] = (track, midi_note)
+
+    def _release_sounding(self, pad):
+        """Note-off for a pad, sent to where its note-on went (the track or view may have changed
+        since). Not sent while another held pad plays the same note (isomorphic layouts repeat notes)."""
+        dest = self.sounding.pop(pad, None)
+        if dest and dest not in self.sounding.values():
+            self.protocol.release_note(*dest)
+
     def handle_pad(self, note, velocity):
         """Handle pad press/release - routes to mode-specific handler."""
         if note < 36 or note > 99:
             return
+
+        # Release a held pad's note first, whatever the view is now: Song view or Mute may have
+        # opened, or the pad mode changed, since it was pressed (the handlers below then just redraw)
+        if velocity == 0 and note in self.sounding:
+            self._release_sounding(note)
+            if self.session_mode or self.current_mode == 'mute':
+                self.active_notes.pop(note, None)
+                self.note_repeat_notes.pop(note, None)
+                return
 
         # Mute mode always handles pads specially
         if self.current_mode == 'mute':
@@ -3605,7 +3640,7 @@ class SeqtrakBridge:
                 # Note off
                 if note in self.active_notes:
                     self.active_notes.pop(note)
-                    self.protocol.release_note(track, midi_note)
+                    self._release_sounding(note)
 
                     # Remove from note repeat tracking
                     if note in self.note_repeat_notes:
@@ -3637,7 +3672,7 @@ class SeqtrakBridge:
                 # Normal press = trigger drum sound
                 # Apply accent velocity if accent mode is active
                 out_velocity = self.accent_velocity if self.accent_mode else velocity
-                self.protocol.trigger_note(track, midi_note, out_velocity)
+                self._sound_note(note, track, midi_note, out_velocity)
                 self.active_notes[note] = midi_note
 
                 # Register for note repeat if active
@@ -3847,6 +3882,7 @@ class SeqtrakBridge:
         """Queue a read of the sampler note list (75 30 0, 1, 2, ... until an empty reply)."""
         self._sampler_read_buf = {}
         self._sampler_read_done = False
+        self._sampler_read_end = None
         self._step_read_queue = [a for a in self._step_read_queue if a[0] != 0x75]
         self._sampler_read_next = 0
         self._queue_sampler_reads(max(16, len(self.sampler_notes) + 8))
@@ -3864,12 +3900,15 @@ class SeqtrakBridge:
                                              (data[6] << 7) | data[7])
             if index == self._sampler_read_next - 1 and self._sampler_read_next < 128:
                 self._queue_sampler_reads(16)
-            return
-        # First empty reply = end of list
-        if all(i in self._sampler_read_buf for i in range(index)):
+        elif self._sampler_read_end is None or index < self._sampler_read_end:
+            self._sampler_read_end = index  # an empty reply = past the end of the list
+        # Complete once every note before the end has arrived; replies can come in any order
+        # (a resent request's reply may land after the end-of-list reply), so check on every reply
+        end = self._sampler_read_end
+        if end is not None and all(i in self._sampler_read_buf for i in range(end)):
             self._sampler_read_done = True
             self._step_read_queue = [a for a in self._step_read_queue if a[0] != 0x75]
-            self._apply_sampler_notes([self._sampler_read_buf[i] for i in range(index)])
+            self._apply_sampler_notes([self._sampler_read_buf[i] for i in range(end)])
 
     def _apply_sampler_notes(self, notes):
         """Replace the sampler mirror and rebuild the per-pad step grid from it."""
@@ -3899,10 +3938,12 @@ class SeqtrakBridge:
             deadline = time.time() + timeout
             reply = None
             while reply is None and time.time() < deadline:
+                self.requests.pump()  # the request queue sends it (and resends it if unanswered)
                 for msg in port.iter_pending():
                     d = list(msg.data) if msg.type == 'sysex' else []
                     if len(d) >= 8 and d[0] == 0x43 and d[5:8] == [0x75, group, index]:
                         reply = d[8:]
+                        self.requests.answered(d[5:8])
                     else:
                         self.handle_seqtrak_message(msg)
                 time.sleep(0.002)
@@ -3917,6 +3958,8 @@ class SeqtrakBridge:
         for track in range(1, 12):
             self.protocol.request_preset_name(track)
             self.protocol.request_parameter([0x30, 0x50 + track - 1, 0x0F])
+        self.protocol.request_parameter(Address.PLAY_STATE)    # it may already be playing
+        self.protocol.request_parameter(Address.RECORD_STATE)
         self.protocol.request_parameter(Address.TEMPO)
         self.protocol.request_parameter(Address.MASTER_VOLUME)
         self.protocol.request_parameter(Address.PATTERN_SELECT_MODE)
@@ -3937,9 +3980,10 @@ class SeqtrakBridge:
         for track in range(1, 12):
             for variation in range(6):
                 self.protocol.request_parameter([0x30, 0x50 + track - 1, 0x16 + 2 * variation])
-        for track in range(1, 8):
-            self._request_drum_steps(track)
-        self._request_sampler_notes()
+        # Steps last, once everything above is answered (so the pattern lengths and variations are
+        # known), and only as far as each pattern goes: reading all 7 x 128 steps at once flooded the
+        # Seqtrak while it was loading a project, and even the tempo reply got lost (capture 2026-10-15)
+        self._steps_read_due = True
 
     def _schedule_resync(self, full=False, delay=0.5):
         """Re-read the Seqtrak after `delay` s (debounced, so a burst of changes lands first)."""
@@ -3947,6 +3991,9 @@ class SeqtrakBridge:
         self._resync_at = time.time() + delay
 
     def _process_resync(self):
+        if self._steps_read_due and self.requests.idle():
+            self._steps_read_due = False
+            self._reread_all_steps()
         if not self._resync_at or time.time() < self._resync_at:
             return
         self._resync_at = 0.0
@@ -3998,12 +4045,11 @@ class SeqtrakBridge:
         if self._sampler_resync_at and now >= self._sampler_resync_at:
             self._sampler_resync_at = 0.0
             self._request_sampler_notes()
-        if not self._step_read_queue:
-            return
-        if now - self._last_step_read_sent < 0.003:
-            return
-        self._last_step_read_sent = now
-        self.protocol.request_parameter(self._step_read_queue.pop(0))
+        # Fed into the request queue only when it has room, so other reads go first and at most a
+        # window's worth of step reads wait for replies at a time
+        while self._step_read_queue and self.requests.has_room():
+            self.protocol.request_parameter(self._step_read_queue.pop(0))
+            self.requests.pump()
 
     def _toggle_step(self, track, step_index):
         """Toggle a step in the drum sequencer.
@@ -4156,8 +4202,8 @@ class SeqtrakBridge:
                         if not self.arp_latch:
                             self._rebuild_arp_sequence()
                 else:
-                    # Normal release (no arp)
-                    self.protocol.release_note(self.keyboard_track, midi_note)
+                    # Normal release (no arp), to the track the note started on
+                    self._release_sounding(note)
 
                 # Remove from note repeat tracking
                 if note in self.note_repeat_notes:
@@ -4199,7 +4245,7 @@ class SeqtrakBridge:
         out_velocity = self.accent_velocity if self.accent_mode else velocity
 
         # Send to Seqtrak
-        self.protocol.trigger_note(self.keyboard_track, midi_note, out_velocity)
+        self._sound_note(note, self.keyboard_track, midi_note, out_velocity)
         self.active_notes[note] = midi_note
 
         # Register for note repeat if active
@@ -4265,7 +4311,7 @@ class SeqtrakBridge:
             # Note off
             if note in self.active_notes:
                 self.active_notes.pop(note)
-                self.seqtrak.send(mido.Message('note_off', channel=sampler_channel, note=midi_note, velocity=0))
+                self._release_sounding(note)
 
                 # Remove from note repeat tracking
                 if note in self.note_repeat_notes:
@@ -4298,7 +4344,7 @@ class SeqtrakBridge:
             # Normal press = trigger sample on channel 11
             # Apply accent velocity if accent mode is active
             out_velocity = self.accent_velocity if self.accent_mode else velocity
-            self.seqtrak.send(mido.Message('note_on', channel=sampler_channel, note=midi_note, velocity=out_velocity))
+            self._sound_note(note, Track.SAMPLER, midi_note, out_velocity)  # channel 11
             self.active_notes[note] = midi_note
 
             # Register for note repeat if active (use track 11 for sampler)
@@ -4707,6 +4753,9 @@ class SeqtrakBridge:
             self.push_in = push_in
             self.seqtrak = seqtrak_out
             self.protocol = SeqtrakProtocol(seqtrak_out)
+            # Every Parameter Request goes through the paced queue (replies tracked, retried)
+            self.requests.send = self.protocol.request_parameter
+            self.protocol.request_parameter = self.requests.add
 
             # Open Seqtrak input if available
             seqtrak_in = None
@@ -4799,6 +4848,7 @@ class SeqtrakBridge:
                     self._process_resync()
                     self._process_record_reads()
                     self._process_step_reads()
+                    self.requests.pump()
 
                     # Process note repeat for held pads
                     self._process_note_repeat()
@@ -4839,6 +4889,7 @@ class SeqtrakBridge:
 # =============================================================================
 
 def main():
+    sys.stdout.reconfigure(line_buffering=True)  # so the service journal shows the log as it happens
     bridge = SeqtrakBridge()
     bridge.run()
 
