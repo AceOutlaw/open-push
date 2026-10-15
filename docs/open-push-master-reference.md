@@ -633,6 +633,27 @@ Push hardware knows nothing about modes, scales, or state. It simply reports eve
 
 **LED Control:** Note messages with velocity = color/brightness
 
+**Button LED values (CC value), from Ableton Live 12's own Push 1 script (`pushbase/colors`, `skin_default`;
+read 2026-10-15) and checked on the hardware:**
+
+| Button kind | Values |
+|---|---|
+| Single-colour ("Basic"): Note, Session, Play (green), Record (red), Solo (blue), most others | 0 off · 1 half · 2 / 3 half blinking slow / fast · **4 full** · 5 / 6 full blinking slow / fast |
+| Two-colour ("BiLed"): the 8 buttons right of the pads (CC 36–43), the row below the LCD **closer to the screen** (CC 20–27), Scales, Fixed Length | red 4 (half 1, blink 5 / 6) · amber 10 (7, 11 / 12) · yellow 16 (13, 17 / 18) · green 22 (19, 23 / 24) · 0 off |
+| The row below the LCD **closer to the pads** (CC 102–109) | the pad colour palette (e.g. 13 bright yellow, 11 dim yellow), as the bridge's Scale mode uses |
+
+The two rows below the LCD can't show the same colours: the one closer to the screen acts like the buttons beside
+the pads, the one closer to the pads acts like the pads (confirmed by the user's own colour test). Nearest
+matches: red 4 ↔ 5, amber 10 ↔ orange 9, yellow 16 ↔ 13, green 22 ↔ 21.
+
+- 4 is the brightest a single-colour button goes; higher values only blink (user test 2026-10-15).
+- Note and Session are **white** LEDs and look dimmer than the amber buttons at the same value. That is the
+  hardware, not the code (photo comparison 2026-10-15). Live uses the same values (`DefaultButton.On = 4`,
+  `Off = 1`); there is no brightness SysEx in Live's or PusheR's Push 1 code (PusheR's "Brightness" only picks
+  different pad colours). Push 1 on USB power may be dimmer than with its AC adapter.
+- Live's default skin: scene buttons green; note-repeat rate red (selected) / yellow; quantize green / yellow;
+  options amber / yellow-half; mixer mute yellow; arm red.
+
 ### Key Hardware Insight
 
 Push's modes are **software constructs**. The hardware just reports:

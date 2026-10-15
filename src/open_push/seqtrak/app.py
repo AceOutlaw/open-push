@@ -455,9 +455,7 @@ def bank_program_to_preset(bank_lsb, program):
 # Button LED values
 LED_OFF = 0
 LED_DIM = 1
-LED_ON = 4
-# Note and Session light much dimmer than Play at LED_ON (user report 2026-10-14); full value for these two
-LED_ON_NOTE_SESSION = 127
+LED_ON = 4  # brightest steady value; Note and Session are just dimmer than Play in hardware (tested 2026-10-15)
 
 # Button CCs (matching Reason app)
 BUTTONS = {
@@ -2123,7 +2121,7 @@ class SeqtrakBridge:
         self.session_page = 0
         self.scene_page = 0
         print("Entering Song view")
-        self.set_button_led(BUTTONS['session'], LED_ON_NOTE_SESSION)
+        self.set_button_led(BUTTONS['session'], LED_ON)
         self._request_song()
         self._refresh_song_view()
 
@@ -2411,7 +2409,7 @@ class SeqtrakBridge:
         # Update button LEDs for mode buttons
         self.set_button_led(BUTTONS['volume'], LED_ON if mode == 'mixer' else LED_DIM)
         self.set_button_led(BUTTONS['device'], LED_ON if mode == 'device' else LED_DIM)
-        self.set_button_led(BUTTONS['note'], LED_ON_NOTE_SESSION if mode == 'note' else LED_DIM)
+        self.set_button_led(BUTTONS['note'], LED_ON if mode == 'note' else LED_DIM)
         self.set_button_led(BUTTONS['scale'], LED_ON if mode == 'scale' else LED_DIM)
         self.set_button_led(BUTTONS['track'], LED_ON if mode == 'track' else LED_DIM)
 
