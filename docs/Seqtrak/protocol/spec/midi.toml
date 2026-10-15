@@ -57,7 +57,7 @@ dir = ["command"]
 status = "verified"
 meaning = "Receive only (the device doesn't send them); state is readable as 30 5p 29 / 30 40 68."
 guide = "§18.3.3"
-evidence = ["Bridge mixer mute since 2025 (PARITY ch.5 ✅)"]
+evidence = ["Bridge mixer mute since 2025 (PARITY ch.5 ✅)", "Pi 2026-10-15: CC 23 127 on ch 1 → 30 50 29 reads 7D, CC 23 0 → 00"]
 
 [[message]]
 id = "midi.other_cc"

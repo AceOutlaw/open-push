@@ -140,7 +140,7 @@ status = "verified"
 test = { write = ["01", "00"] }
 meaning = "Loop the song after the last scene (app-only setting)."
 guide = "§13.2.3"
-evidence = ["App SG-25/26", "Pi verify --write 2026-10-15: 71 10 06 wrote 00, read back 00, restored 01 (runs/2026-10-15-write.json)"]
+evidence = ["App SG-25/26", "Pi verify --write 2026-10-15: 71 10 06 wrote 00, read back 00, restored 01 (runs/2026-10-15-write.json)", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 71 10 06 wrote 00, read back, restored 01"]
 
 [[message]]
 id = "song.loop_scene"
@@ -154,7 +154,7 @@ status = "reported"
 test = { write = ["01", "00"] }
 meaning = "Scene loop (double-tap a playing scene's key)."
 guide = "§13.2.2"
-evidence = ["Device captures 2026-10-14"]
+evidence = ["Device captures 2026-10-14", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 71 10 07 wrote 01, read back, restored 00"]
 
 [[message]]
 id = "song.scene_end"

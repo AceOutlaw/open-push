@@ -45,11 +45,11 @@ kind = "parameter"
 address = "30 40 63"
 data = "bit mask, bit 0 = pad 1 … bit 6 = pad 7"
 dir = ["command", "report", "readable"]
-status = "app"
+status = "verified"
 test = { write = ["01", "00"] }
 meaning = "Mute individual SAMPLER pads."
 guide = "§8.11"
-evidence = ["App click-through 109-03b", "Data List"]
+evidence = ["App click-through 109-03b", "Data List", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 30 40 63 wrote 01, read back, restored 00"]
 
 [[message]]
 id = "project.pan"
@@ -59,11 +59,11 @@ kind = "parameter"
 address = "30 40 65"
 data = "1–127, 64 = centre"
 dir = ["command", "readable"]
-status = "official"
+status = "verified"
 test = { write = ["30", "40"] }
 meaning = "Project (ALL knob) pan."
 guide = "§11.2"
-evidence = ["Data List Project Common General"]
+evidence = ["Data List Project Common General", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 30 40 65 wrote 30, read back, restored 40"]
 
 [[message]]
 id = "project.volume"
@@ -77,7 +77,7 @@ status = "verified"
 test = { write = ["70", "7F"] }
 meaning = "Project (ALL knob) volume = the app's MASTER Overview VOLUME. Not the speaker volume (00 00 00)."
 guide = "§11.2"
-evidence = ["P0-PROBE: app 127 → 98 → 127 sent 66 66/62/7F", "Data List"]
+evidence = ["P0-PROBE: app 127 → 98 → 127 sent 66 66/62/7F", "Data List", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 30 40 66 wrote 70, read back, restored 7F"]
 
 [[message]]
 id = "project.solo"
@@ -87,11 +87,11 @@ kind = "parameter"
 address = "30 40 68"
 data = "00 off, 01–0B track 1–11"
 dir = ["command", "report", "readable"]
-status = "app"
+status = "verified"
 test = { write = ["01", "00"] }
 meaning = "The one soloed track (only one at a time). Same as CC 24."
 guide = "§5.8.2"
-evidence = ["App click-through 110-02", "Data List"]
+evidence = ["App click-through 110-02", "Data List", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 30 40 68 wrote 01, read back, restored 00"]
 
 [[message]]
 id = "project.tempo"
@@ -105,7 +105,7 @@ status = "verified"
 test = { write = ["00 7B", "00 64"] }
 meaning = "Project tempo."
 guide = "§4.5.1"
-evidence = ["Bridge tempo encoder + readback (PARITY ch.4)", "App 111-02 / 112-02", "Pi verify --write 2026-10-15: 30 40 76 wrote 00 7B, read back 00 7B, restored 00 46 (runs/2026-10-15-write.json)"]
+evidence = ["Bridge tempo encoder + readback (PARITY ch.4)", "App 111-02 / 112-02", "Pi verify --write 2026-10-15: 30 40 76 wrote 00 7B, read back 00 7B, restored 00 46 (runs/2026-10-15-write.json)", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 30 40 76 wrote 00 7B, read back, restored 00 46"]
 notes = "Typing 60.5 in the app sent 02 2C (= 300); fractional BPM encoding unknown."
 
 [[message]]
@@ -116,11 +116,11 @@ kind = "parameter"
 address = "30 40 79"
 values = { "00" = "3 patterns", "01" = "6 patterns" }
 dir = ["command", "readable"]
-status = "app"
+status = "verified"
 test = { write = ["01", "00"] }
 meaning = "Number of patterns per track (Data List: Pattern Select Mode Normal / Advanced)."
 guide = "§5.3"
-evidence = ["App click-through 103-04", "Bridge Shift+encoder 8 (dcfc4b3)"]
+evidence = ["App click-through 103-04", "Bridge Shift+encoder 8 (dcfc4b3)", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 30 40 79 wrote 01, read back, restored 00"]
 
 [[message]]
 id = "project.launch_quantize"
@@ -130,11 +130,11 @@ kind = "parameter"
 address = "30 40 7A"
 data = "2 bytes, steps 1–128 (app: 1, 4, 16, 32)"
 dir = ["command", "readable"]
-status = "app"
+status = "verified"
 test = { write = ["00 04", "00 10"] }
 meaning = "Launch quantize length (Data List: Pattern Master Step)."
 guide = "§5.1.3"
-evidence = ["App click-through 103-05"]
+evidence = ["App click-through 103-05", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 30 40 7A wrote 00 04, read back, restored 00 10"]
 
 [[message]]
 id = "project.swing"
@@ -148,7 +148,7 @@ status = "verified"
 test = { write = ["01 05", "01 00"] }
 meaning = "Swing of even steps."
 guide = "§4.5.2"
-evidence = ["App 112-01 (68 % = 01 2C)", "Bridge swing encoder confirmed on hardware by Ace 2026-10-14", "Pi verify --write 2026-10-15: 30 40 7C wrote 01 05, read back 01 05, restored 01 26 (runs/2026-10-15-write.json)"]
+evidence = ["App 112-01 (68 % = 01 2C)", "Bridge swing encoder confirmed on hardware by Ace 2026-10-14", "Pi verify --write 2026-10-15: 30 40 7C wrote 01 05, read back 01 05, restored 01 26 (runs/2026-10-15-write.json)", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 30 40 7C wrote 01 05, read back, restored 01 26"]
 notes = "The app also writes the same value to each synth's arp swing (31 5p 16)."
 
 [[message]]
@@ -159,11 +159,11 @@ kind = "parameter"
 address = "30 40 7E"
 data = "0–7 = the project's scale slot"
 dir = ["command", "report", "readable"]
-status = "app"
+status = "verified"
 test = { write = ["01", "00"] }
 meaning = "Selected scale. Each project has 8 scale slots (30 4D)."
 guide = "§7.4"
-evidence = ["App click-through 105-11"]
+evidence = ["App click-through 105-11", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 30 40 7E wrote 01, read back, restored 00"]
 
 [[message]]
 id = "project.key"
@@ -173,11 +173,11 @@ kind = "parameter"
 address = "30 40 7F"
 data = "40–4B = C … B (0x40 + semitone)"
 dir = ["command", "report", "readable"]
-status = "app"
+status = "verified"
 test = { write = ["42", "40"] }
 meaning = "Key (half steps)."
 guide = "§7.5"
-evidence = ["App click-through 105-10", "Data List range 40–4B"]
+evidence = ["App click-through 105-10", "Data List range 40–4B", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 30 40 7F wrote 42, read back, restored 40"]
 
 [[message]]
 id = "project.scale_slot_notes"
@@ -187,8 +187,8 @@ kind = "parameter"
 address = "30 4D nn"
 data = "nn = 16 × slot + pad (pad 0–6); value = MIDI note"
 dir = ["command", "readable"]
-status = "app"
+status = "verified"
 test = { address = ["30 4D 00", "30 4D 10"], write = { "30 4D 00" = ["3E", "3C"] } }
 meaning = "The 7 pad notes of each of the 8 scale slots (MINOR = 3C 3E 3F 41 43 44 46 …)."
 guide = "§7.4 note"
-evidence = ["App P0-NAV reads all 56", "App 105-12 rewrites slot 8 (30 4D 70–76)"]
+evidence = ["App P0-NAV reads all 56", "App 105-12 rewrites slot 8 (30 4D 70–76)", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 30 4D 00 wrote 3E, read back, restored 3C"]

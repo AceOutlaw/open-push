@@ -11,7 +11,7 @@ dir = ["command", "report", "readable"]
 status = "verified"
 test = { address = ["31 10 1C"], write = ["44", "40"] }
 meaning = "Track pitch; same scale as CC 25."
-evidence = ["App 107-01, EX-05/06 (all drum tracks)", "Pi verify --write 2026-10-15: 31 10 1C wrote 44, read back 44, restored 40 (runs/2026-10-15-write.json)"]
+evidence = ["App 107-01, EX-05/06 (all drum tracks)", "Pi verify --write 2026-10-15: 31 10 1C wrote 44, read back 44, restored 40 (runs/2026-10-15-write.json)", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 31 10 1C wrote 44, read back, restored 40"]
 
 [[message]]
 id = "sound.sends"
@@ -26,7 +26,7 @@ status = "verified"
 test = { address = ["31 10 19", "31 10 1A"], write = { "31 10 19" = ["20", "00"], "31 10 1A" = ["20", "00"] } }
 meaning = "Track sends; same as CC 91 / 94."
 guide = "§10.1.2"
-evidence = ["App 107-14/15, 109-02", "Pi verify --write 2026-10-15: 31 10 19 wrote 20, read back 20, restored 00 (runs/2026-10-15-write.json)"]
+evidence = ["App 107-14/15, 109-02", "Pi verify --write 2026-10-15: 31 10 19 wrote 20, read back 20, restored 00 (runs/2026-10-15-write.json)", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 31 10 19 wrote 20, read back, restored 00; 31 10 1A wrote 20, read back, restored 00"]
 
 [[message]]
 id = "sound.eq"
@@ -37,11 +37,11 @@ address = "31 1p 48"
 also = ["31 1p 4D", "31 1p 46", "31 1p 4B"]
 data = "48 low gain, 4D high gain (28–58, 40 = 0 dB); 46 low freq, 4B high freq (2 bytes: 00 30 = 63 Hz … 01 74 = 18 kHz)"
 dir = ["command", "report", "readable"]
-status = "app"
+status = "verified"
 test = { write = { "31 10 48" = ["44", "40"], "31 10 4D" = ["44", "40"] } }
 meaning = "Track EQ (gains = CC 21 / 20)."
 guide = "§10.1.1"
-evidence = ["App 107-10…13"]
+evidence = ["App 107-10…13", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 31 10 48 wrote 44, read back, restored 40; 31 10 4D wrote 44, read back, restored 40"]
 
 [[message]]
 id = "sound.amp_env"
@@ -52,10 +52,10 @@ address = "31 1p 2C"
 also = ["31 1p 2D"]
 data = "2C attack, 2D decay (drums); 40 = 0, 00 = −64, 7F = +63"
 dir = ["command", "report", "readable"]
-status = "app"
+status = "verified"
 test = { write = { "31 10 2C" = ["44", "40"], "31 10 2D" = ["44", "40"] } }
 meaning = "Amp envelope offsets; same as CC 73 / 75. SYNTH decay goes to 31 1p 00, DX to 31 19 01/02."
-evidence = ["App 107-04/05, 107-23, EX-07/09/16"]
+evidence = ["App 107-04/05, 107-23, EX-07/09/16", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 31 10 2C wrote 44, read back, restored 40; 31 10 2D wrote 44, read back, restored 40"]
 
 [[message]]
 id = "sound.synth_decay"
@@ -65,10 +65,10 @@ kind = "parameter"
 address = "31 1p 00"
 data = "40 = 0"
 dir = ["command", "readable"]
-status = "app"
+status = "verified"
 test = { address = ["31 17 00"], write = ["44", "40"] }
 meaning = "AEG decay on SYNTH 1/2 (parsed Data List name unreliable)."
-evidence = ["App 107-23, EX-09"]
+evidence = ["App 107-23, EX-09", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 31 17 00 wrote 44, read back, restored 40"]
 
 [[message]]
 id = "sound.key_assign"
@@ -90,11 +90,11 @@ kind = "parameter"
 address = "31 1p 23"
 values = { "00" = "mono", "01" = "poly", "02" = "chord" }
 dir = ["command", "report", "readable"]
-status = "app"
+status = "verified"
 test = { address = ["31 17 23"], write = ["00", "01", "02"] }
 meaning = "Voice mode of SYNTH 1/2/DX; same as CC 26."
 guide = "§7.6"
-evidence = ["App 107-20/21, 105-07"]
+evidence = ["App 107-20/21, 105-07", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 31 17 23 wrote 00, read back, restored 01"]
 
 [[message]]
 id = "sound.portamento"
@@ -105,10 +105,10 @@ address = "31 1p 1E"
 also = ["31 1p 1F"]
 data = "1E switch 00/01, 1F time 0–127"
 dir = ["command", "readable"]
-status = "app"
+status = "verified"
 test = { address = ["31 17 1E", "31 17 1F"], write = { "31 17 1E" = ["01", "00"], "31 17 1F" = ["50", "40"] } }
 meaning = "Portamento (CC 65 / CC 5)."
-evidence = ["App 107-25/26, EX-11/15"]
+evidence = ["App 107-25/26, EX-11/15", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 31 17 1E wrote 01, read back, restored 00; 31 17 1F wrote 50, read back, restored 00"]
 
 [[message]]
 id = "sound.track_filter"
@@ -119,11 +119,11 @@ address = "31 3p 03"
 also = ["31 3p 05"]
 data = "03 = one 2-byte value: 02 00 THRU, below = LPF (00 09 ≈ 20 Hz … 01 7E ≈ 19.4 kHz), above = HPF (03 00 ≈ 438 Hz); 05 = resonance 2 bytes (00 10 default, 00 7F max)"
 dir = ["command", "readable"]
-status = "app"
+status = "verified"
 test = { write = { "31 30 03" = ["01 40", "02 00"] } }
 meaning = "The track's LP-HP filter (Insertion B). Not the same scale as CC 74 / 71."
 guide = "§10.1.1"
-evidence = ["App 107-07…09, 107-24, 107-30a, LE-07"]
+evidence = ["App 107-07…09, 107-24, 107-30a, LE-07", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 31 30 03 wrote 01 40, read back, restored 02 00"]
 
 [[message]]
 id = "sound.alt_group"
@@ -145,11 +145,11 @@ kind = "parameter"
 address = "31 4p nn"
 data = "01 wave (00–0B), 02 speed, 03 tempo speed (05–18 = 1/16 … 1/4×64), 04 tempo sync, 05 delay, 0B destination, 0C depth"
 dir = ["command", "readable"]
-status = "app"
+status = "verified"
 test = { address = ["31 40 01", "31 47 01"], write = { "31 40 01" = ["01", "00"] } }
 meaning = "Per-track LFO (app-only on the device). Destinations: 00 FX param 1 … 09 dry/wet, 20 filter cutoff, 21 resonance, 40 level, 41 pitch, 44 pan."
 guide = "§14.1"
-evidence = ["App click-through 113-01…12"]
+evidence = ["App click-through 113-01…12", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 31 40 01 wrote 01, read back, restored 00"]
 
 [[message]]
 id = "sound.arp"
@@ -159,10 +159,10 @@ kind = "parameter"
 address = "31 5p nn"
 data = "00 template (00 off, 01 on), 0D key mode (00 ARP, 03 +DIRECT), 1E type (2 bytes, 00–08 in the app), 08 speed (00 = 200 % … 03 = 100 % … 09 = 25 %), 14 gate (2 bytes, %), 1C octave (40 = 0), 16 swing (2 bytes, written with project swing)"
 dir = ["command", "readable"]
-status = "app"
+status = "verified"
 test = { address = ["31 57 00", "31 57 0D"], write = { "31 57 00" = ["01", "00"] } }
 meaning = "SYNTH 1/2/DX arpeggiator."
-evidence = ["App click-through 105-01…06, EX-11/15", "Data List Arpeggiator block"]
+evidence = ["App click-through 105-01…06, EX-11/15", "Data List Arpeggiator block", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 31 57 00 wrote 01, read back, restored 00"]
 
 [[message]]
 id = "sound.chord_notes"
@@ -172,8 +172,8 @@ kind = "parameter"
 address = "30 6p nn"
 data = "nn 00–1B = 7 pads × 4 notes (MIDI notes, 00 = none); scales 5–8 at 30 7p"
 dir = ["command", "readable"]
-status = "app"
+status = "verified"
 test = { address = ["30 67 00"], write = ["3E", "3C"] }
 meaning = "Chord pads of SYNTH 1/2/DX (CHORD PACK rewrites them)."
 guide = "§7.7"
-evidence = ["App click-through 105-08"]
+evidence = ["App click-through 105-08", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 30 67 00 wrote 3E, read back, restored 3C"]

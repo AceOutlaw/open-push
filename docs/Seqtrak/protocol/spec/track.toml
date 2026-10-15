@@ -12,7 +12,7 @@ status = "verified"
 test = { address = ["30 50 00"], write = ["50", "60"] }
 meaning = "Track volume (same as CC 7 on the track's channel)."
 guide = "§11.2"
-evidence = ["App 107-03, 109-01", "Bridge reads it at start (dcfc4b3)", "Pi verify --write 2026-10-15: 30 50 00 wrote 50, read back 50, restored 64 (runs/2026-10-15-write.json)"]
+evidence = ["App 107-03, 109-01", "Bridge reads it at start (dcfc4b3)", "Pi verify --write 2026-10-15: 30 50 00 wrote 50, read back 50, restored 64 (runs/2026-10-15-write.json)", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 30 50 00 wrote 50, read back, restored 64"]
 
 [[message]]
 id = "track.pan"
@@ -26,7 +26,7 @@ status = "verified"
 test = { address = ["30 50 01"], write = ["30", "40"] }
 meaning = "Track pan (same as CC 10)."
 guide = "§11.2"
-evidence = ["App 107-02, 107-22, EX-07", "Pi verify --write 2026-10-15: 30 50 01 wrote 30, read back 30, restored 40 (runs/2026-10-15-write.json)"]
+evidence = ["App 107-02, 107-22, EX-07", "Pi verify --write 2026-10-15: 30 50 01 wrote 30, read back 30, restored 40 (runs/2026-10-15-write.json)", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 30 50 01 wrote 30, read back, restored 40"]
 
 [[message]]
 id = "track.choke_group"
@@ -36,10 +36,10 @@ kind = "parameter"
 address = "30 5p 08"
 values = { "00" = "off", "7E" = "HAT pair (HAT1 + HAT2)", "7F" = "PERC pair (PERC1 + PERC2)" }
 dir = ["command", "readable"]
-status = "app"
+status = "verified"
 test = { write = ["01", "00"] }
 meaning = "Choke groups between hats / percs (app SETTINGS > DRUM CHOKE; written to both tracks). Data List: Group Number."
-evidence = ["App click-through 113-13, 113-14"]
+evidence = ["App click-through 113-13, 113-14", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 30 50 08 wrote 01, read back, restored 00"]
 
 [[message]]
 id = "track.octave"
@@ -49,11 +49,11 @@ kind = "parameter"
 address = "30 5p 0C"
 data = "3E–42 = −2…+2 (guide says +2…−3)"
 dir = ["command", "readable"]
-status = "official"
+status = "verified"
 test = { address = ["30 57 0C"], write = ["41", "40"] }
 meaning = "Octave of the Seqtrak's own Synth keys for the track."
 guide = "§7.3"
-evidence = ["Data List Project Track General"]
+evidence = ["Data List Project Track General", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 30 57 0C wrote 41, read back, restored 40"]
 
 [[message]]
 id = "track.pattern_select"
@@ -90,11 +90,11 @@ kind = "parameter"
 address = "30 5p 29"
 values = { "00" = "unmuted", "7D" = "muted" }
 dir = ["command", "report", "readable"]
-status = "app"
-test = { write = ["01", "00"] }
-meaning = "Track mute (same as CC 23)."
+status = "verified"
+test = { write = ["7D", "00"] }
+meaning = "Track mute (same as CC 23). Only 00 and 7D are accepted; any other value is ignored."
 guide = "§5.8.1"
-evidence = ["App click-through 110-01", "Data List: 0 off, 125 on"]
+evidence = ["App click-through 110-01", "Data List: 0 off, 125 on", "Pi 2026-10-15: SysEx write accepts only 00 and 7D (01, 40, 7E, 7F ignored, read back 00); 7D read back, restored", "Pi 2026-10-15: CC 23 127 on ch 1 → 30 50 29 reads 7D; CC 23 0 → 00"]
 
 [[message]]
 id = "track.select"

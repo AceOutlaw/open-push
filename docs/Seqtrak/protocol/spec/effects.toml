@@ -13,7 +13,7 @@ status = "verified"
 test = { address = ["30 41 00", "30 41 03"], write = { "30 41 03" = ["00 20", "00 15"] } }
 meaning = "Send reverb. Types: HD HALL 01 03, HD ROOM 01 13, HD PLATE 01 21, REV-X HALL 01 00, REV-X ROOM 01 10, R3 HALL 01 01, R3 ROOM 01 11, R3 PLATE 01 20, SPX HALL 01 02, SPX ROOM 01 12, SPX STAGE 01 30, SPACE SIMULATOR 01 40."
 guide = "§11.3"
-evidence = ["App 108-30…32: every type matched the Data List Effect Type List (two sources agree)"]
+evidence = ["App 108-30…32: every type matched the Data List Effect Type List (two sources agree)", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 30 41 03 wrote 00 20, read back, restored 00 15"]
 
 [[message]]
 id = "fx.delay"
@@ -21,13 +21,13 @@ name = "Send 2 (delay)"
 area = "effects"
 kind = "parameter"
 address = "30 42 nn"
-data = "00 type (2 bytes) · 03, 05, … params · 44 return level"
+data = "00 type (2 bytes) · 03, 05, … params (clamped to the current type's range) · 44 return level"
 dir = ["command", "readable"]
 status = "verified"
-test = { address = ["30 42 00", "30 42 03"], write = { "30 42 03" = ["00 20", "00 0A"] } }
+test = { address = ["30 42 00", "30 42 03"], write = { "30 42 03" = ["00 10", "00 0A"] } }
 meaning = "Send delay. Types: CROSS 02 00, TEMPO CROSS 02 10, TEMPO MONO 02 20, TEMPO STEREO 02 28, CONTROL 02 30, LR 02 40, LCR 02 50, ANALOG RETRO 02 60, ANALOG MODERN 02 68."
 guide = "§11.3"
-evidence = ["App 108-40…42: types matched the Data List"]
+evidence = ["App 108-40…42: types matched the Data List", "Pi 2026-10-15 (type TEMPO STEREO 02 28): param 1 at 30 42 03 wrote 00 05 / 00 10 / 00 13, read back; 00 14 and 00 20 clamp to 00 13 — params clamp to the type's range"]
 
 [[message]]
 id = "fx.master"
@@ -51,11 +51,11 @@ kind = "parameter"
 address = "30 47 nn"
 data = "band n: gain 4(n−1) (34 = −12 dB, 40 = 0, 4C = +12), freq +1, Q +2 (01 = 0.1 … 78 = 12.0); shape 03 / 13 (shelf / peak); 14 EQ on/off"
 dir = ["command", "readable"]
-status = "app"
+status = "verified"
 test = { address = ["30 47 00", "30 47 01"], write = { "30 47 00" = ["44", "40"] } }
 meaning = "Master EQ."
 guide = "§10.1.3"
-evidence = ["App 108-60a…h", "Data List Master EQ"]
+evidence = ["App 108-60a…h", "Data List Master EQ", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 30 47 00 wrote 44, read back, restored 40"]
 
 [[message]]
 id = "fx.track_effect"

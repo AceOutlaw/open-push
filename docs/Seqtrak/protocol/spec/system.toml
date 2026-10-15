@@ -21,11 +21,11 @@ kind = "parameter"
 address = "00 00 01"
 data = "1 byte, 0–127 (default 32)"
 dir = ["command", "readable"]
-status = "official"
+status = "verified"
 test = { write = ["50", "5C"] }
 meaning = "Headphone master volume."
 guide = "§16.4"
-evidence = ["Data List System General"]
+evidence = ["Data List System General", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 00 00 01 wrote 50, read back, restored 5C"]
 
 [[message]]
 id = "system.legacy_midi_tx"
@@ -142,11 +142,11 @@ kind = "parameter"
 address = "00 00 1B"
 data = "00 off / 01 on"
 dir = ["command", "readable"]
-status = "app"
+status = "verified"
 test = { write = ["00", "01"] }
 meaning = "Count-in before sampling / MIDI recording (app: COUNT-IN MIDI RECORDING)."
 guide = "§8.6"
-evidence = ["App click-through 112-04"]
+evidence = ["App click-through 112-04", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 00 00 1B wrote 00, read back, restored 01"]
 
 [[message]]
 id = "system.auto_normalize"
@@ -156,11 +156,11 @@ kind = "parameter"
 address = "00 00 1C"
 data = "00 off / 01 on"
 dir = ["command", "readable"]
-status = "app"
+status = "verified"
 test = { write = ["00", "01"] }
 meaning = "Normalize new samples."
 guide = "§8.8"
-evidence = ["App click-through 106-03"]
+evidence = ["App click-through 106-03", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 00 00 1C wrote 00, read back, restored 01"]
 
 [[message]]
 id = "system.project_resume"
@@ -184,11 +184,11 @@ kind = "parameter"
 address = "00 00 1F"
 values = { "00" = "OFF", "01" = "1/32", "02" = "1/16T", "03" = "1/16", "04" = "1/8T", "05" = "1/8" }
 dir = ["command", "readable"]
-status = "app"
+status = "verified"
 test = { write = ["02", "03"] }
 meaning = "Quantize for real-time recording."
 guide = "§7.2"
-evidence = ["App click-through 105-13"]
+evidence = ["App click-through 105-13", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 00 00 1F wrote 02, read back, restored 03"]
 
 [[message]]
 id = "system.pad_velocity"
@@ -198,10 +198,10 @@ kind = "parameter"
 address = "00 00 20"
 data = "1 byte, 1–127 (default 100)"
 dir = ["command", "readable"]
-status = "app"
+status = "verified"
 test = { write = ["50", "64"] }
 meaning = "Fixed velocity for notes entered on the device keys."
-evidence = ["App click-through 112-05", "Data List Pad Velocity"]
+evidence = ["App click-through 112-05", "Data List Pad Velocity", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 00 00 20 wrote 50, read back, restored 64"]
 
 [[message]]
 id = "system.sound_design_mode"
@@ -211,10 +211,10 @@ kind = "parameter"
 address = "00 00 21"
 data = "00 / 01"
 dir = ["command", "readable"]
-status = "app"
+status = "verified"
 test = { write = ["00", "01"] }
 meaning = "Enables the advanced sound design pages on the device."
-evidence = ["App click-through 112-04"]
+evidence = ["App click-through 112-04", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 00 00 21 wrote 00, read back, restored 01"]
 
 [[message]]
 id = "system.metronome"
@@ -229,7 +229,7 @@ status = "verified"
 test = { write = { "00 00 25" = ["01", "00"], "00 00 26" = ["01", "00"], "00 00 27" = ["40", "38"] } }
 meaning = "Click / metronome."
 guide = "§4.5.3"
-evidence = ["App click-through 112-03", "Bridge Metronome button bb115a8 (awaiting hardware test)", "Pi verify --write 2026-10-15: 00 00 25 wrote 01, read back 01, restored 00 (runs/2026-10-15-write.json)"]
+evidence = ["App click-through 112-03", "Bridge Metronome button bb115a8 (awaiting hardware test)", "Pi verify --write 2026-10-15: 00 00 25 wrote 01, read back 01, restored 00 (runs/2026-10-15-write.json)", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 00 00 25 wrote 01, read back, restored 00; 00 00 26 wrote 01, read back, restored 00; 00 00 27 wrote 40, read back, restored 38"]
 
 [[message]]
 id = "system.midi_sync"
@@ -253,11 +253,11 @@ kind = "parameter"
 address = "00 00 2F"
 values = { "01" = "FAST", "02" = "NORMAL", "03" = "SLOW" }
 dir = ["command", "readable"]
-status = "app"
-test = { write = ["00", "01"] }
+status = "verified"
+test = { write = ["02", "01"] }
 meaning = "Knob sensitivity (Data List names it Pattern Select Sensitivity)."
 guide = "§16.2"
-evidence = ["App click-through 112-13a"]
+evidence = ["App click-through 112-13a", "Pi 2026-10-15: 02 and 03 written and read back, restored 01; 00 ignored (out of range)"]
 
 [[message]]
 id = "system.wifi_country"
