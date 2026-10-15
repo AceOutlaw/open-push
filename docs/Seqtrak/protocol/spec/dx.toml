@@ -9,6 +9,7 @@ address = "48 09 00"
 data = "00–0B = algorithm 1–12"
 dir = ["command", "readable"]
 status = "app"
+test = { write = ["06", "07"] }
 meaning = "FM algorithm."
 guide = "§14.1"
 evidence = ["App click-through 113-20"]
@@ -22,7 +23,7 @@ address = "48 09 nn"
 data = "04 wave (00 SINE, 01 TRI, 02 SAW UP, 03 SAW DOWN, 04 SQUARE, 05 S/HB, 06 S/H), 05 speed (0–127; the app shows 0–63), 06 delay, 07 PMD"
 dir = ["command", "readable"]
 status = "app"
-test = { address = ["48 09 04"] }
+test = { address = ["48 09 04"], write = ["01", "00"] }
 meaning = "DX LFO."
 evidence = ["App click-through 113-50…53"]
 
@@ -35,7 +36,7 @@ address = "48 09 nn"
 data = "0A–0D rate 1–4, 0E–11 level 1–4 (40 = 0)"
 dir = ["command", "readable"]
 status = "app"
-test = { address = ["48 09 0A"] }
+test = { address = ["48 09 0A"], write = ["44", "40"] }
 meaning = "Pitch EG."
 evidence = ["App click-through 113-40…47"]
 
@@ -48,7 +49,7 @@ address = "49 o9 nn"
 data = "o = operator 0–3. 00 on/off · 02–05 EG rate 1–4 (app 'time' = inverse) · 06–09 EG level 1–4 · 0A KSC rate · 0C/0D KLS depth L/R · 0E/0F curve (00 LIN, 01 EXP) · 11 AMD depth · 12 velocity sens · 13 output level · 14 feedback level · 15 feedback type · 17 PMD on/off · 18 PEG on/off · 19 freq mode · 1A coarse · 1B fine · 1C detune (40 = 0)"
 dir = ["command", "readable"]
 status = "app"
-test = { address = ["49 09 00", "49 39 00"] }
+test = { address = ["49 09 00", "49 39 00"], write = { "49 09 00" = ["00", "01"] } }
 meaning = "Per-operator FM parameters."
 evidence = ["App click-through 113-21…37, 113-48, 113-54/55"]
 
@@ -62,5 +63,6 @@ also = ["31 19 02"]
 data = "01 attack, 02 decay (Carrier Attack / Decay Offset, 40 = 0)"
 dir = ["command", "readable"]
 status = "app"
+test = { write = { "31 19 01" = ["44", "40"], "31 19 02" = ["44", "40"] } }
 meaning = "DX amp envelope (the app's ATTACK / DECAY on the DX track)."
 evidence = ["App EX-13, EX-20"]

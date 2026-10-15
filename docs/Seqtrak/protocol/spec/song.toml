@@ -151,6 +151,7 @@ address = "71 10 07"
 data = "01 / 00"
 dir = ["report", "readable"]
 status = "reported"
+test = { write = ["01", "00"] }
 meaning = "Scene loop (double-tap a playing scene's key)."
 guide = "§13.2.2"
 evidence = ["Device captures 2026-10-14"]

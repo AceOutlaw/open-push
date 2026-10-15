@@ -11,7 +11,8 @@ ALSA lets both open the port). Needs mido + python-rtmidi and Python 3.11+.
     python3 tools/seqtrak_verify.py --compare old.json   # what changed since an earlier run (firmware update)
 
 A Parameter Request (F0 43 30 7F 1C 0C H M L F7) never changes anything. --write sends real
-Parameter Changes (only for entries with a `test.write` in the spec), reads the value back, then
+Parameter Changes (only for entries with a `test.write` in the spec;
+a list for the first test address, or a table {address: values}), reads the value back, then
 puts the original value back and checks that too. It's audible for a moment if the Seqtrak is playing.
 
 Results go to seqtrak-verify-<time>.json (and are printed). A reply proves the address is
@@ -114,9 +115,9 @@ def run(args):
                             "data": hexs(data) if data is not None else None})
             time.sleep(args.gap)
 
-        write = e.get("test", {}).get("write")
-        if args.write and write and addrs:
-            results.append(write_test(dev, e, addrs[0], write))
+        if args.write:
+            for a, values in write_plan(e, addrs):
+                results.append(write_test(dev, e, a, values))
 
     report = {"time": datetime.datetime.now().isoformat(timespec="seconds"),
               "firmware": hexs(fw) if fw else None, "results": results}
@@ -126,6 +127,14 @@ def run(args):
     print(f"\nSaved {path}")
     if args.compare:
         print_compare(json.loads(pathlib.Path(args.compare).read_text(encoding="utf-8")), report)
+
+
+def write_plan(e, addrs):
+    """[(address, values)]: test.write is a list (for the first test address) or a table {address: values}."""
+    write = e.get("test", {}).get("write")
+    if isinstance(write, dict):
+        return list(write.items())
+    return [(addrs[0], write)] if write and addrs else []
 
 
 def write_test(dev, e, a, write):

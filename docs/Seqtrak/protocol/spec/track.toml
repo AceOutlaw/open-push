@@ -37,6 +37,7 @@ address = "30 5p 08"
 values = { "00" = "off", "7E" = "HAT pair (HAT1 + HAT2)", "7F" = "PERC pair (PERC1 + PERC2)" }
 dir = ["command", "readable"]
 status = "app"
+test = { write = ["01", "00"] }
 meaning = "Choke groups between hats / percs (app SETTINGS > DRUM CHOKE; written to both tracks). Data List: Group Number."
 evidence = ["App click-through 113-13, 113-14"]
 
@@ -49,6 +50,7 @@ address = "30 5p 0C"
 data = "3E–42 = −2…+2 (guide says +2…−3)"
 dir = ["command", "readable"]
 status = "official"
+test = { address = ["30 57 0C"], write = ["41", "40"] }
 meaning = "Octave of the Seqtrak's own Synth keys for the track."
 guide = "§7.3"
 evidence = ["Data List Project Track General"]
@@ -89,6 +91,7 @@ address = "30 5p 29"
 values = { "00" = "unmuted", "7D" = "muted" }
 dir = ["command", "report", "readable"]
 status = "app"
+test = { write = ["01", "00"] }
 meaning = "Track mute (same as CC 23)."
 guide = "§5.8.1"
 evidence = ["App click-through 110-01", "Data List: 0 off, 125 on"]

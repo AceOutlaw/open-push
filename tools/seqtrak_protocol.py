@@ -85,8 +85,14 @@ def validate(entries):
         for a in t_addrs if isinstance(t_addrs, list) else [t_addrs]:
             if not CONCRETE.match(a) or not any(address_regex(x).match(a) for x in [e.get("address")] + e.get("also", []) if x):
                 problems.append(f"{where}: test address '{a}' must be concrete and match the entry's address")
-        if any(not HEX_BYTES.match(w) for w in t.get("write", [])):
-            problems.append(f"{where}: test.write values must be hex bytes like '01 05'")
+        write = t.get("write")
+        plan = write.items() if isinstance(write, dict) else [(None, write)] if write is not None else []
+        for a, values in plan:
+            if a is not None and (not CONCRETE.match(a) or not any(
+                    address_regex(x).match(a) for x in [e.get("address")] + e.get("also", []) if x)):
+                problems.append(f"{where}: test.write address '{a}' must be concrete and match the entry's address")
+            if not values or any(not HEX_BYTES.match(w) for w in values):
+                problems.append(f"{where}: test.write values must be hex bytes like '01 05'")
         if e.get("status") in ("verified", "app") and not e.get("evidence"):
             problems.append(f"{where}: status {e['status']} needs evidence")
         if e.get("id") in seen:

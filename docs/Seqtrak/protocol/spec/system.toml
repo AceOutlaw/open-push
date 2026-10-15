@@ -22,6 +22,7 @@ address = "00 00 01"
 data = "1 byte, 0–127 (default 32)"
 dir = ["command", "readable"]
 status = "official"
+test = { write = ["50", "5C"] }
 meaning = "Headphone master volume."
 guide = "§16.4"
 evidence = ["Data List System General"]
@@ -142,6 +143,7 @@ address = "00 00 1B"
 data = "00 off / 01 on"
 dir = ["command", "readable"]
 status = "app"
+test = { write = ["00", "01"] }
 meaning = "Count-in before sampling / MIDI recording (app: COUNT-IN MIDI RECORDING)."
 guide = "§8.6"
 evidence = ["App click-through 112-04"]
@@ -155,6 +157,7 @@ address = "00 00 1C"
 data = "00 off / 01 on"
 dir = ["command", "readable"]
 status = "app"
+test = { write = ["00", "01"] }
 meaning = "Normalize new samples."
 guide = "§8.8"
 evidence = ["App click-through 106-03"]
@@ -182,6 +185,7 @@ address = "00 00 1F"
 values = { "00" = "OFF", "01" = "1/32", "02" = "1/16T", "03" = "1/16", "04" = "1/8T", "05" = "1/8" }
 dir = ["command", "readable"]
 status = "app"
+test = { write = ["02", "03"] }
 meaning = "Quantize for real-time recording."
 guide = "§7.2"
 evidence = ["App click-through 105-13"]
@@ -195,6 +199,7 @@ address = "00 00 20"
 data = "1 byte, 1–127 (default 100)"
 dir = ["command", "readable"]
 status = "app"
+test = { write = ["50", "64"] }
 meaning = "Fixed velocity for notes entered on the device keys."
 evidence = ["App click-through 112-05", "Data List Pad Velocity"]
 
@@ -207,6 +212,7 @@ address = "00 00 21"
 data = "00 / 01"
 dir = ["command", "readable"]
 status = "app"
+test = { write = ["00", "01"] }
 meaning = "Enables the advanced sound design pages on the device."
 evidence = ["App click-through 112-04"]
 
@@ -220,7 +226,7 @@ also = ["00 00 26", "00 00 27"]
 data = "25 switch 00/01 · 26 type 00–04 (A–E) · 27 volume 0–127"
 dir = ["command", "report", "readable"]
 status = "verified"
-test = { write = ["01", "00"] }
+test = { write = { "00 00 25" = ["01", "00"], "00 00 26" = ["01", "00"], "00 00 27" = ["40", "38"] } }
 meaning = "Click / metronome."
 guide = "§4.5.3"
 evidence = ["App click-through 112-03", "Bridge Metronome button bb115a8 (awaiting hardware test)", "Pi verify --write 2026-10-15: 00 00 25 wrote 01, read back 01, restored 00 (runs/2026-10-15-write.json)"]
@@ -248,6 +254,7 @@ address = "00 00 2F"
 values = { "01" = "FAST", "02" = "NORMAL", "03" = "SLOW" }
 dir = ["command", "readable"]
 status = "app"
+test = { write = ["00", "01"] }
 meaning = "Knob sensitivity (Data List names it Pattern Select Sensitivity)."
 guide = "§16.2"
 evidence = ["App click-through 112-13a"]

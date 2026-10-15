@@ -10,7 +10,7 @@ address = "30 41 nn"
 data = "00 type (2 bytes, e.g. 01 01 R3 HALL) · 03, 05, … params 1–16 (2 bytes each) · 44 return level"
 dir = ["command", "readable"]
 status = "verified"
-test = { address = ["30 41 00", "30 41 03"] }
+test = { address = ["30 41 00", "30 41 03"], write = { "30 41 03" = ["00 20", "00 15"] } }
 meaning = "Send reverb. Types: HD HALL 01 03, HD ROOM 01 13, HD PLATE 01 21, REV-X HALL 01 00, REV-X ROOM 01 10, R3 HALL 01 01, R3 ROOM 01 11, R3 PLATE 01 20, SPX HALL 01 02, SPX ROOM 01 12, SPX STAGE 01 30, SPACE SIMULATOR 01 40."
 guide = "§11.3"
 evidence = ["App 108-30…32: every type matched the Data List Effect Type List (two sources agree)"]
@@ -24,7 +24,7 @@ address = "30 42 nn"
 data = "00 type (2 bytes) · 03, 05, … params · 44 return level"
 dir = ["command", "readable"]
 status = "verified"
-test = { address = ["30 42 00", "30 42 03"] }
+test = { address = ["30 42 00", "30 42 03"], write = { "30 42 03" = ["00 20", "00 0A"] } }
 meaning = "Send delay. Types: CROSS 02 00, TEMPO CROSS 02 10, TEMPO MONO 02 20, TEMPO STEREO 02 28, CONTROL 02 30, LR 02 40, LCR 02 50, ANALOG RETRO 02 60, ANALOG MODERN 02 68."
 guide = "§11.3"
 evidence = ["App 108-40…42: types matched the Data List"]
@@ -52,7 +52,7 @@ address = "30 47 nn"
 data = "band n: gain 4(n−1) (34 = −12 dB, 40 = 0, 4C = +12), freq +1, Q +2 (01 = 0.1 … 78 = 12.0); shape 03 / 13 (shelf / peak); 14 EQ on/off"
 dir = ["command", "readable"]
 status = "app"
-test = { address = ["30 47 00", "30 47 01"] }
+test = { address = ["30 47 00", "30 47 01"], write = { "30 47 00" = ["44", "40"] } }
 meaning = "Master EQ."
 guide = "§10.1.3"
 evidence = ["App 108-60a…h", "Data List Master EQ"]

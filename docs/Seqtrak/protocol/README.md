@@ -38,9 +38,11 @@ An entry steers its test with an inline `test` table:
 ```toml
 test = { address = ["30 50 00"], write = ["50", "60"] }   # concrete addresses; values to try writing
 test = { skip = "an empty step sends no reply" }         # why it can't be checked automatically
+test = { write = { "00 00 25" = ["01", "00"], "00 00 27" = ["40", "38"] } }   # writes for several addresses
 ```
 Without `test.address`, placeholder nibbles become 0 (`30 5p 00` → `30 50 00`, KICK); a whole-byte placeholder
-(`nn`, `ss`) needs one. A write uses the first value that differs from the current one, and always restores it.
+(`nn`, `ss`) needs one.
+A plain `write` list is for the first test address. A write uses the first value that differs from the current one, and always restores it.
 A reply proves the address is readable, and a passing write proves the command. Neither proves what the value
 means: that still needs the device or an ear.
 

@@ -76,3 +76,10 @@ def test_verify_write_reports_a_failed_command():
     dev = _FakeSeqtrak({(0x30, 0x40, 0x7C): [0x01, 0x00]}, sticky=False)
     r = sv.write_test(dev, {"id": "project.swing", "status": "verified"}, "30 40 7C", ["01 05"])
     assert r["result"] == "FAIL"
+
+
+def test_verify_write_plan_forms():
+    assert sv.write_plan({"test": {"write": ["01", "00"]}}, ["00 00 25"]) == [("00 00 25", ["01", "00"])]
+    plan = sv.write_plan({"test": {"write": {"00 00 25": ["01"], "00 00 27": ["40"]}}}, ["00 00 25"])
+    assert plan == [("00 00 25", ["01"]), ("00 00 27", ["40"])]
+    assert sv.write_plan({}, ["00 00 25"]) == []

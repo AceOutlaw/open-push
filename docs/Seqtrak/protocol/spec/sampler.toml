@@ -10,6 +10,7 @@ also = ["50 eA 6A"]
 data = "66 start, 6A end; 4 bytes × 7 bits, in sample frames. End max = sample length − 17"
 dir = ["command", "readable"]
 status = "app"
+test = { write = { "50 0A 66" = ["00 00 00 10", "00 00 00 00"] } }
 meaning = "Trim a pad's sample (e = pad − 1)."
 guide = "§9.1.5"
 evidence = ["App 106-06/07, LE-09 (pads 1, 2, 7)"]
@@ -24,6 +25,7 @@ also = ["50 eA 60"]
 data = "5F loop 00/01; 60 loop length, 4 × 7-bit frames (loop ends at the end point)"
 dir = ["command", "readable"]
 status = "app"
+test = { write = { "50 0A 5F" = ["01", "00"] } }
 meaning = "Loop on/off and loop length."
 evidence = ["App 106-08, LE-09/11"]
 
@@ -60,7 +62,7 @@ address = "41 eA nn"
 data = "4F coarse tune (40 = 0) · 08 trigger/gate (00 trigger, 01 gate) · 0B pan · 2E level · 33 AEG attack · 35 AEG decay 2 · 37 AEG release (the app's DECAY) · 58 PEG attack time · 59 PEG decay 1 time · 5E/60/62/64 PEG levels (2 bytes, 128 + value)"
 dir = ["command", "readable"]
 status = "app"
-test = { address = ["41 0A 4F", "41 0A 08"] }
+test = { address = ["41 0A 4F", "41 0A 08"], write = { "41 0A 4F" = ["44", "40"], "41 0A 08" = ["00", "01"] } }
 meaning = "Per-pad sound parameters."
 evidence = ["App 106-09…18, LE-06…11, 109-03"]
 
@@ -73,7 +75,7 @@ address = "42 eA nn"
 data = "36 EQ low gain, 39 EQ high gain (40 = 0 dB)"
 dir = ["command", "readable"]
 status = "app"
-test = { address = ["42 0A 36", "42 0A 39"] }
+test = { address = ["42 0A 36", "42 0A 39"], write = { "42 0A 36" = ["44", "40"], "42 0A 39" = ["44", "40"] } }
 meaning = "Per-pad EQ (GUIDE panel page 3)."
 evidence = ["App LE-08 (order of knobs → 36 low, 39 high is inferred)"]
 
