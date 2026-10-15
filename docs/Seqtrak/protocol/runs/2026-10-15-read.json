@@ -1,0 +1,1366 @@
+{
+ "time": "2026-10-15T01:18:03",
+ "firmware": "01 02 01 03",
+ "results": [
+  {
+   "id": "state.firmware",
+   "address": "01 00 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "inferred",
+   "result": "answered",
+   "data": "01 02 01 03"
+  },
+  {
+   "id": "state.unknown_01_00_04",
+   "address": "01 00 04",
+   "test": "read",
+   "claims_readable": true,
+   "status": "unknown",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "state.burst_end",
+   "address": "01 10 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "state.app_page",
+   "address": "01 10 01",
+   "test": "read",
+   "claims_readable": true,
+   "status": "unknown",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "state.auto_power_off",
+   "address": "01 10 03",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "04"
+  },
+  {
+   "id": "state.memory",
+   "address": "01 10 09",
+   "test": "read",
+   "claims_readable": true,
+   "status": "inferred",
+   "result": "answered",
+   "data": "0F 19"
+  },
+  {
+   "id": "state.memory",
+   "address": "01 10 0B",
+   "test": "read",
+   "claims_readable": true,
+   "status": "inferred",
+   "result": "answered",
+   "data": "06 66"
+  },
+  {
+   "id": "state.memory",
+   "address": "01 10 0D",
+   "test": "read",
+   "claims_readable": true,
+   "status": "inferred",
+   "result": "answered",
+   "data": "0B 29"
+  },
+  {
+   "id": "state.memory",
+   "address": "01 10 0F",
+   "test": "read",
+   "claims_readable": true,
+   "status": "inferred",
+   "result": "answered",
+   "data": "0C 70"
+  },
+  {
+   "id": "state.memory",
+   "address": "01 10 11",
+   "test": "read",
+   "claims_readable": true,
+   "status": "inferred",
+   "result": "answered",
+   "data": "01 04"
+  },
+  {
+   "id": "state.memory",
+   "address": "01 10 13",
+   "test": "read",
+   "claims_readable": true,
+   "status": "inferred",
+   "result": "answered",
+   "data": "03 7E"
+  },
+  {
+   "id": "state.project_name_buf",
+   "address": "01 10 16",
+   "test": "read",
+   "claims_readable": true,
+   "status": "unknown",
+   "result": "answered",
+   "data": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
+  },
+  {
+   "id": "state.display_mode",
+   "address": "01 10 18",
+   "test": "read",
+   "claims_readable": true,
+   "status": "reported",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "state.ui_mode",
+   "address": "01 10 19",
+   "test": "read",
+   "claims_readable": true,
+   "status": "reported",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "state.track_ui",
+   "address": "01 10 30",
+   "test": "read",
+   "claims_readable": true,
+   "status": "reported",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "state.track_ui",
+   "address": "01 10 36",
+   "test": "read",
+   "claims_readable": true,
+   "status": "reported",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "state.track_ui",
+   "address": "01 10 39",
+   "test": "read",
+   "claims_readable": true,
+   "status": "reported",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "state.track_ui",
+   "address": "01 10 3C",
+   "test": "read",
+   "claims_readable": true,
+   "status": "reported",
+   "result": "no reply",
+   "data": null
+  },
+  {
+   "id": "state.track_ui",
+   "address": "01 10 50",
+   "test": "read",
+   "claims_readable": true,
+   "status": "reported",
+   "result": "answered",
+   "data": "09"
+  },
+  {
+   "id": "state.track_ui",
+   "address": "01 10 51",
+   "test": "read",
+   "claims_readable": true,
+   "status": "reported",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "state.track_ui",
+   "address": "01 10 52",
+   "test": "read",
+   "claims_readable": true,
+   "status": "reported",
+   "result": "answered",
+   "data": "04"
+  },
+  {
+   "id": "state.track_ui",
+   "address": "01 10 56",
+   "test": "read",
+   "claims_readable": true,
+   "status": "reported",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "state.track_ui",
+   "address": "01 10 57",
+   "test": "read",
+   "claims_readable": true,
+   "status": "reported",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "state.track_ui",
+   "address": "01 10 58",
+   "test": "read",
+   "claims_readable": true,
+   "status": "reported",
+   "result": "answered",
+   "data": "04"
+  },
+  {
+   "id": "dx.algorithm",
+   "address": "48 09 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "07"
+  },
+  {
+   "id": "dx.lfo",
+   "address": "48 09 04",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "dx.pitch_eg",
+   "address": "48 09 0A",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "40"
+  },
+  {
+   "id": "dx.operator",
+   "address": "49 09 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "dx.operator",
+   "address": "49 39 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "dx.amp_env",
+   "address": "31 19 01",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "40"
+  },
+  {
+   "id": "dx.amp_env",
+   "address": "31 19 02",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "40"
+  },
+  {
+   "id": "fx.reverb",
+   "address": "30 41 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "01 01"
+  },
+  {
+   "id": "fx.reverb",
+   "address": "30 41 03",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "00 15"
+  },
+  {
+   "id": "fx.delay",
+   "address": "30 42 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "02 28"
+  },
+  {
+   "id": "fx.delay",
+   "address": "30 42 03",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "00 0A"
+  },
+  {
+   "id": "fx.master",
+   "address": "30 43 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "01 12"
+  },
+  {
+   "id": "fx.master",
+   "address": "30 44 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "0C 28"
+  },
+  {
+   "id": "fx.master",
+   "address": "30 45 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "0C 7C"
+  },
+  {
+   "id": "fx.master",
+   "address": "30 46 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "08 30"
+  },
+  {
+   "id": "fx.master_eq",
+   "address": "30 47 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "40"
+  },
+  {
+   "id": "fx.master_eq",
+   "address": "30 47 01",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "0C"
+  },
+  {
+   "id": "fx.track_effect",
+   "address": "31 20 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "07 10"
+  },
+  {
+   "id": "fx.track_effect",
+   "address": "31 2A 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "0D 28"
+  },
+  {
+   "id": "fx.knob_map",
+   "address": "01 10 53",
+   "test": "read",
+   "claims_readable": true,
+   "status": "inferred",
+   "result": "answered",
+   "data": "09"
+  },
+  {
+   "id": "fx.knob_map",
+   "address": "01 10 5C",
+   "test": "read",
+   "claims_readable": true,
+   "status": "inferred",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "project.current",
+   "address": "01 10 15",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "project.name",
+   "address": "30 40 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "official",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "project.sampler_mute",
+   "address": "30 40 63",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "project.pan",
+   "address": "30 40 65",
+   "test": "read",
+   "claims_readable": true,
+   "status": "official",
+   "result": "answered",
+   "data": "40"
+  },
+  {
+   "id": "project.volume",
+   "address": "30 40 66",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "7F"
+  },
+  {
+   "id": "project.solo",
+   "address": "30 40 68",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "project.tempo",
+   "address": "30 40 76",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "00 46"
+  },
+  {
+   "id": "project.pattern_select_mode",
+   "address": "30 40 79",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "project.launch_quantize",
+   "address": "30 40 7A",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00 10"
+  },
+  {
+   "id": "project.swing",
+   "address": "30 40 7C",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "01 26"
+  },
+  {
+   "id": "project.scale",
+   "address": "30 40 7E",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "project.key",
+   "address": "30 40 7F",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "40"
+  },
+  {
+   "id": "project.scale_slot_notes",
+   "address": "30 4D 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "3C"
+  },
+  {
+   "id": "project.scale_slot_notes",
+   "address": "30 4D 10",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "3C"
+  },
+  {
+   "id": "sampler.start_end",
+   "address": "50 0A 66",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00 00 00 00"
+  },
+  {
+   "id": "sampler.start_end",
+   "address": "50 0A 6A",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00 01 26 5F"
+  },
+  {
+   "id": "sampler.loop",
+   "address": "50 0A 5F",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "sampler.loop",
+   "address": "50 0A 60",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00 01 26 5F"
+  },
+  {
+   "id": "sampler.length",
+   "address": "01 10 40",
+   "test": "read",
+   "claims_readable": true,
+   "status": "inferred",
+   "result": "answered",
+   "data": "00 01 26 70"
+  },
+  {
+   "id": "sampler.name",
+   "address": "01 10 46",
+   "test": "read",
+   "claims_readable": true,
+   "status": "inferred",
+   "result": "answered",
+   "data": "00 46 65 6D 61 6C 65 20 00 43 6F 75 6E 74 20 31 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
+  },
+  {
+   "id": "sampler.element",
+   "address": "41 0A 4F",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "40"
+  },
+  {
+   "id": "sampler.element",
+   "address": "41 0A 08",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "sampler.element_eq",
+   "address": "42 0A 36",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "40"
+  },
+  {
+   "id": "sampler.element_eq",
+   "address": "42 0A 39",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "40"
+  },
+  {
+   "id": "song.mode",
+   "address": "01 10 17",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "song.scene_mode",
+   "address": "71 50 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "song.scene_data",
+   "address": "71 40 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
+  },
+  {
+   "id": "song.current_scene",
+   "address": "71 10 04",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "song.loop_song",
+   "address": "71 10 06",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "song.loop_scene",
+   "address": "71 10 07",
+   "test": "read",
+   "claims_readable": true,
+   "status": "reported",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "sound.pitch",
+   "address": "31 10 1C",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "40"
+  },
+  {
+   "id": "sound.sends",
+   "address": "31 10 19",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "sound.sends",
+   "address": "31 10 1A",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "sound.eq",
+   "address": "31 10 48",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "40"
+  },
+  {
+   "id": "sound.eq",
+   "address": "31 10 4D",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "40"
+  },
+  {
+   "id": "sound.eq",
+   "address": "31 10 46",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00 66"
+  },
+  {
+   "id": "sound.eq",
+   "address": "31 10 4B",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01 10"
+  },
+  {
+   "id": "sound.amp_env",
+   "address": "31 10 2C",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "40"
+  },
+  {
+   "id": "sound.amp_env",
+   "address": "31 10 2D",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "40"
+  },
+  {
+   "id": "sound.synth_decay",
+   "address": "31 10 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "40"
+  },
+  {
+   "id": "sound.key_assign",
+   "address": "31 10 22",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "sound.mono_poly",
+   "address": "31 10 23",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "sound.portamento",
+   "address": "31 10 1E",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "sound.portamento",
+   "address": "31 10 1F",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "40"
+  },
+  {
+   "id": "sound.track_filter",
+   "address": "31 30 03",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "02 00"
+  },
+  {
+   "id": "sound.track_filter",
+   "address": "31 30 05",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00 10"
+  },
+  {
+   "id": "sound.alt_group",
+   "address": "41 00 0A",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "sound.lfo",
+   "address": "31 40 01",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "sound.lfo",
+   "address": "31 47 01",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "sound.arp",
+   "address": "31 57 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "sound.arp",
+   "address": "31 57 0D",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "sound.chord_notes",
+   "address": "30 67 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "3C"
+  },
+  {
+   "id": "steps.drum_read",
+   "address": "70 4t ss",
+   "test": "read",
+   "result": "skipped",
+   "note": "an empty step sends no reply, so a read-only run proves nothing; verified by step edits (STEP-SEQUENCER.md)"
+  },
+  {
+   "id": "steps.drum_prob_read",
+   "address": "70 6t ss",
+   "test": "read",
+   "result": "skipped",
+   "note": "an empty step sends no reply; verified by probability edits on the Pi"
+  },
+  {
+   "id": "steps.drum_table_5",
+   "address": "70 5t ss",
+   "test": "read",
+   "result": "skipped",
+   "note": "meaning unknown; an empty step sends no reply"
+  },
+  {
+   "id": "steps.note_read",
+   "address": "75 g0 nn",
+   "test": "read",
+   "result": "skipped",
+   "note": "past the last note there is no data; verified by note edits (STEP-SEQUENCER.md)"
+  },
+  {
+   "id": "system.speaker_volume",
+   "address": "00 00 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "7F"
+  },
+  {
+   "id": "system.headphone_volume",
+   "address": "00 00 01",
+   "test": "read",
+   "claims_readable": true,
+   "status": "official",
+   "result": "answered",
+   "data": "5C"
+  },
+  {
+   "id": "system.legacy_midi_tx",
+   "address": "00 00 0A",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "system.legacy_midi_tx",
+   "address": "00 00 0B",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "70"
+  },
+  {
+   "id": "system.legacy_midi_tx",
+   "address": "00 00 0C",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "system.usb_midi_tx",
+   "address": "00 00 0E",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "system.usb_midi_tx",
+   "address": "00 00 0F",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "70"
+  },
+  {
+   "id": "system.usb_midi_tx",
+   "address": "00 00 10",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "system.bt_midi_tx",
+   "address": "00 00 12",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "system.bt_midi_tx",
+   "address": "00 00 13",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "70"
+  },
+  {
+   "id": "system.bt_midi_tx",
+   "address": "00 00 14",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "system.midi_thru",
+   "address": "00 00 22",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "03"
+  },
+  {
+   "id": "system.midi_thru",
+   "address": "00 00 23",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "03"
+  },
+  {
+   "id": "system.midi_thru",
+   "address": "00 00 24",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "03"
+  },
+  {
+   "id": "system.usb_audio_gain",
+   "address": "00 00 15",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "system.wireless_lan",
+   "address": "00 00 16",
+   "test": "read",
+   "claims_readable": true,
+   "status": "official",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "system.analog_gain",
+   "address": "00 00 18",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "system.sampling_source",
+   "address": "00 00 19",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "02"
+  },
+  {
+   "id": "system.sampling_count_in",
+   "address": "00 00 1B",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "system.auto_normalize",
+   "address": "00 00 1C",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "system.project_resume",
+   "address": "00 00 1D",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "system.project_resume",
+   "address": "00 00 1E",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "system.record_quantize",
+   "address": "00 00 1F",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "03"
+  },
+  {
+   "id": "system.pad_velocity",
+   "address": "00 00 20",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "64"
+  },
+  {
+   "id": "system.sound_design_mode",
+   "address": "00 00 21",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "system.metronome",
+   "address": "00 00 25",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "system.metronome",
+   "address": "00 00 26",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "system.metronome",
+   "address": "00 00 27",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "38"
+  },
+  {
+   "id": "system.midi_sync",
+   "address": "00 00 2A",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "system.midi_sync",
+   "address": "00 00 2B",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "system.midi_sync",
+   "address": "00 00 2D",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "system.knob_sensitivity",
+   "address": "00 00 2F",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "01"
+  },
+  {
+   "id": "system.wifi_country",
+   "address": "00 60 06",
+   "test": "read",
+   "claims_readable": true,
+   "status": "inferred",
+   "result": "answered",
+   "data": "55 53"
+  },
+  {
+   "id": "system.hardware_unknown",
+   "address": "00 60 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "unknown",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "system.hardware_unknown",
+   "address": "00 60 01",
+   "test": "read",
+   "claims_readable": true,
+   "status": "unknown",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "system.hardware_unknown",
+   "address": "00 61 02",
+   "test": "read",
+   "claims_readable": true,
+   "status": "unknown",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "track.volume",
+   "address": "30 50 00",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "64"
+  },
+  {
+   "id": "track.pan",
+   "address": "30 50 01",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "40"
+  },
+  {
+   "id": "track.choke_group",
+   "address": "30 50 08",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "track.octave",
+   "address": "30 50 0C",
+   "test": "read",
+   "claims_readable": true,
+   "status": "official",
+   "result": "answered",
+   "data": "40"
+  },
+  {
+   "id": "track.pattern_select",
+   "address": "30 50 0F",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "02"
+  },
+  {
+   "id": "track.pattern_length",
+   "address": "30 50 16",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "00 10"
+  },
+  {
+   "id": "track.pattern_length",
+   "address": "30 50 18",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "00 10"
+  },
+  {
+   "id": "track.pattern_length",
+   "address": "30 57 16",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "00 20"
+  },
+  {
+   "id": "track.mute",
+   "address": "30 50 29",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "track.select",
+   "address": "01 10 27",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "07"
+  },
+  {
+   "id": "track.sampler_pad_select",
+   "address": "01 10 28",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "track.sound_name",
+   "address": "01 10 35",
+   "test": "read",
+   "claims_readable": true,
+   "status": "verified",
+   "result": "answered",
+   "data": "00 54 53 5F 52 4E 42 5F 00 6B 69 63 6B 5F 72 6E 00 62 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
+  },
+  {
+   "id": "track.sound_id",
+   "address": "01 10 33",
+   "test": "read",
+   "claims_readable": true,
+   "status": "inferred",
+   "result": "answered",
+   "data": "20 51"
+  },
+  {
+   "id": "transport.play_state",
+   "address": "01 10 20",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  },
+  {
+   "id": "transport.record_state",
+   "address": "01 10 21",
+   "test": "read",
+   "claims_readable": true,
+   "status": "app",
+   "result": "answered",
+   "data": "00"
+  }
+ ]
+}

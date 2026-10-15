@@ -48,6 +48,7 @@ address = "70 4t ss"
 data = "reply: [note] [vel] [substep] [60 + micro] [len hi] [len lo]; no data = empty step. Live-recorded length = key hold time"
 dir = ["readable"]
 status = "verified"
+test = { skip = "an empty step sends no reply, so a read-only run proves nothing; verified by step edits (STEP-SEQUENCER.md)" }
 meaning = "Read one step of the MIDI-selected pattern."
 evidence = ["STEP-SEQUENCER live recording section (2026-10-13)"]
 
@@ -60,6 +61,7 @@ address = "70 6t ss"
 data = "1 byte: 00 = 100 % … 07; no reply for an empty step"
 dir = ["readable"]
 status = "verified"
+test = { skip = "an empty step sends no reply; verified by probability edits on the Pi" }
 meaning = "Probability of a step (not in the 70 4t readback)."
 evidence = ["2026-10-15 from the Pi: set 04 / 07, read back 04 / 07"]
 
@@ -71,6 +73,7 @@ kind = "parameter"
 address = "70 5t ss"
 dir = ["readable"]
 status = "unknown"
+test = { skip = "meaning unknown; an empty step sends no reply" }
 meaning = "Never answered so far. The app reads it for every step; maybe parameter locks."
 evidence = ["App P0-NAV"]
 
@@ -95,6 +98,7 @@ address = "75 g0 nn"
 data = "nn = index; reply 8-byte note, no data = past the end"
 dir = ["readable"]
 status = "verified"
+test = { skip = "past the last note there is no data; verified by note edits (STEP-SEQUENCER.md)" }
 meaning = "Notes in time order (0 = earliest); the list renumbers after a remove."
 evidence = ["STEP-SEQUENCER §2"]
 

@@ -60,6 +60,7 @@ address = "41 eA nn"
 data = "4F coarse tune (40 = 0) · 08 trigger/gate (00 trigger, 01 gate) · 0B pan · 2E level · 33 AEG attack · 35 AEG decay 2 · 37 AEG release (the app's DECAY) · 58 PEG attack time · 59 PEG decay 1 time · 5E/60/62/64 PEG levels (2 bytes, 128 + value)"
 dir = ["command", "readable"]
 status = "app"
+test = { address = ["41 0A 4F", "41 0A 08"] }
 meaning = "Per-pad sound parameters."
 evidence = ["App 106-09…18, LE-06…11, 109-03"]
 
@@ -72,6 +73,7 @@ address = "42 eA nn"
 data = "36 EQ low gain, 39 EQ high gain (40 = 0 dB)"
 dir = ["command", "readable"]
 status = "app"
+test = { address = ["42 0A 36", "42 0A 39"] }
 meaning = "Per-pad EQ (GUIDE panel page 3)."
 evidence = ["App LE-08 (order of knobs → 36 low, 39 high is inferred)"]
 
@@ -81,6 +83,7 @@ name = "Choose a pad's sample"
 area = "sampler"
 kind = "program"
 form = "B[pad−1] 00 3E, B[pad−1] 20 [bank], C[pad−1] [program]"
+cc = [0, 32]                        # bank select MSB 62, then the program change
 dir = ["command"]
 status = "app"
 meaning = "Bank MSB 62 = sampler element; channel = pad."

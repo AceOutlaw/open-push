@@ -6,6 +6,7 @@ name = "Start / Continue / Stop / Clock"
 area = "transport"
 kind = "realtime"
 form = "FA start · FB continue · FC stop · F8 clock"
+realtime = ["start", "continue", "stop", "clock"]
 dir = ["command", "report"]
 status = "verified"
 meaning = "MIDI realtime transport. The Seqtrak sends Start/Stop when its own PLAY is pressed (Transmit Sequencer Control on); clock only if Clock Out is on."

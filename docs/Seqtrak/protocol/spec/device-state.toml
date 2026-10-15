@@ -133,7 +133,7 @@ data = "30 GUIDE panel page (00–04) · 39 knob display (01 01, 00 00) · 36, 3
 dir = ["command", "report", "readable"]
 status = "reported"
 meaning = "UI state per track used by the app and the device."
-evidence = ["App P0-NAV, EX-08…17, LE-07…10", "Pi captures"]
+evidence = ["App P0-NAV, EX-08…17, LE-07…10", "Pi captures", "Pi verify run 2026-10-15 (KICK): every address answers except 01 10 3C — no reply; maybe only for some track types ❓"]
 
 [[message]]
 id = "state.unknown_01_10_27_burst"

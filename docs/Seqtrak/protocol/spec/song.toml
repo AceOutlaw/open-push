@@ -61,6 +61,7 @@ address = "71 40 nn"
 data = "[len hi] [len lo] + 11 bytes (pattern 0–5 per track, KICK … SAMPLER); no data = empty slot"
 dir = ["readable", "report"]
 status = "verified"
+test = { address = ["71 40 00"] }
 meaning = "Read a scene."
 evidence = ["App P0-NAV / SG", "Readback 2026-10-15"]
 
@@ -136,6 +137,7 @@ address = "71 10 06"
 data = "01 on / 00 off"
 dir = ["command", "readable"]
 status = "app"
+test = { write = ["01", "00"] }
 meaning = "Loop the song after the last scene (app-only setting)."
 guide = "§13.2.3"
 evidence = ["App SG-25/26"]

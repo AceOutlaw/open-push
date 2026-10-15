@@ -9,6 +9,7 @@ address = "31 1p 1C"
 data = "28–58, 40 = 0 (−24…+24)"
 dir = ["command", "report", "readable"]
 status = "app"
+test = { address = ["31 10 1C"], write = ["44", "40"] }
 meaning = "Track pitch; same scale as CC 25."
 evidence = ["App 107-01, EX-05/06 (all drum tracks)"]
 
@@ -22,6 +23,7 @@ also = ["31 1p 1A"]
 data = "19 reverb (send 1), 1A delay (send 2); 0–127"
 dir = ["command", "report", "readable"]
 status = "app"
+test = { address = ["31 10 19", "31 10 1A"], write = ["20", "00"] }
 meaning = "Track sends; same as CC 91 / 94."
 guide = "§10.1.2"
 evidence = ["App 107-14/15, 109-02"]
@@ -138,6 +140,7 @@ address = "31 4p nn"
 data = "01 wave (00–0B), 02 speed, 03 tempo speed (05–18 = 1/16 … 1/4×64), 04 tempo sync, 05 delay, 0B destination, 0C depth"
 dir = ["command", "readable"]
 status = "app"
+test = { address = ["31 40 01", "31 47 01"] }
 meaning = "Per-track LFO (app-only on the device). Destinations: 00 FX param 1 … 09 dry/wet, 20 filter cutoff, 21 resonance, 40 level, 41 pitch, 44 pan."
 guide = "§14.1"
 evidence = ["App click-through 113-01…12"]
@@ -151,6 +154,7 @@ address = "31 5p nn"
 data = "00 template (00 off, 01 on), 0D key mode (00 ARP, 03 +DIRECT), 1E type (2 bytes, 00–08 in the app), 08 speed (00 = 200 % … 03 = 100 % … 09 = 25 %), 14 gate (2 bytes, %), 1C octave (40 = 0), 16 swing (2 bytes, written with project swing)"
 dir = ["command", "readable"]
 status = "app"
+test = { address = ["31 57 00", "31 57 0D"] }
 meaning = "SYNTH 1/2/DX arpeggiator."
 evidence = ["App click-through 105-01…06, EX-11/15", "Data List Arpeggiator block"]
 
@@ -163,6 +167,7 @@ address = "30 6p nn"
 data = "nn 00–1B = 7 pads × 4 notes (MIDI notes, 00 = none); scales 5–8 at 30 7p"
 dir = ["command", "readable"]
 status = "app"
+test = { address = ["30 67 00"] }
 meaning = "Chord pads of SYNTH 1/2/DX (CHORD PACK rewrites them)."
 guide = "§7.7"
 evidence = ["App click-through 105-08"]

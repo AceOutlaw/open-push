@@ -6,6 +6,7 @@ name = "Load project 1–8"
 area = "project"
 kind = "program"
 form = "B0 00 40, B0 20 00, C0 [project−1]"
+cc = [0, 32]                        # bank select MSB 64 / LSB 0, then the program change
 dir = ["command"]
 status = "app"
 meaning = "Bank MSB 64 / LSB 0 / Program 0–7 loads project 1–8 (program 8 = temporary project). Channel ignored. The Seqtrak saves the current project first and stops playback."
@@ -97,6 +98,7 @@ address = "30 40 76"
 data = "2 bytes (7-bit pair), 5–300 BPM; e.g. 00 64 = 100"
 dir = ["command", "report", "readable"]
 status = "verified"
+test = { write = ["00 7B", "00 64"] }
 meaning = "Project tempo."
 guide = "§4.5.1"
 evidence = ["Bridge tempo encoder + readback (PARITY ch.4)", "App 111-02 / 112-02"]
@@ -137,6 +139,7 @@ address = "30 40 7C"
 data = "2 bytes = 128 + offset in ticks, offset −58…+58 (01 00 = straight). App % = (120 + offset)/240"
 dir = ["command", "report", "readable"]
 status = "verified"
+test = { write = ["01 05", "01 00"] }
 meaning = "Swing of even steps."
 guide = "§4.5.2"
 evidence = ["App 112-01 (68 % = 01 2C)", "Bridge swing encoder confirmed on hardware by Ace 2026-10-14"]
@@ -177,6 +180,7 @@ address = "30 4D nn"
 data = "nn = 16 × slot + pad (pad 0–6); value = MIDI note"
 dir = ["command", "readable"]
 status = "app"
+test = { address = ["30 4D 00", "30 4D 10"] }
 meaning = "The 7 pad notes of each of the 8 scale slots (MINOR = 3C 3E 3F 41 43 44 46 …)."
 guide = "§7.4 note"
 evidence = ["App P0-NAV reads all 56", "App 105-12 rewrites slot 8 (30 4D 70–76)"]

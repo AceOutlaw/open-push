@@ -15,9 +15,34 @@ can use it: this bridge, a desktop editor, other hardware. Every message carries
 python3 tools/seqtrak_protocol.py check     # validate the spec
 python3 tools/seqtrak_protocol.py render    # regenerate PROTOCOL.md
 python3 tools/seqtrak_protocol.py datalist  # regenerate DATALIST-PARAMS.md (needs reference files/)
-python3 tools/seqtrak_protocol.py bridge    # which SysEx addresses the bridge uses, vs. the spec
+python3 tools/seqtrak_protocol.py bridge    # the SysEx addresses and plain MIDI the bridge sends, vs. the spec
 ```
-`tests/test_seqtrak_protocol.py` runs the check and fails if the bridge uses a SysEx address the spec doesn't have.
+`tests/test_seqtrak_protocol.py` runs the check and fails if the bridge uses a SysEx address, CC number,
+program change, note or transport message the spec doesn't describe.
+
+## Checking the spec against a real Seqtrak
+
+`tools/seqtrak_verify.py` runs where the Seqtrak is plugged in (the Pi, next to the running bridge) and
+replays the spec. Re-run it after every firmware update.
+
+```bash
+python3 tools/seqtrak_verify.py                    # read-only: request every readable address
+python3 tools/seqtrak_verify.py --write            # also: write test value, read back, restore the original
+python3 tools/seqtrak_verify.py --probe            # also request addresses the spec doesn't call readable
+python3 tools/seqtrak_verify.py --compare runs/2026-10-15-read.json   # what changed since that run
+```
+It reports addresses that should answer and don't, addresses that answer but aren't marked readable, and
+write tests that pass (evidence for ✅) or fail. Keep the results file in `runs/`.
+
+An entry steers its test with an inline `test` table:
+```toml
+test = { address = ["30 50 00"], write = ["50", "60"] }   # concrete addresses; values to try writing
+test = { skip = "an empty step sends no reply" }         # why it can't be checked automatically
+```
+Without `test.address`, placeholder nibbles become 0 (`30 5p 00` → `30 50 00`, KICK); a whole-byte placeholder
+(`nn`, `ss`) needs one. A write uses the first value that differs from the current one, and always restores it.
+A reply proves the address is readable, and a passing write proves the command. Neither proves what the value
+means: that still needs the device or an ear.
 
 ## A message entry
 

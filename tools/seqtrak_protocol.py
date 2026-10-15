@@ -8,7 +8,9 @@ Usage:
     python3 tools/seqtrak_protocol.py check     # validate the spec
     python3 tools/seqtrak_protocol.py render    # write docs/Seqtrak/protocol/PROTOCOL.md
     python3 tools/seqtrak_protocol.py datalist  # write DATALIST-PARAMS.md from Yamaha's Data List extract
-    python3 tools/seqtrak_protocol.py bridge    # what the bridge uses, vs. the spec
+    python3 tools/seqtrak_protocol.py bridge    # SysEx + plain MIDI the bridge sends, vs. the spec
+
+To check the spec against a real Seqtrak, see tools/seqtrak_verify.py.
 """
 import pathlib
 import re
@@ -24,6 +26,9 @@ BRIDGE = [ROOT / "src" / "open_push" / "seqtrak" / "app.py", ROOT / "src" / "ope
 
 KINDS = {"parameter", "bulk", "cc", "note", "program", "realtime"}
 DIRS = {"command", "report", "readable"}
+REALTIME = {"start", "continue", "stop", "clock"}
+CONCRETE = re.compile(r"^[0-9A-F]{2} [0-9A-F]{2} [0-9A-F]{2}$")
+HEX_BYTES = re.compile(r"^[0-9A-F]{2}( [0-9A-F]{2})*$")
 # Strongest first. Only "verified" means proven on this unit (readback, the device, or ear).
 STATUSES = ["verified", "app", "official", "reported", "inferred", "unknown"]
 STATUS_TEXT = {
@@ -69,6 +74,19 @@ def validate(entries):
         for a in [e.get("address")] + e.get("also", []):
             if a and not address_regex(a):
                 problems.append(f"{where}: bad address '{a}'")
+        if e.get("kind") in ("cc", "program") and not e.get("cc"):
+            problems.append(f"{where}: cc/program needs 'cc' (the CC numbers it uses)")
+        if any(not isinstance(n, int) or not 0 <= n <= 127 for n in e.get("cc", [])):
+            problems.append(f"{where}: 'cc' must be numbers 0-127")
+        if e.get("kind") == "realtime" and not set(e.get("realtime", [])) <= REALTIME:
+            problems.append(f"{where}: 'realtime' must be from {sorted(REALTIME)}")
+        t = e.get("test", {})
+        t_addrs = t.get("address", [])
+        for a in t_addrs if isinstance(t_addrs, list) else [t_addrs]:
+            if not CONCRETE.match(a) or not any(address_regex(x).match(a) for x in [e.get("address")] + e.get("also", []) if x):
+                problems.append(f"{where}: test address '{a}' must be concrete and match the entry's address")
+        if any(not HEX_BYTES.match(w) for w in t.get("write", [])):
+            problems.append(f"{where}: test.write values must be hex bytes like '01 05'")
         if e.get("status") in ("verified", "app") and not e.get("evidence"):
             problems.append(f"{where}: status {e['status']} needs evidence")
         if e.get("id") in seen:
@@ -229,6 +247,77 @@ def bridge_addresses(paths=BRIDGE):
     return found
 
 
+SENDS_TO_SEQTRAK = re.compile(r"self\.(seqtrak|port)\.send\(")
+CC_TUPLE = re.compile(r"\('[^']*',\s*(\d+),\s*-?\d+,")          # DEVICE_PARAMS ('Volume', 7, 100, fmt)
+SEND_CC_LITERAL = re.compile(r"_send_cc\([^,()]+,\s*(\d+)\s*,")   # self._send_cc(1, 0, 64)
+CONTROL_LITERAL = re.compile(r"control=(\d+)")
+
+
+def bridge_midi(paths=BRIDGE):
+    """Plain MIDI the bridge sends to the Seqtrak: {('cc', n) | ('program',) | ('note',) | ('realtime', name): [where]}.
+
+    CC numbers come from protocol.py's `class CC`, the DEVICE_PARAMS tables (sent by send_track_cc),
+    literal _send_cc(channel, N, ...) calls, and control=N on lines that send to the Seqtrak port.
+    Push LED/button CCs go to push_out and are not counted."""
+    found = {}
+    add = lambda key, where: found.setdefault(key, []).append(where)
+    for path in paths:
+        in_cc_class = False
+        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            where = f"{path.name}:{n}"
+            s = line.strip()
+            if s.startswith("#"):
+                continue
+            if line.startswith("class "):
+                in_cc_class = line.startswith("class CC")
+            elif in_cc_class and (m := re.match(r"\s+[A-Z_]+\s*=\s*(\d+)", line)):
+                add(("cc", int(m.group(1))), where)
+            for m in CC_TUPLE.finditer(line):
+                if int(m.group(1)) > 0:
+                    add(("cc", int(m.group(1))), where)
+            for m in SEND_CC_LITERAL.finditer(line):
+                add(("cc", int(m.group(1))), where)
+            # protocol.py only ever talks to the Seqtrak port; in app.py, only self.seqtrak.send lines do
+            if path.name == "protocol.py" or SENDS_TO_SEQTRAK.search(line):
+                for m in CONTROL_LITERAL.finditer(line):
+                    add(("cc", int(m.group(1))), where)
+                if "'program_change'" in line:
+                    add(("program",), where)
+                if "'note_on'" in line or "'note_off'" in line:
+                    add(("note",), where)
+                for rt in REALTIME:
+                    if f"Message('{rt}')" in line:
+                        add(("realtime", rt), where)
+    return found
+
+
+def midi_report(entries):
+    """Which plain-MIDI messages the bridge sends that the spec doesn't describe."""
+    covered = {("cc", n): [e for e in entries if n in e.get("cc", [])] for n in range(128)}
+    used = bridge_midi()
+    lines, missing, weak = [], [], []
+    for key, where in sorted(used.items(), key=lambda kv: (kv[0][0], str(kv[0][1:]))):
+        if key[0] == "cc":
+            hits = covered[key]
+        elif key[0] == "realtime":
+            hits = [e for e in entries if key[1] in e.get("realtime", [])]
+        else:
+            hits = [e for e in entries if e["kind"] == key[0]]
+        label = " ".join(str(k) for k in key)
+        if not hits:
+            missing.append((label, where))
+        elif all(h["status"] not in ("verified", "app", "official") for h in hits):
+            weak.append((label, [h["status"] for h in hits], where))
+    ccs = sorted(k[1] for k in used if k[0] == "cc")
+    lines.append(f"Bridge sends {len(ccs)} CC numbers to the Seqtrak: {', '.join(map(str, ccs))}")
+    lines.append(f"  plus: {', '.join(' '.join(map(str, k)) for k in sorted(used) if k[0] != 'cc')}")
+    lines.append(f"Not in the spec: {len(missing)}")
+    lines += [f"  {a}  ({', '.join(w[:3])})" for a, w in missing]
+    lines.append(f"Only reported/inferred/unknown in the spec: {len(weak)}")
+    lines += [f"  {a}  {s}  ({', '.join(w[:3])})" for a, s, w in weak]
+    return "\n".join(lines), missing
+
+
 def bridge_report(entries):
     used = bridge_addresses()
     lines, missing, weak = [], [], []
@@ -266,6 +355,8 @@ def main(argv):
         print(f"wrote {DATALIST_OUT.relative_to(ROOT)} ({n} parameters)")
     elif cmd == "bridge":
         print(bridge_report(entries)[0])
+        print()
+        print(midi_report(entries)[0])
     return 0
 
 
