@@ -99,3 +99,45 @@ def test_two_pads_on_the_same_note_release_once_both_are_up(bridge):
     assert notes(bridge, 'note_off') == []
     bridge._release_sounding(45)
     assert notes(bridge, 'note_off') == [(8, 60)]
+
+
+def lcd_line1(b):
+    texts = [bytes(m.data[7:]).decode('ascii') for m in b.push_out.sent
+             if m.type == 'sysex' and list(m.data[:4]) == [0x47, 0x7F, 0x15, 0x18]]
+    return texts[-1] if texts else ''
+
+
+def test_lcd_shows_syncing_until_the_project_is_read(bridge):
+    bridge._request_seqtrak_state()
+    assert 'SYNCING...' in lcd_line1(bridge)
+    bridge.update_display()                          # any view redraw keeps the label
+    assert 'SYNCING...' in lcd_line1(bridge)
+    for addr in bridge._essential_addresses():
+        bridge.handle_seqtrak_sysex(HEADER + list(addr) + [0x00, 0x40])
+    assert 'SYNC' not in lcd_line1(bridge)
+
+
+def test_lcd_shows_partial_sync_when_a_read_fails(bridge):
+    bridge._request_seqtrak_state()
+    essentials = bridge._essential_addresses()
+    for addr in essentials[1:]:
+        bridge.handle_seqtrak_sysex(HEADER + list(addr) + [0x00, 0x40])
+    bridge._on_request_failed(essentials[0])
+    assert 'PARTIAL SYNC' in lcd_line1(bridge)
+
+
+def lcd_line4(b):
+    texts = [bytes(m.data[7:]).decode('ascii') for m in b.push_out.sent
+             if m.type == 'sysex' and list(m.data[:4]) == [0x47, 0x7F, 0x15, 0x1B]]
+    return texts[-1] if texts else ''
+
+
+def test_duplicate_says_done_only_after_the_last_message_goes_out(bridge):
+    bridge.dup_scope, bridge.dup_from, bridge.dup_goto = 'drums', 1, True
+    bridge._duplicate_patterns(2)
+    assert 'DUPLICATING' in lcd_line4(bridge)
+    assert bridge.track_variation.get(1) != 2        # not moved until its select goes out
+    while bridge._timed_sends:
+        bridge._timed_sends.pop(0)[1]()
+    assert 'DUPLICATED' in lcd_line4(bridge)
+    assert bridge.track_variation[1] == 2

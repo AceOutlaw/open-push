@@ -30,6 +30,7 @@ from open_push.seqtrak.protocol import (
 )
 from open_push.seqtrak.presets import get_preset_name_short
 from open_push.seqtrak.requests import RequestQueue
+from open_push.seqtrak.sync import SyncState, SYNCED, PARTIAL
 
 # =============================================================================
 # PUSH CONSTANTS (matching Reason app)
@@ -562,6 +563,10 @@ class SeqtrakBridge:
         self._resync_full = False    # True: everything; False: steps only
         self._steps_read_due = False # read the drum steps once a full re-read has been answered
         self.requests = RequestQueue()  # paced Parameter Requests; send is set when the port opens
+        self.requests.on_failed = self._on_request_failed
+        self.sync = SyncState()         # which Seqtrak values are known to be current
+        self._sync_shown = SYNCED       # the status line 1 currently shows
+        self._lcd_text = {}             # line -> last text drawn (without the sync label)
         self._seqtrak_ui_mode = 0    # 01 10 19: 00 idle, 03 step input, 04 Delete held
         self._seqtrak_project = None # 01 10 15: current project, 0-based (None = not heard yet)
         self._project_known = False  # first 01 10 15 (startup read) only sets it, no re-read
@@ -842,6 +847,9 @@ class SeqtrakBridge:
         # Extract address (bytes 5-7) and data (byte 8+)
         addr = list(data[5:8])
         self.requests.answered(addr)
+        self.sync.confirm(addr)
+        if self._sync_shown != SYNCED:
+            self._refresh_sync_indicator()
         sysex_data = list(data[8:])
 
         # Song mode state (also kept when the Song view isn't open)
@@ -928,6 +936,8 @@ class SeqtrakBridge:
                 self._steps_read_due = False
                 self.requests.clear()
                 self.requests.pause(1.0)
+                self.sync.begin(self._essential_addresses())  # old values: "SYNCING..." right away
+                self._refresh_sync_indicator()
                 if self._timed_sends:  # a Duplicate still in progress belongs to the old project
                     self._timed_sends = []
                     self._show_lcd_popup("DUPLICATE", "cancelled")
@@ -1105,19 +1115,37 @@ class SeqtrakBridge:
         text = ""
         for part in parts:
             text += part[:CHARS_PER_SEGMENT].center(CHARS_PER_SEGMENT)
-
-        line_addr = LCD_LINES.get(line, LCD_LINES[1])
-        data = [line_addr, 0x00, 0x45, 0x00]
-        data.extend([ord(c) for c in text])
-        self.send_sysex(data)
+        self._write_lcd_line(line, text)
 
     def set_lcd_line_raw(self, line, text):
         """Set LCD line with raw 68-char string."""
-        text = text[:68].ljust(68)
+        self._write_lcd_line(line, text[:68].ljust(68))
+
+    def _write_lcd_line(self, line, text):
+        """Every LCD write goes through here: it remembers the text, and while the Push isn't in
+        sync with the Seqtrak it shows that at the right end of line 1, whatever view is drawing."""
+        self._lcd_text[line] = text
+        status = self.sync.status()
+        if line == 1 and status != SYNCED:
+            text = text[:51] + ("PARTIAL SYNC" if status == PARTIAL else "SYNCING...").center(17)
         line_addr = LCD_LINES.get(line, LCD_LINES[1])
         data = [line_addr, 0x00, 0x45, 0x00]
         data.extend([ord(c) for c in text])
         self.send_sysex(data)
+
+    def _refresh_sync_indicator(self):
+        """Redraw line 1 when the sync status changes (the label is added in _write_lcd_line)."""
+        status = self.sync.status()
+        if status == self._sync_shown:
+            return
+        self._sync_shown = status
+        print(f"Seqtrak: {status} (project read {self.sync.epoch})")
+        if 1 in self._lcd_text and getattr(self, 'push_out', None):
+            self._write_lcd_line(1, self._lcd_text[1])
+
+    def _on_request_failed(self, address):
+        self.sync.failed(address)
+        self._refresh_sync_indicator()
 
     def set_pad_color(self, note, color):
         """Set pad LED color."""
@@ -1435,15 +1463,21 @@ class SeqtrakBridge:
         delay += 0.06
         if self.dup_goto:
             for track in copied:
-                self._timed_sends.append((time.time() + delay, lambda tr=track: self.protocol.select_track_variation(tr, to_pattern)))
-                self.track_variation[track] = to_pattern
+                self._timed_sends.append((time.time() + delay, lambda tr=track: self._goto_pattern(tr, to_pattern)))
                 delay += 0.02
         self._last_track_select_sent = time.time() + delay  # ignore the Seqtrak's track-select echoes
         self._schedule_resync(delay=delay + 0.5)
         names = {'track': Track.NAMES.get(self.keyboard_track, ''), 'drums': 'Drums', 'all': 'All'}[self.dup_scope]
         src_label = f"P{self.dup_from}" if self.dup_from else "current"
-        self._show_lcd_popup("DUPLICATED", f"{names} {src_label}->P{to_pattern}", duration=3.0)
+        label = f"{names} {src_label}->P{to_pattern}"
+        # The copy goes out over the next `delay` seconds; only say it's done once the last message has gone
+        self._show_lcd_popup("DUPLICATING", label, duration=delay + 1.0)
+        self._timed_sends.append((time.time() + delay, lambda: self._show_lcd_popup("DUPLICATED", label, duration=3.0)))
         print(f"Duplicate: {names} {src_label} -> P{to_pattern} ({len(copied)} tracks)")
+
+    def _goto_pattern(self, track, pattern):
+        self.protocol.select_track_variation(track, pattern)
+        self.track_variation[track] = pattern
 
     def _show_project_picker(self):
         current = self._seqtrak_project
@@ -3953,8 +3987,19 @@ class SeqtrakBridge:
                 return index
         return 128
 
+    def _essential_addresses(self):
+        """What must be read back before the Push counts as in sync with the Seqtrak: transport,
+        tempo, swing, volume, key/scale, the project, each track's sound name and pattern."""
+        return ([Address.PLAY_STATE, Address.RECORD_STATE, Address.TEMPO, Address.SWING,
+                 Address.MASTER_VOLUME, Address.PATTERN_SELECT_MODE, Address.SCALE, Address.KEY,
+                 [0x01, 0x10, 0x15]]
+                + [[0x01, 0x10 + p, 0x35] for p in range(10)]     # sound names (not the SAMPLER)
+                + [[0x30, 0x50 + p, 0x0F] for p in range(11)])    # pattern per track
+
     def _request_seqtrak_state(self):
         """Read everything the Push shows from the Seqtrak (power-on, project load)."""
+        self.sync.begin(self._essential_addresses())  # until answered, the Push shows "SYNCING..."
+        self._refresh_sync_indicator()
         for track in range(1, 12):
             self.protocol.request_preset_name(track)
             self.protocol.request_parameter([0x30, 0x50 + track - 1, 0x0F])

@@ -23,6 +23,7 @@ class RequestQueue:
         self.paused_until = 0.0
         self.failed = 0               # requests given up on since start
         self.sent = 0
+        self.on_failed = None         # optional function(address list) called when one is given up
 
     def add(self, address):
         """Queue a request (once: an address already queued or waiting isn't added again)."""
@@ -63,6 +64,8 @@ class RequestQueue:
                 del self.in_flight[key]
                 self.failed += 1
                 self.log(f"Seqtrak: no reply to {' '.join(f'{b:02X}' for b in key)} after {tries} tries")
+                if self.on_failed:
+                    self.on_failed(list(key))
         while self.queue and len(self.in_flight) < self.window:
             self._send(self.queue.pop(0), 1, now)
 

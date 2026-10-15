@@ -89,3 +89,14 @@ def test_low_priority_feeder_waits_for_room():
     assert not q.has_room()          # window full
     q.answered([0x30, 0x40, 0x76])
     assert q.has_room()
+
+
+def test_failure_hook_names_the_address():
+    q, _, _, clock = make(timeout=1.0, retries=0)
+    failed = []
+    q.on_failed = failed.append
+    q.add([0x30, 0x40, 0x76])
+    q.pump()
+    clock.t += 1.1
+    q.pump()
+    assert failed == [[0x30, 0x40, 0x76]]
