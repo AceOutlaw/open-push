@@ -2,6 +2,11 @@
 
 **Goal:** everything the Yamaha SEQTRAK can do (per Yamaha's User Guide, OS V2.00) should be doable from
 an Ableton Push 1 through the bridge.
+
+**Firmware scope (Ace, 2026-10-15):** the target is the firmware this unit runs, **1.21.3**, until it works
+fully. The guide is written for OS V2.00, so a guide feature may not exist or may behave differently on 1.21.3.
+§6.7 track types (Drum / DrumKit / Synth) is 2.0-only. Moving to 2.0 is a later, separate project (Linear
+KM-34): it changes what the drum keys mean, so drum tracks are no longer fixed KICK / SNARE / …
 **Updated:** 2026-10-15 (after the KM-100 fixes, new buttons, song mode and the app click-through). **Built:** 2026-10-12, from the user guide text (`reference files/Yamaha/User Guide/SEQTRAK_user_guide_En_D0.txt`),
 `src/open_push/seqtrak/app.py` / `protocol.py` (working tree on `integration`, incl. uncommitted changes), and
 `STEP-SEQUENCER.md`, `FUNCTIONALITY-MAP.md`, `midi-data-table.md`, `BUGS_AND_ENHANCEMENTS.md`.

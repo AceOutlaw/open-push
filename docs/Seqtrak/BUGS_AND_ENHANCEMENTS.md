@@ -271,6 +271,62 @@ while playing.
 
 ---
 
+### 5. Copy a Sample from One Sampler Pad to Another
+**Priority**: Low (the sampler is parked)
+**Linear**: KM-227
+**Description**: Put the sample on one SAMPLER pad onto another pad from the Push, e.g. to play the same
+sample trimmed, pitched or looped differently on two pads.
+
+**Current Behavior**: Not possible from the Push. The Seqtrak itself has no sample copy either: the guide
+only copies patterns (§5.5) and steps (§5.9), and each pad picks its sound from the library with Sound Design
+knob 1 (§5.7).
+
+**Ways it might work (none verified)**:
+- Preset or imported sample: set the target pad to the same library sound. Needs the message that picks a
+  pad's sound, which isn't known yet (the picker list `bulk.toml` is only ❓ inferred).
+- Recorded sample: the guide doesn't say whether recordings appear in the sound list. Saving a sound (hold
+  [ALL], press Sound Design knob 1, §9.5) adds it as a favourite, which another pad could pick (§5.7.1);
+  untested on the SAMPLER track.
+- Bulk dump of the sampler element (`bulk.toml`, official) sent back to another pad: untested, risky.
+
+**Investigation Needed**:
+- On the device: does save-as-favourite work for a recorded sample? If yes, can another pad select it?
+- App click-through capture while changing a pad's sample, to find the pad sound-select message.
+- Then a Push action like Duplicate (hold a button, press From pad, press To pad).
+
+---
+
+### 6. Split Outputs (Drums Left, Synths Right)
+**Priority**: Medium
+**Linear**: KM-228
+**Description**: The Seqtrak has one stereo output (the PHONES stereo mini jack; guide, Specifications). A "Split outputs"
+switch on the Push pans all drum tracks hard left and the synth tracks hard right, so a splitter cable (TRS
+to two mono jacks) gives two separate outputs: drums to one channel of a mixer or interface, synths to another.
+
+**Current Behavior**: Possible today only by panning every track by hand.
+
+**Proposed Behavior**:
+- One switch in a menu: **Split outputs ON/OFF**.
+- ON: drums (KICK … PERC 2, tracks 1–7) hard left (pan 1), SYNTH 1, SYNTH 2, DX (8–10) hard right (pan 127).
+  SAMPLER (11) goes with the synths (decided 2026-10-15; no setting for now).
+- Project pan (ALL knob) set to centre (64) so it doesn't shift the split.
+- OFF: restore every track's pan to what it was before ON.
+- Show it on the LCD (e.g. `SPLIT L|R`) so it's clear why the mix is one-sided.
+- Remember it across restarts? (TBD) Re-apply after a project switch, since pans are saved per project.
+
+**Protocol** (✅ verified 2026-10-15, `spec/track.toml`, `spec/project.toml`):
+- Track pan `30 5p 01`, data 1–127, 64 = centre (p = track − 1). Same as CC 10.
+- Project pan `30 40 65`, data 1–127, 64 = centre.
+
+**Unknowns to check on the hardware (not in the guide)**:
+- REVERB and DELAY are shared send effects (§11.3). Their returns are probably stereo, so reverb/delay from
+  the drums may leak into the synth side and the other way round. Option: a "dry split" that also turns the
+  sends down, or accept the bleed.
+- The master effect and any stereo sound (stereo delay, chorus, wide presets) may also leak across.
+- Check with the splitter: solo the drums with Split ON and listen to the right channel for leakage.
+
+---
+
 ## Testing Checklist
 
 When fixing bugs or adding enhancements, test these workflows:
