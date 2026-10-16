@@ -282,7 +282,7 @@ fixed too (`bb115a8`).
 | Add scene (up to 16) | §13.3 (p.82) | 🔵 | ✅ | Dim pad under the last scene → `71 00 00 [scene]`, verified |
 | Delete scene | §13.4 (p.82) | 🔵 | ✅ | Delete + launch button → `71 20 00 [scene]`, verified |
 | Edit scene patterns / mute / solo | §13.5.1 (p.83) | 🔵 | 📱 | Encoders → `71 [10+t] 01`; hold Mute/Solo + pad → `71 [10+t] 02` / `71 10 03` |
-| Scene length (incl. AUTO) | §13.5.2 (p.83–84) | 🔵 | ✅ | Master encoder in Song view: AUTO or 1–96 bars (`71 10 00`), verified |
+| Scene length (incl. AUTO) | §13.5.2 (p.83–84) | 🔵 | ✅ | Shift + any of the 8 encoders in Song view (the master knob stays volume): AUTO or 1–96 bars (`71 10 00`), verified |
 
 ## 14. SEQTRAK App: app-only features (listed separately)
 

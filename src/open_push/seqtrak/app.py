@@ -2271,7 +2271,7 @@ class SeqtrakBridge:
                               f"{names[4]:^8s}{names[5]:^9s}", f"{names[6]:^8s}{names[7]:^9s}")
         self.set_lcd_segments(3, f"{pats[0]:^8s}{pats[1]:^9s}", f"{pats[2]:^8s}{pats[3]:^9s}",
                               f"{pats[4]:^8s}{pats[5]:^9s}", f"{pats[6]:^8s}{pats[7]:^9s}")
-        loop = "Loop scn ON" if self.scene_loop else ""
+        loop = "Loop scn ON" if self.scene_loop else "Shift+knob=Len"
         self.set_lcd_segments(4, "[1] mode", f"Scenes {self.scene_page * 8 + 1}-{self.scene_page * 8 + 8}",
                               loop, f"[8] SongLoop {'ON' if self.song_loop else 'off'}")
 
@@ -2337,7 +2337,7 @@ class SeqtrakBridge:
             self._refresh_song_view()
 
     def _adjust_scene_length(self, delta):
-        """Master encoder in Song view: selected scene's length, AUTO or 1-96 bars."""
+        """Shift + an encoder in Song view: selected scene's length, AUTO or 1-96 bars."""
         delta = self._coarse_steps(79, delta, 3)
         data = self.song_scenes.get(self.song_selected_scene)
         if not data or not delta:
@@ -2980,8 +2980,10 @@ class SeqtrakBridge:
 
     def handle_encoder(self, cc, value):
         """Handle encoder turn."""
+        # Tempo (CC 14), swing (CC 15) and master volume (CC 79) sit apart from the eight encoders
+        # above the screen and never change job, whatever the mode or view.
         # If in settings mode, handle settings-specific encoder input
-        if self.settings_mode:
+        if self.settings_mode and cc not in (14, 15, 79):
             self._handle_settings_encoder(cc, value)
             return
 
@@ -3032,13 +3034,13 @@ class SeqtrakBridge:
 
         # Session mode: CC 71-78 encoders set pattern for selected slot
         # Must be checked BEFORE device/mixer modes to block other encoder behavior
+        # (Shift + any of them: the selected scene's length)
         elif self.session_mode and 71 <= cc <= 78:
-            encoder_index = cc - 71  # 0-7
-            self._handle_session_encoder(encoder_index, delta)
-
-        # Song view: master encoder = selected scene's length (Shift = master volume as usual)
-        elif self.session_mode and cc == 79 and not self.shift_held:
-            self._adjust_scene_length(delta)
+            if self.shift_held:
+                self._adjust_scene_length(delta)
+            else:
+                encoder_index = cc - 71  # 0-7
+                self._handle_session_encoder(encoder_index, delta)
 
         # Track mode: CC 78 = variation selection (1-6)
         # Shift+CC 78 = toggle between 3 and 6 variation modes
@@ -3072,8 +3074,8 @@ class SeqtrakBridge:
                 self._show_lcd_popup("OCTAVES", str(self.arp_octave_range))
                 print(f"Arp Octaves: {self.arp_octave_range}")
 
-        elif self.arp_mode_active and cc == 79:
-            # Master encoder: Adjust gate (10%-90%)
+        elif self.arp_mode_active and cc == 76:
+            # Encoder 6: Adjust gate (10%-90%)
             new_gate = max(0.1, min(0.9, self.arp_gate + (delta * 0.05)))
             if new_gate != self.arp_gate:
                 self.arp_gate = new_gate

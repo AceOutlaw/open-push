@@ -141,3 +141,32 @@ def test_duplicate_says_done_only_after_the_last_message_goes_out(bridge):
         bridge._timed_sends.pop(0)[1]()
     assert 'DUPLICATED' in lcd_line4(bridge)
     assert bridge.track_variation[1] == 2
+
+
+@pytest.mark.parametrize("setup", ['song', 'arp', 'settings', 'song_shift'])
+def test_volume_tempo_and_swing_knobs_never_change_job(bridge, setup):
+    if setup.startswith('song'):
+        bridge._enter_session_mode()
+        bridge.song_scenes[0] = {'length': 4, 'patterns': [0] * 11}
+        bridge.shift_held = setup == 'song_shift'
+    elif setup == 'arp':
+        bridge.arp_mode_active = True
+    else:
+        bridge.settings_mode = True
+    bridge.master_volume, bridge.tempo, bridge.swing = 64, 120, 0
+    bridge.handle_encoder(79, 3)
+    bridge.handle_encoder(14, 1)
+    bridge.handle_encoder(15, 1)
+    assert bridge.master_volume == 70 and bridge.tempo == 121 and bridge.swing == 2
+    if setup.startswith('song'):
+        assert bridge.song_scenes[0]['length'] == 4
+
+
+def test_shift_and_an_encoder_set_the_scene_length_in_song_view(bridge):
+    bridge._enter_session_mode()
+    bridge.song_scenes[0] = {'length': 4, 'patterns': [0] * 11}
+    bridge.shift_held = True
+    for _ in range(3):
+        bridge.handle_encoder(73, 1)
+    assert bridge.song_scenes[0]['length'] == 5
+    assert bridge.song_scenes[0]['patterns'] == [0] * 11
