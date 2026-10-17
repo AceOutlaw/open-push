@@ -94,6 +94,20 @@ meaning = "Add a note to the list. A note reaching the next note on the same pad
 evidence = ["STEP-SEQUENCER §2 (SAMPLER, SYNTH 1)"]
 
 [[message]]
+id = "steps.param_lock"
+name = "Parameter lock event (sampler)"
+area = "steps"
+kind = "parameter"
+address = "72 g0 00"
+data = "8 bytes: [tick hi] [tick lo] 03 [param H] [param M] [param L] [value] 00 — e.g. 03 41 1A 4F 4C 00 = pad 2 PITCH +12"
+dir = ["command", "report"]
+status = "verified"
+test = { skip = "action message: not requested by --probe, in case a request at an action address isn't harmless" }
+meaning = "A Parameter Lock (guide V1.20 §9.2) is an event in the same list as the notes: type byte 03 instead of 00 (note). The device writes each lock twice, at the step and 60 ticks (half a step) before it; it stores the address with the pad nibble moved (41 1A 4F is stored and read back as 41 10 4F). Read back with 75 g0 [index] like notes."
+guide = "§9.2 (OS V1.20)"
+evidence = ["Pi capture 2026-10-17 23:09 / 23:17: holding a SAMPLER step and turning PITCH sent 72 30 00 [tick] 03 41 1A 4F [value] 00 at the step and step − 60 ticks", "Pi write 2026-10-17: 72 30 00 07 7C / 08 38 + 03 41 1A 4F 4C 00 (step 10, +12) stored (read back 41 10 4F 4C) and Ace heard step 10 play an octave up"]
+
+[[message]]
 id = "steps.note_read"
 name = "Note read"
 area = "steps"

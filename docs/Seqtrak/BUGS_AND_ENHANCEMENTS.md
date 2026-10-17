@@ -327,6 +327,42 @@ to two mono jacks) gives two separate outputs: drums to one channel of a mixer o
 
 ---
 
+### 7. Sample Keyboard (Play One Sample Chromatically Across the Pads)
+**Priority**: Medium
+**Linear**: KM-229
+**Description**: The Seqtrak plays each SAMPLER pad as a one-shot at a fixed pitch; you can change a pad's PITCH
+but not play it like an instrument. In software: a Push mode where the 8×8 grid is a keyboard and every pad
+press retunes a SAMPLER pad, then triggers it.
+
+**How**:
+- Per press: pad PITCH `41 eA 4F` (✅ verified writable, 40 = 0) to the pad's note, then note-on ch 11,
+  note 60 + (pad − 1).
+- Polyphony: if retuning bends a ringing note, put the same sample on all 7 pads and rotate (needs KM-227
+  for recorded samples; presets/imports can be selected on each pad already).
+- Alternative: MIDI pitch bend on ch 11, if the SAMPLER responds (not documented).
+
+**Recording (✅ solved 2026-10-17)**: a note recorded while the pad is retuned stores only the pad (test 5:
+four notes at 0/+4/+7/+12 played back as the same note). But the pitch can be stored per step as a
+**Parameter Lock event** in the same note list (`72 30 00 [tick] 03 41 1A 4F [value] 00`, written at the step
+and 60 ticks before it, `spec/steps.toml` steps.param_lock). A lock written from the Pi on step 10 (+12)
+played an octave up. So recording from the Push = add the note **and** its pitch lock.
+
+**Tests (hardware, with ears), 2026-10-17, pad 2**:
+1. ✅ PITCH +4 / +7 / ±12 played at those pitches. Range −48…+48 semitones (writes clamp to `10`–`70`).
+2. ✅ Retuning while a note rings does **not** change that note: the pitch is fixed at note-on (heard twice).
+3. ✅ Pitch bend on ch 11 bends the sample (not in Yamaha's docs). Bend range not measured.
+
+**What that means for the design**:
+- Retune-then-trigger works, and a ringing note keeps its pitch, so fast melodies on one pad are fine.
+- 4. 🟡 Two overlapping notes on one pad (pad 2, gate mode; root then +7 on top, both held): Ace didn't
+  think both sounded together, but the vocal sample made it hard to tell ("it did sound good"). Treat one
+  pad as **one voice** (a new note-on cuts the ringing one) until a clearer test (a plain sustained tone)
+  says otherwise. Design for chords: rotate notes across pads that hold the same sample.
+- Pitch bend can add bends on top (a touch strip). It moves every sounding SAMPLER note, so it isn't a way
+  to play chords.
+
+---
+
 ## Testing Checklist
 
 When fixing bugs or adding enhancements, test these workflows:

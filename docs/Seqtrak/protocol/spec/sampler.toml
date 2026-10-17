@@ -39,7 +39,7 @@ data = "4 × 7-bit frames (pad 1 = 01 10, pad 7 = 01 16)"
 dir = ["readable"]
 status = "inferred"
 meaning = "Length of the pad's sample in frames (pad 1: 21,360). Sample rate unknown."
-evidence = ["App reads it when the sample editor opens (106-06…); 17 more than the End Point max on 3 pads"]
+evidence = ["App reads it when the sample editor opens (106-06…); 17 more than the End Point max on 3 pads", "Pi read 2026-10-17, all 7 pads answered (01 10 40 … 01 16 40): 21,360 / 94,256 / 498,071 / 18,032 / 168,000 / 8,640 / 35,573; End Point (50 eA 6A) = length − 17 on every pad. Seconds need the sample rate: the guide says 44.1 kHz for imports (§9.7) and USB audio (§18.1), so 16 s (the limit, §8.2) would be 705,600 frames; the internal rate isn't stated (168,000 and 8,640 are whole at 48 kHz). Unverified: record a full 16 s and read the length"]
 
 [[message]]
 id = "sampler.name"
@@ -51,7 +51,7 @@ data = "Yamaha 7-bit packed text"
 dir = ["readable"]
 status = "inferred"
 meaning = "Name of the pad's sample ('Female Count 1')."
-evidence = ["App reads it with the sample editor (106-06…)"]
+evidence = ["App reads it with the sample editor (106-06…)", "Pi read 2026-10-17: all 7 pads answered with their names (Female Count 1, Singing - Female - Ah 1, MORNING CHILL 2 RISER 01, Laser - Blast 2, Noise - Fade In 1, Bird 1, STRICTLY LO FI 2 PERCUSSION 01)"]
 
 [[message]]
 id = "sampler.element"
@@ -64,7 +64,7 @@ dir = ["command", "readable"]
 status = "verified"
 test = { address = ["41 0A 4F", "41 0A 08"], write = { "41 0A 4F" = ["44", "40"], "41 0A 08" = ["00", "01"] } }
 meaning = "Per-pad sound parameters."
-evidence = ["App 106-09…18, LE-06…11, 109-03", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 41 0A 4F wrote 44, read back, restored 40; 41 0A 08 wrote 00, read back, restored 01"]
+evidence = ["App 106-09…18, LE-06…11, 109-03", "Pi verify --write 2026-10-15 (runs/2026-10-15-write-2.json): 41 0A 4F wrote 44, read back, restored 40; 41 0A 08 wrote 00, read back, restored 01", "Pi test 2026-10-17 (KM-229): 41 1A 4F PITCH clamps to 10–70 = −48…+48 semitones (wrote 00 / 7F, read back 10 / 70); +4/+7/±12 heard at the right pitches; changing it while a note rings does NOT change that note (heard twice): the pitch is fixed at note-on", "Pi test 2026-10-17 (KM-229 test 4): two overlapping note-ons on pad 2 (gate mode, 41 1A 08 = 01) at 0 and +7: Ace probably heard one voice, not both (vocal sample, unclear) — unconfirmed"]
 
 [[message]]
 id = "sampler.element_eq"

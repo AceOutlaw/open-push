@@ -170,3 +170,18 @@ def test_shift_and_an_encoder_set_the_scene_length_in_song_view(bridge):
         bridge.handle_encoder(73, 1)
     assert bridge.song_scenes[0]['length'] == 5
     assert bridge.song_scenes[0]['patterns'] == [0] * 11
+
+
+def test_parameter_locks_in_the_sampler_list_are_not_steps(bridge):
+    """A pitch lock (type 03, 41 10 4F) sits in the note list; byte 3 (41) must not read as pad 6."""
+    bridge._request_sampler_notes()
+    events = [[0x04, 0x1C, 0x03, 0x41, 0x10, 0x4F, 0x56, 0x00],   # lock, step 5.5
+              [0x04, 0x58, 0x00, 0x3D, 0x64, 0x00, 0x00, 0x78],   # pad 2, step 6
+              [0x04, 0x58, 0x03, 0x41, 0x10, 0x4F, 0x56, 0x00]]   # lock, step 6
+    for i, data in enumerate(events):
+        bridge._handle_sampler_note_reply(i, data)
+    bridge._handle_sampler_note_reply(3, [])
+    assert bridge._sampler_read_done
+    assert len(bridge.sampler_notes) == 3                          # indexes still match the device
+    assert set(bridge.sampler_step_states) == {1}                  # only pad 2 has a step
+    assert bridge.sampler_step_states[1][5]

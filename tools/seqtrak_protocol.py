@@ -24,7 +24,7 @@ DATALIST_OUT = ROOT / "docs" / "Seqtrak" / "protocol" / "DATALIST-PARAMS.md"
 DATALIST_MD = ROOT / "reference files" / "Yamaha" / "Seqtrak Data List V2" / "md"
 BRIDGE = [ROOT / "src" / "open_push" / "seqtrak" / "app.py", ROOT / "src" / "open_push" / "seqtrak" / "protocol.py"]
 
-KINDS = {"parameter", "bulk", "cc", "note", "program", "realtime"}
+KINDS = {"parameter", "bulk", "cc", "note", "pitchbend", "program", "realtime"}
 DIRS = {"command", "report", "readable"}
 REALTIME = {"start", "continue", "stop", "clock"}
 CONCRETE = re.compile(r"^[0-9A-F]{2} [0-9A-F]{2} [0-9A-F]{2}$")

@@ -3932,7 +3932,10 @@ class SeqtrakBridge:
         if self._sampler_read_done:
             return
         if len(data) >= 8:
-            self._sampler_read_buf[index] = ((data[0] << 7) | data[1], data[3],
+            # Byte 2 is the event type: 00 a note; 03 a Parameter Lock ([03] [param address] [value] 00),
+            # which keeps its slot (indexes stay exact) but has no note, so it's never a step
+            note = data[3] if data[2] == 0x00 else None
+            self._sampler_read_buf[index] = ((data[0] << 7) | data[1], note,
                                              (data[6] << 7) | data[7])
             if index == self._sampler_read_next - 1 and self._sampler_read_next < 128:
                 self._queue_sampler_reads(16)
@@ -3951,6 +3954,8 @@ class SeqtrakBridge:
         self.sampler_notes = notes
         states = {}
         for tick, note, _length in notes:
+            if note is None:  # a Parameter Lock, not a note
+                continue
             pad, step = note - 0x3C, round(tick / 120)
             if 0 <= pad <= 6 and 0 <= step < 128:
                 states.setdefault(pad, [False] * 128)[step] = True

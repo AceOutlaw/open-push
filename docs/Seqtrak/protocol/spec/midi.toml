@@ -34,6 +34,17 @@ meaning = "Pad 1 = note 60 … pad 7 = 66."
 evidence = ["Bridge sampler pads (PARITY ch.8 ✅)", "App EX-04"]
 
 [[message]]
+id = "midi.sampler_pitch_bend"
+name = "SAMPLER pitch bend"
+area = "notes"
+kind = "pitchbend"
+form = "EA lsb msb (channel 11), centre 00 40"
+dir = ["command"]
+status = "verified"
+meaning = "Bends the SAMPLER's sounding notes. Not in Yamaha's guides or MIDI chapter. Range per sound is probably Sound Common Pitch Bend Range (31 1A 10 / 11, Data List default ±2); not measured."
+evidence = ["Pi test 2026-10-17 (KM-229 test 3): pad 2 held, bend swept max → 0 → min → 0; Ace heard it slide (run twice)"]
+
+[[message]]
 id = "midi.sound_cc"
 name = "Sound Design CCs"
 area = "midi"
