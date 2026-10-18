@@ -220,13 +220,13 @@ fixed too (`bb115a8`).
 | Drum params (sound, pitch, pan, vol, attack, decay, filter, reso, sends, EQ) | §9.1.2 (p.60) | 🔵 | ✅ | Ranges clamped to the guide (§18.3.1); values read back and followed from the Seqtrak's knobs (`dcfc4b3`, `2474f4d`) except cutoff/reso |
 | Synth params incl. porta, arp type/gate/speed | §9.1.3 (p.61) | 🔵 | ✅ | Ranges clamped; vol/pan/sends/EQ/mono-poly/porta read back; arp/filter not |
 | DX params incl. FM algorithm/mod amount/freq/feedback | §9.1.4 (p.62) | 🟡 | ✅ | FM macros CC 116–119 have no readable SysEx; full engine is in the app capture (113-2x) |
-| SAMPLER params pages 1–3 | §9.1.5 (p.63) | 🟡 | ✅ | `DEVICE_PARAMS_SAMPLER` (app.py:305): no PITCH (no sampler CC in §18.3); whole track vs selected pad ❓. Bug 5 |
+| SAMPLER params pages 1–3 | §9.1.5 (p.63) | 🟡 | ✅ | `DEVICE_PARAMS_SAMPLER` (app.py:305): no PITCH (no sampler CC in §18.3); whole track vs selected pad ❓. Bug 5. Pad PITCH by SysEx `41 eA 4F` ✅: −48…+48 semitones (writes clamp to `10`–`70`), fixed at note-on (2026-10-17, KM-229) |
 | SAMPLER start / end / loop on-off / loop length | §9.1.5 (p.63) | ❌ | 📱 | `50 eA 66/6A/5F/60` (4×7-bit frames); length readable at `01 1[e] 40` (sampler parked) |
 | SAMPLER pitch EG (PEG) | §9.1.5 (p.63) | ❌ | 📱 | `41 eA 58–64` (sampler parked) |
 | Pitch per step (synth, step input) | §9.1.3 note (p.61) | ❌ | ❓ | |
-| Parameter Lock | §9.2 (p.64) | ❌ | ❓ | Purple steps; Push shows every step green (STEP-SEQUENCER §2) |
-| Delete Parameter Lock (pattern / step) | §9.2.1 (p.65–66) | ❌ | ❓ | |
-| Motion Recording | §9.3 (p.67) | ❌ | ❓ | Untested whether Push CCs during recording become motion |
+| Parameter Lock | §9.2 (p.64) | ❌ | ✅ | Purple steps; Push shows every step green (STEP-SEQUENCER §2). Stored as an event in the note list: `72 g0 00 [tick] 03 [param] [value] 00`, at the step and 60 ticks before it; written from the Pi and heard (SAMPLER pad 2 PITCH +12, 2026-10-17, spec `steps.param_lock`). The bridge skips lock events when drawing steps (`ab497a5`, confirmed on the Push with a device-made lock) |
+| Delete Parameter Lock (pattern / step) | §9.2.1 (p.65–66) | ❌ | 🟡 | One lock event: `74 g0 [index] 00`, like a note ✅ (2026-10-17). The device's own pattern/step delete combos not captured |
+| Motion Recording | §9.3 (p.67) | ❌ | ❓ | Pad PITCH changed by SysEx from the Pi during recording was **not** recorded (2026-10-17, KM-229 test 5). Push CCs during recording untested |
 | Delete Motion | §9.3.1 (p.67) | ❌ | ❓ | |
 | Undo / Redo | §9.4 (p.68) | 🔵 | ✅ | Push Undo (CC 119) → `01 10 1F 01`, verified from the Pi (`2474f4d`) |
 | Save sound (+ favorite) | §9.5 (p.68) | ❌ | 🟡 | Favourite = bulk write `10 01 03` (capture EX-18); save ❓ |
@@ -329,3 +329,18 @@ These aren't on the Seqtrak's panel; parity here is optional.
 Software arpeggiator and note repeat (app.py:2743–2994; BUGS #5 asks how they should interact), accent /
 fixed velocity, DRUM bus (volume, mute, solo; app.py:3751), Session view launcher, iPad audio routing
 (Shift+User settings, app.py:1393).
+
+### Sample keyboard (KM-229, enhancement #7): not built; every piece tested on hardware 2026-10-17
+
+Play one SAMPLER pad chromatically from the Push grid. Tested on pad 2 with Ace listening:
+
+| Piece | Result | How |
+|---|---|---|
+| Retune a pad, then trigger it | ✅ | PITCH `41 eA 4F` (40 = 0), range −48…+48; +4/+7/±12 heard at the right pitch |
+| Ringing note when the pad is retuned | ✅ keeps its pitch | Pitch is fixed at note-on (heard twice), so fast melodies on one pad work |
+| Two overlapping notes on one pad | 🟡 probably one voice | Unclear with a vocal sample; chords = rotate across pads holding the same sample |
+| Pitch bend | ✅ bends | Ch 11 pitch bend (not in Yamaha's docs); moves every sounding SAMPLER note: bends, not chords |
+| Recording while retuning | ❌ pitch not kept | Notes stored as pad 2 only; played back as one pitch |
+| Store each note's pitch | ✅ | Parameter Lock event per step (see §9 Parameter Lock): +12 on step 10 played an octave up |
+
+So recording from the Push = add the note and write its pitch lock.

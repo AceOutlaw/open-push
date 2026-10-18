@@ -39,7 +39,7 @@ data = "4 × 7-bit frames (pad 1 = 01 10, pad 7 = 01 16)"
 dir = ["readable"]
 status = "inferred"
 meaning = "Length of the pad's sample in frames (pad 1: 21,360). Sample rate unknown."
-evidence = ["App reads it when the sample editor opens (106-06…); 17 more than the End Point max on 3 pads", "Pi read 2026-10-17, all 7 pads answered (01 10 40 … 01 16 40): 21,360 / 94,256 / 498,071 / 18,032 / 168,000 / 8,640 / 35,573; End Point (50 eA 6A) = length − 17 on every pad. Seconds need the sample rate: the guide says 44.1 kHz for imports (§9.7) and USB audio (§18.1), so 16 s (the limit, §8.2) would be 705,600 frames; the internal rate isn't stated (168,000 and 8,640 are whole at 48 kHz). Unverified: record a full 16 s and read the length"]
+evidence = ["App reads it when the sample editor opens (106-06…); 17 more than the End Point max on 3 pads", "Pi read 2026-10-17, all 7 pads answered (01 10 40 … 01 16 40): 21,360 / 94,256 / 498,071 / 18,032 / 168,000 / 8,640 / 35,573; End Point (50 eA 6A) = length − 17 on every pad. Seconds need the sample rate: the guide says 44.1 kHz for imports (§9.7) and USB audio (§18.1), so 16 s (the limit, §8.2) would be 705,600 frames; the internal rate isn't stated (168,000 and 8,640 are whole at 48 kHz). Unverified: record a full 16 s and read the length", "App export random 1.Y3P (2026-10-18, docs/Seqtrak/Y3P-PROJECT-FILE.md): the waveform header says 44,100 Hz and its frame counts equal these lengths (498,071 riser, 35,573 perc) — so frames at 44.1 kHz: riser 11.29 s"]
 
 [[message]]
 id = "sampler.name"

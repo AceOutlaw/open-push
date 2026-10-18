@@ -347,6 +347,90 @@ four notes at 0/+4/+7/+12 played back as the same note). But the pitch can be st
 and 60 ticks before it, `spec/steps.toml` steps.param_lock). A lock written from the Pi on step 10 (+12)
 played an octave up. So recording from the Push = add the note **and** its pitch lock.
 
+---
+
+### 8. Save and Load Projects on the Pi Bridge
+**Priority**: Medium
+**Linear**: KM-230
+**Description**: Save the current Seqtrak project to a file on the Pi and load it back from the Push, with no
+app. More than the Seqtrak's 8 slots, backups before a gig, and it fits the headless goal.
+
+**What a project file needs**:
+| Part | Read | Write back |
+|---|---|---|
+| Project settings + track sounds (tempo, effects, mixer, sound per track) | Official bulk dump (Data List "Bulk Dump Block": request by the Bulk Header address `11 mm nn`), not tested | Official, not tested |
+| Patterns and steps (drum steps, note lists, parameter locks) | ✅ the bridge already reads them (`70 4t`, `75 g0`) | ✅ mostly proven (note add, drum step edits, locks) |
+| Song scenes | ✅ (`71 40`) | ✅ scene edits proven |
+| Recorded sample audio | ❌ not over MIDI | ❌ |
+
+Yamaha's project bulk dump has **no pattern or step data** (REVERSE-ENGINEERING-LOG), so a full save is the
+official dump **plus** our pattern reads.
+
+**Sounds are references, not data**: a project points at sounds on the device. Sounds still on the Seqtrak
+(presets, imports, saved sounds) load correctly. Risk: the reference may be a list position, and saving a sound
+inserts it after the original (guide §9.5), which may shift later numbers. Safeguard:
+- Save each track's sound **name** with its number (preset names `01 1p 35`, SAMPLER pad names `01 1e 46`).
+- After a load, read the names back and compare; show any mismatch on the LCD
+  (e.g. `PAD 3: MISSING "MORNING CHILL 2 RISER"`). Later: find the sound by name and fix the number.
+
+**Recorded samples**: unknown whether a recording made on a pad becomes a library sound (then it loads like any
+other) or lives only inside the project (then the Pi can't restore the audio).
+
+**Stages**:
+1. Save only (read-only for the Seqtrak, safe): snapshot to a file. Learns whether the bulk dump answers on 1.21.3.
+2. Load: write a file back into a project slot (overwrites it; test carefully).
+3. Later: capture how the app moves samples, to see if audio can be included.
+
+**Tests first**:
+- Does the bulk dump request answer on firmware 1.21.3? How long does a full read / write take?
+- Record a sample into a pad, then check another project's SAMPLER sound list for it (Sound Design knob 1).
+- How does the app save / recall a project (guide §4, "save a project in the SEQTRAK app")?
+
+**Other routes for your own sounds (2026-10-18)**:
+- Build a `.Y3P` with your WAVs (format decoded, `docs/Seqtrak/Y3P-PROJECT-FILE.md`) and import it in the app
+  once. Test first: swap one sample's audio in an export, import into an empty slot, listen.
+- Pi sends a project straight to the Seqtrak: not possible yet. MIDI carries sample settings, not audio; the app's
+  transfer (Wi-Fi / USB content mode?) isn't captured.
+- Load single WAVs with no app: enhancement #9.
+
+---
+
+### 9. Sample Browser on the Push: Load WAVs from the Pi into a SAMPLER Pad
+**Priority**: Medium
+**Linear**: KM-231
+**Description**: Pick a WAV on the Pi from the Push and put it on a SAMPLER pad, with no app and no manual
+recording. The Pi plays the file into the Seqtrak over USB audio while the Seqtrak samples it.
+
+**How (every step uses something already known)**:
+1. Sampling source = USB: `00 00 19 00` (📱 app-captured, command not yet tested).
+2. Select the pad and start sampling: `01 10 28 [pad]` + `01 10 22 01` (✅ Shift+Record does this).
+3. Play the file from the Pi into the Seqtrak (USB audio out of the Pi ✅ works, iPad bridge).
+4. Stop sampling when the file ends: `01 10 22 00`. Restore the previous sampling source.
+Digital end to end: USB audio is 44.1 kHz (guide §18.1), the rate the Seqtrak stores samples at.
+
+**Push UI**:
+- **Shift + Browse** opens SAMPLES (Browse alone stays the project picker).
+- LCD: line 1 folder, file count, target pad; lines 2–3 four files per page (name, length); line 4 help.
+  ```
+  SAMPLES  /kicks               12 files            → Pad 3
+  > 808 Long.wav     Clap Room.wav    Tom Low.wav      Vinyl Hit.wav
+    0.8 s            1.2 s            0.6 s            14.9 s
+  Enc1: scroll      Pad: preview     Select: load     Back: up
+  ```
+- Encoder 1 scrolls; buttons below the LCD pick a file / open a folder; Back goes up.
+- Preview: the Pi plays the file through the Seqtrak (USB audio), without sampling.
+- Load: `LOADING… 4.2 s`, then `LOADED → PAD 3`. Files over 16 s (the limit, guide §8.2) warn or load the
+  first 16 s.
+
+**Files**: a USB stick shows up as a folder (most headless), or a samples folder on the Pi copied over the
+network. The Pi converts any WAV (rate, bit depth, mono/stereo) to 44.1 kHz before playing.
+
+**Tests first**:
+- Does the full sequence (USB source + sample record + Pi playback) record cleanly?
+- Timing: does sampling start exactly with the sound? Trim leading silence if not (Start Point `50 eA 66`).
+- Auto-normalize (`00 00 1C`) on or off for loaded files?
+- Restoring the sampling source afterwards.
+
 **Tests (hardware, with ears), 2026-10-17, pad 2**:
 1. ✅ PITCH +4 / +7 / ±12 played at those pitches. Range −48…+48 semitones (writes clamp to `10`–`70`).
 2. ✅ Retuning while a note rings does **not** change that note: the pitch is fixed at note-on (heard twice).
