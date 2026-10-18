@@ -99,8 +99,30 @@ Six exports of `random 1`, each one change after the previous:
 - ❓ The page contents are a **bit-packed stream**: values like `3C` (note 60) and `00 78` (length 120) appear,
   but not at fixed record offsets. Needs exports that change one step property at a time (below).
 
-**Next exports for the step format** (KICK, an empty pattern, one change each):
-step 1 on → step 2 on → step 1 velocity changed → step 1 micro timing changed → step 16 on.
+### Drum step records (2026-10-18, test project, KICK pattern 6 = page 5)
+
+Five hand-edited exports (step 1 on, step 2 on, velocity, micro timing, step 16 on), then four exact changes
+made over MIDI on step 16 (each read back from the device, then exported): micro +30, substep ×4,
+probability 49 %, velocity 80. Every MIDI change showed up as **exactly one byte**.
+
+- ✅ **Step n** record = **page + 0x0E + (n − 1) × 0x48** (72 bytes). Steps 2 and 16 confirmed.
+- ✅ An empty step's record starts `A0 FF 47 00 00 …`; turning it on wrote `80 BC 64 00 3C 80 …`.
+
+| Record byte | Field | Evidence |
+|---|---|---|
+| +1 | Note with bit 7 set (`BC` = 60) | 🟡 drum note is always 60 |
+| **+2** | **Velocity** | ✅ `64` → `50` when set to 80 (`70 10 01`) |
+| +3 | ❓ (`00`) | |
+| **+4** | **Micro timing**, 60 + offset | ✅ `3C` → `5A` when set to +30 (`70 10 00`) |
+| **+5** | `1 ? ppp sss`: **probability** in bits 3–5, **substep** in bits 0–2 | ✅ `80` → `83` (substep ×4 = 3), → `A3` (probability 4 = 49 %) |
+| +6 … | ❓ (length? other locks?) | |
+
+- 🟡 Page header +0x09 counts the steps that are on (`28` with one step, `29` with two).
+- ❓ Step 1's record looked different after a VOLUME lock and hand micro timing; not yet explained.
+
+**How to export a change made over MIDI**: the app exports its own copy of the project. After changing the
+Seqtrak from another program, **switch to another project and back in the app** before exporting; otherwise the
+export is unchanged (seen twice).
 
 ## What it means for saving projects on the Pi (KM-230)
 

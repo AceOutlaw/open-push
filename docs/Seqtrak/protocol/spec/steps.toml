@@ -30,17 +30,17 @@ evidence = ["STEP-SEQUENCER §1", "2026-10-15 PERC 2 pattern 2 cleared while sel
 
 [[message]]
 id = "steps.drum_edit"
-name = "Drum step edit (micro timing / substep / probability)"
+name = "Drum step edit (micro timing / velocity / substep / probability)"
 area = "steps"
 kind = "parameter"
 address = "70 1t nn"
-data = "nn = param; data [step] [value]. 00 micro timing: 60 + offset (−60…+59) · 03 substep: 00 none, 01 ×2, 04 ×3 8th triplet, 02 ×3 16th triplet, 03 ×4 · 04 probability: 00 = 100 % … 07 (8 levels; 01 = 87 %, 04 = 49 %, 07 = 10 %)"
+data = "nn = param; data [step] [value]. 00 micro timing: 60 + offset (−60…+59) · 01 velocity (1–127) · 03 substep: 00 none, 01 ×2, 04 ×3 8th triplet, 02 ×3 16th triplet, 03 ×4 · 04 probability: 00 = 100 % … 07 (8 levels; 01 = 87 %, 04 = 49 %, 07 = 10 %)"
 dir = ["command", "report"]
 status = "verified"
 test = { skip = "action message: not requested by --probe, in case a request at an action address isn't harmless" }
 meaning = "Edit one step. The device reports the same when you edit on its keys."
 guide = "§6.3, §6.4, §6.6"
-evidence = ["App 104-03", "2026-10-15 from the Pi on PERC 2: micro +30 → readback 5A, substep ×4 → 03, probability → 70 66 = 04 / 07"]
+evidence = ["App 104-03", "2026-10-15 from the Pi on PERC 2: micro +30 → readback 5A, substep ×4 → 03, probability → 70 66 = 04 / 07", "2026-10-18 from the Mac on KICK step 16: 70 10 01 0F 50 → 70 40 0F read back velocity 80 (was 100); probability reads back at 70 6t [step]"]
 
 [[message]]
 id = "steps.drum_read"
