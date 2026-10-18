@@ -76,6 +76,32 @@ as native **little-endian** integers, not 7-bit groups. Example: pad 1 End Point
 **Method for the rest**: export the same project twice with one change in between and diff the two
 `project.bin` files (tempo, one track's volume, one drum step, one synth note, one lock, one scene).
 
+### Differential exports, 2026-10-18 (`~/Downloads/Seqtak projects/`, `tools/y3p_diff.py`)
+
+Six exports of `random 1`, each one change after the previous:
+
+| Change | Bytes that changed | Result |
+|---|---|---|
+| Tempo 87 → 88 | `0x69` `57` → `58` | ✅ **tempo** = byte at 0x69 |
+| Export name | `0x04`… (packed name) | ✅ the name is the export name |
+| KICK step 1, pattern 2 (also selected pattern 2) | `0x6D` `00`→`01`; `0x255` `00`→`01`; headers of pages 2–5 | 🟡 0x6D likely KICK's selected pattern; step 1 itself didn't change (probably already on) |
+| + KICK step 5, pattern 2 | page 1 +0x12A, +0x12F, +0x132 (`… 3C …`) | ✅ page 1 = KICK pattern 2 |
+| + SYNTH 1 note | page 42 +0x8…+0x16 (`… 64 … 00 78 …` = vel 100, len 120) | ✅ page 42 = SYNTH 1 pattern 1 |
+| "KICK vol" | page 1 +0x10 `64` → `52` (100 → 82) | 🟡 a KICK pattern-2 value; which control was changed to be confirmed |
+| + one scene | `0x255` `01`→`00`; `0x4E08`…`0x4E67` | ✅ **song / scenes** around 0x4E00 |
+
+**Pattern memory** = 66 pages of 0x4000 (16 KB) from `0x5000`:
+- ✅ Pages 0–41: **drum tracks**, track by track, 6 patterns each: page = (track − 1) × 6 + (pattern − 1).
+  KICK pattern 2 = page 1 (0x9000).
+- ✅ Pages 42–65: **SYNTH 1, SYNTH 2, DX, SAMPLER**, 6 patterns each: page = 42 + (n) × 6 + (pattern − 1).
+  SAMPLER pattern 1 = page 60 (0xF5000), where the pad-2 test notes (`3D 64`) were.
+- 🟡 Drum pages are full (~1,400 non-`FF` bytes, maybe defaults for 128 steps); note pages are nearly empty.
+- ❓ The page contents are a **bit-packed stream**: values like `3C` (note 60) and `00 78` (length 120) appear,
+  but not at fixed record offsets. Needs exports that change one step property at a time (below).
+
+**Next exports for the step format** (KICK, an empty pattern, one change each):
+step 1 on → step 2 on → step 1 velocity changed → step 1 micro timing changed → step 16 on.
+
 ## What it means for saving projects on the Pi (KM-230)
 
 - The app's own file already bundles **user sounds, sampler elements and their audio** with the project, and

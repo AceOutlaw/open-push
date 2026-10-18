@@ -24,6 +24,13 @@ def region(offset):
         return f"{name}: track {(offset - 0x0D6A) // 0x5C5 + 1}, +0x{(offset - 0x0D6A) % 0x5C5:X}"
     if name.startswith("SAMPLER"):
         return f"{name}: pad {(offset - 0x4903) // 0x75 + 1}, +0x{(offset - 0x4903) % 0x75:X}"
+    if offset >= 0x5000:
+        page, at = divmod(offset - 0x5000, 0x4000)
+        tracks = ["KICK", "SNARE", "CLAP", "HAT 1", "HAT 2", "PERC 1", "PERC 2", "SYNTH 1", "SYNTH 2", "DX", "SAMPLER"]
+        if page < len(tracks) * 6:
+            return f"page {page}: {tracks[page // 6]} pattern {page % 6 + 1}, +0x{at:X}"
+    if 0x4E00 <= offset < 0x5000:
+        return "song / scenes"
     return name
 
 
