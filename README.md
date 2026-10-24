@@ -211,6 +211,7 @@ This is an open project. Contributions welcome:
 
 ## Documentation
 
+- **Start here**: `PROJECTS.md` - the map of the projects in this repo, their state, and where each lives
 - **General**: `docs/open-push-master-reference.md` - Complete Push 1 hardware reference
 - **Reason**: `docs/Reason/reason-bridge-reference.md` - Reason integration guide
 - **Seqtrak**: `docs/Seqtrak/protocol/` - the protocol spec; `docs/Seqtrak/PARITY.md` - what works

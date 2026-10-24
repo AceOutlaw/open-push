@@ -101,11 +101,120 @@ knob touch notes 0–7, LEDs set by MIDI/SysEx. Same design idea as the Push 1 (
 - The SPI driver (`ablspi`) is GPL, so its source was released on request; the community's SPI
   protocol knowledge comes from that.
 
+### How the clip launcher works
+
+Sources: the demo sets in the recovery image's `data` partition (`CoreLibrary/DemoSongs/`), and
+Schwung's `docs/MOVE_MODEL.md`, whose author read Move's live model out of the running app's memory
+(firmware 2.1.0). Ableton documents none of this.
+
+**The set file** (`Song.abl`) is plain JSON (schema `tech.ableton.com/schema/song/1.8.3`):
+
+```
+Song   tempo, timeSignature, rootNote, scale
+├── tracks[4]        kind "midi" | "audio", name, color, mixer {volume, pan, speakerOn, solo}
+│    └── clipSlots[8]               one per pad in the track's row
+│         └── clip (or empty)
+│              ├── region {start, end, loop {start, end, isEnabled}}        in BEATS
+│              ├── notes [{noteNumber, startTime, duration, velocity, offVelocity}]   MIDI clip
+│              └── sampleUri + warping {markers [{seconds, beats}]}        audio clip
+├── scenes[8]        name + colour only: a scene is just a column
+├── masterTrack      devices (effects)
+└── grooves
+```
+
+Everything is in **beats**. Notes are absolute in clip time, so a clip whose loop starts later can
+still hold notes before it. Audio clips pair seconds with beats in warp markers so the sample stretches
+to the tempo.
+
+**In memory it's Live's own data model** (`shared/live-model/FlipModelLib`, built on Ohm Force's
+`flip` framework): `live.Song` → `live.Track` → `live.Clips` (8 `ClipSlot`s + one `PlayingState`) →
+`live.Clip` (`ClipRegion`, notes). Each track has a **single** `PlayingState` (`mPlayingClipSlot`,
+`mSessionClipStartTime`), which is why a track can play only one clip: launching moves that pointer.
+
+**A launch, step by step:**
+1. The pad press reaches the CM4 as a MIDI note from the XMOS. In Session Mode the rows descend by
+   eight: 92–99 = Track 1, 84–91 Track 2, 76–83 Track 3, 68–75 Track 4.
+2. The UI maps the note to (track, slot) and asks the engine to launch it.
+3. The engine **queues** the launch. The queue is engine state: it isn't in the set file or the model.
+4. The transport keeps a clock in **beats since Play** (reset to 0 on every Play). At the next launch
+   boundary the engine sets `mPlayingClipSlot` and `mSessionClipStartTime` to that exact beat.
+   Measured: pressed at 4.76 → start 8.0; pressed at 13.5 → start 16.0. The switch happens at the
+   boundary, not at the press; the pulsing-green LED is the time in between.
+
+**Playback**: every 128-frame audio block (~2.9 ms) the engine computes each track's position as
+`region.start + (song_beats − start_beat)`, wrapped into `[loop.start, loop.end)`, then plays the
+notes that fall in the block (or reads the warped sample there). One shared clock plus a start beat
+per track keeps every clip on the bar however late it was launched. Shift+Play just resets the start
+beats.
+
+**Around it:**
+- LEDs (playing, queued, selected) are drawn from the same model and sent back to the XMOS as MIDI.
+- A scene launch is several slot launches on the same boundary (a finger slid down a column).
+- `Song.abl` is saved about 10 s behind the live model, so the audio thread never waits on the disk.
+- `flip` records every change as a transaction, which is where undo comes from.
+
+**Document vs. engine**, the design split worth copying:
+
+| Lives in | What | Why |
+|---|---|---|
+| Document (flip) | clips, notes, loop regions, playing clip, start beat | saved, undoable, observable by the UI |
+| Engine (plain C++) | the launch queue, sample-exact timing | temporary, real-time, owned by the audio thread |
+
+Schwung could read the document because `flip` keeps a runtime registry of class and member names
+(it needs them to save, undo and notify). Plain C++ engine objects keep no names after compiling, so
+seeing the queue would mean disassembling the 30 MB `Move` binary. Its behaviour is observable from
+outside anyway.
+
+**For a launcher of our own**, five pieces: one clock in beats since Play; clips stored in beats with
+a loop region; per track, one pointer to the playing clip plus its start beat; launches queued and
+committed at the next boundary; the audio thread computing `clock − start`, wrapped into the loop.
+The clock, queue and playing state live in the engine; the Push side only requests launches and
+reads state for its LEDs.
+
 **Running it elsewhere**: the image targets the Pi 4 chip family. `ableton-move-lab` runs the Move
 software in Docker or on a plain Pi 4 by faking the XMOS with an `LD_PRELOAD` shim. Personal research
 only: it's Ableton's proprietary software.
 
-## 4. Open platforms to study
+## 4. How devices let other software in: offline files vs. a live protocol
+
+A sealed firmware doesn't mean a closed device. What matters is which **door** the device offers
+other software, and there are two kinds:
+
+| | Offline: file exchange | Online: live protocol |
+|---|---|---|
+| Examples | OP-1 field, OP-XY (USB disk/MTP mode); Seqtrak `.Y3P` project export | EP series (SysEx file protocol); Seqtrak parameter/step/note messages; Push |
+| How it works | The device stops being an instrument, hands its storage to the computer, then reloads what it finds | The device keeps playing; other software sends **requests** and the firmware carries them out |
+| What a tool can do | Build files in the exact format the device expects (e.g. field-arrange for OP-1 Field tapes) | Work alongside the device in real time (companion apps like the third-party EP-133 librarians) |
+
+**Why it's one or the other**: it comes down to who may write the device's storage. In disk/MTP mode the
+computer writes directly, so the instrument must step aside (two writers would corrupt the file
+system). With a request protocol the device stays the **only writer**: it queues requests and runs them
+between its own work, so it can keep playing. Same idea as CHOMPI's queues: one owner of the data,
+everyone else asks.
+
+**teenage engineering in practice** (from TE's own EP Sample Tool web app,
+`teenage.engineering/apps/ep-sample-tool`, read 2026-10-24):
+- The tool's JavaScript names a full **file system over SysEx**: `TE_SYSEX_FILE_INIT`, `_LIST`, `_GET`,
+  `_INFO`, `_METADATA`, `_DELETE`, `_EVENT`, capabilities `READ` / `WRITE` / `MOVE` / `DELETE` /
+  `PLAYBACK`, file types `DIR` / `FILE`. List folders, read and write samples and projects, read metadata,
+  delete, move, even audition a sample.
+- It knows only three products: `TE032AS001` EP-133 K.O. II, `TE032AS005` EP-1320, `TE032AS006` EP-40.
+  No OP devices.
+- The OP-1 field and OP-XY are samplers too, but their file door is **disk/MTP mode** (the OP-1 field
+  release notes mention an MTP fix), and live control stops at MIDI notes and CC. The SysEx channel
+  exists on them, since TE's updater flashes them over SysEx, but nothing public uses it beyond updates.
+- So an OP arranger can only be an **offline file builder**, while EP companion apps can work live.
+
+**How people learn a device's protocol:** read the official tool's code when it's a web page (the
+updater's `TE_SYSEX_DFU`, the sample tool's `TE_SYSEX_FILE_*`); record the traffic while the official
+tool runs (how the Seqtrak protocol was found); then experiment, starting with read-only requests.
+
+**The Seqtrak has both doors**: the live parameter protocol the bridge already uses, and the `.Y3P`
+export (`docs/Seqtrak/Y3P-PROJECT-FILE.md`). A Seqtrak arranger (`seqtrak-arranger.md`) therefore
+doesn't have to be offline-only like field-arrange: it could prepare projects as files *and* audition or
+adjust them live while the Seqtrak plays.
+
+## 5. Open platforms to study
 
 Local clones in `OpenSource/`:
 
@@ -116,7 +225,7 @@ Local clones in `OpenSource/`:
 | **Critter & Guitari Organelle** (`Organelle_OS`, `Organelle_Controller`) | A Pi-class instrument running Pure Data patches; the controller repo is the microcontroller side |
 | **Ableton `push-interface`** | Ableton's published Push 2 MIDI and display protocol |
 
-## 5. Lessons for open-push
+## 6. Lessons for open-push
 
 For the bridge now (tracked in Linear as epic KM-244, *Bridge · Architecture & reliability*, KM-254 to KM-258):
 1. Never block inside a handler. Turn multi-step reads into operations the main loop advances.
