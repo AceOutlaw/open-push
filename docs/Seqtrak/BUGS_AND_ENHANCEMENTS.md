@@ -341,6 +341,20 @@ press retunes a SAMPLER pad, then triggers it.
   for recorded samples; presets/imports can be selected on each pad already).
 - Alternative: MIDI pitch bend on ch 11, if the SAMPLER responds (not documented).
 
+**Tests (hardware, with ears), 2026-10-17, pad 2**:
+1. ✅ PITCH +4 / +7 / ±12 played at those pitches. Range −48…+48 semitones (writes clamp to `10`–`70`).
+2. ✅ Retuning while a note rings does **not** change that note: the pitch is fixed at note-on (heard twice).
+3. ✅ Pitch bend on ch 11 bends the sample (not in Yamaha's docs). Bend range not measured.
+
+**What that means for the design**:
+- Retune-then-trigger works, and a ringing note keeps its pitch, so fast melodies on one pad are fine.
+- 4. 🟡 Two overlapping notes on one pad (pad 2, gate mode; root then +7 on top, both held): Ace didn't
+  think both sounded together, but the vocal sample made it hard to tell ("it did sound good"). Treat one
+  pad as **one voice** (a new note-on cuts the ringing one) until a clearer test (a plain sustained tone)
+  says otherwise. Design for chords: rotate notes across pads that hold the same sample.
+- Pitch bend can add bends on top (a touch strip). It moves every sounding SAMPLER note, so it isn't a way
+  to play chords.
+
 **Recording (✅ solved 2026-10-17)**: a note recorded while the pad is retuned stores only the pad (test 5:
 four notes at 0/+4/+7/+12 played back as the same note). But the pitch can be stored per step as a
 **Parameter Lock event** in the same note list (`72 30 00 [tick] 03 41 1A 4F [value] 00`, written at the step
@@ -431,19 +445,44 @@ network. The Pi converts any WAV (rate, bit depth, mono/stereo) to 44.1 kHz befo
 - Auto-normalize (`00 00 1C`) on or off for loaded files?
 - Restoring the sampling source afterwards.
 
-**Tests (hardware, with ears), 2026-10-17, pad 2**:
-1. ✅ PITCH +4 / +7 / ±12 played at those pitches. Range −48…+48 semitones (writes clamp to `10`–`70`).
-2. ✅ Retuning while a note rings does **not** change that note: the pitch is fixed at note-on (heard twice).
-3. ✅ Pitch bend on ch 11 bends the sample (not in Yamaha's docs). Bend range not measured.
+---
 
-**What that means for the design**:
-- Retune-then-trigger works, and a ringing note keeps its pitch, so fast melodies on one pad are fine.
-- 4. 🟡 Two overlapping notes on one pad (pad 2, gate mode; root then +7 on top, both held): Ace didn't
-  think both sounded together, but the vocal sample made it hard to tell ("it did sound good"). Treat one
-  pad as **one voice** (a new note-on cuts the ringing one) until a clearer test (a plain sustained tone)
-  says otherwise. Design for chords: rotate notes across pads that hold the same sample.
-- Pitch bend can add bends on top (a touch strip). It moves every sounding SAMPLER note, so it isn't a way
-  to play chords.
+### 10. Write Our Own .Y3P Project Files (Import Through the App)
+**Priority**: Medium
+**Linear**: KM-232
+**Description**: Generate SEQTRAK project files (`.Y3P`) on the Pi or a Mac: patterns, tempo, your own samples on
+the pads. Import them with the SEQTRAK app into a project slot. Format notes: `docs/Seqtrak/Y3P-PROJECT-FILE.md`;
+diff tool: `tools/y3p_diff.py`.
+
+**Approach: a template, not from scratch.** Start from a real export and change only the fields we have decoded;
+copy everything else as it is (including the leftover memory contents in the pattern pages). Each decoded field
+becomes one more thing we can write. Rebuild the ZIP (its CRCs are recomputed automatically).
+
+**Plan**:
+1. ✅ **Acceptance test passed (2026-10-18)**: `test edit tempo100.Y3P` = `test vel80.Y3P` with one byte changed
+   (tempo `0x69` 120 → 100, same name and UUID, ZIP rebuilt). The app imported it and the Seqtrak played it at
+   **100 BPM**. So the app accepts edited files: no checksum or signature beyond the ZIP's own.
+2. **Writer tool** (`tools/y3p_write.py`): open a template, set fields, write a new `.Y3P` with a new name and
+   project UUID. Start with what's decoded: tempo, name, drum steps (on/off, velocity, micro timing, probability,
+   substep).
+3. **Decode and add the rest**, one export pair at a time (the same method as the drum steps):
+   step length and record bytes +3 / +6…, synth / sampler notes, drum parameter locks, pattern length,
+   song / scenes, project settings (swing, key, scale, mixer), track sound settings.
+4. **Your own samples**: write WAVs into `sampleN.bin` / `waveformN.*` / `elementN.*` (16-bit, 44.1 kHz, L/R
+   separate) and point a pad at them (`ElementNSampleNumber`). Needs the element `.bin` and content numbers
+   understood; test with one pad first.
+5. **Later**: send the file to the Seqtrak without the app. Needs the app's transfer captured (KM-230).
+
+**What it enables**: building patterns or whole projects on the Pi or a Mac, batch-loading your own samples into
+pads, converting between projects, backups you can edit.
+
+**Risks / unknowns**:
+- The app may reject edited files (UUID, version or content-number checks). Step 1 finds out.
+- Custom content numbers may clash with what's already on the device.
+- Edits must stay within what the firmware (1.21.3) accepts; test every new field by importing and checking on
+  the device.
+
+**Rule for tests**: always import into an **empty** project slot, never over a project you care about.
 
 ---
 

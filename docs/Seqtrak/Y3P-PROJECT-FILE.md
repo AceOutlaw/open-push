@@ -124,6 +124,12 @@ probability 49 %, velocity 80. Every MIDI change showed up as **exactly one byte
 Seqtrak from another program, **switch to another project and back in the app** before exporting; otherwise the
 export is unchanged (seen twice).
 
+## Writing files (KM-232)
+
+✅ **The app imports edited files** (2026-10-18): a copy of `test vel80.Y3P` with only the tempo byte changed
+(`0x69` 120 → 100; same name and UUID; ZIP rebuilt with Python `zipfile`, same entry order and compression)
+imported, loaded on the Seqtrak and played at 100 BPM. No checksum beyond the ZIP CRCs.
+
 ## What it means for saving projects on the Pi (KM-230)
 
 - The app's own file already bundles **user sounds, sampler elements and their audio** with the project, and
