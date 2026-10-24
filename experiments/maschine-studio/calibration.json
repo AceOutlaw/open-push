@@ -1,0 +1,60 @@
+{
+ "ring": {
+  "CHANNEL": 0,
+  "BROWSE": 2,
+  "VOLUME": 6,
+  "SWING": 8,
+  "TUNE": 9,
+  "EDIT": 13
+ },
+ "meters": [
+  {
+   "test": "meters bytes 1-15 + 17-31 at 127 (reference)",
+   "seen": "BLUE"
+  },
+  {
+   "test": "same at 40",
+   "seen": "BLUE"
+  },
+  {
+   "test": "same at 127 + 0x83 byte 33",
+   "seen": "WHITE"
+  },
+  {
+   "test": "same at 127 + 0x83 byte 34",
+   "seen": "BLUE"
+  },
+  {
+   "test": "same at 255",
+   "seen": "BLUE"
+  },
+  {
+   "test": "same at 200",
+   "seen": "BLUE"
+  },
+  {
+   "test": "meters + 0x80 bytes 51-54",
+   "seen": "BLUE"
+  },
+  {
+   "test": "ONLY 0x80 byte 51 (look at IN / OUT marks)",
+   "seen": "other"
+  },
+  {
+   "test": "ONLY 0x80 byte 52",
+   "seen": "other"
+  },
+  {
+   "test": "ONLY 0x80 byte 53",
+   "seen": "other"
+  },
+  {
+   "test": "ONLY 0x80 byte 54",
+   "seen": "other"
+  },
+  {
+   "test": "ONLY 0x83 bytes 33 + 34",
+   "seen": "other"
+  }
+ ]
+}

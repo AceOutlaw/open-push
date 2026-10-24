@@ -1,0 +1,1399 @@
+{
+ "_meta": {
+  "baseline_bits": [
+   [
+    11,
+    1
+   ]
+  ],
+  "navigation": {
+   "ENTER": [
+    7,
+    4
+   ],
+   "BACK": [
+    7,
+    7
+   ],
+   "jog RIGHT": [
+    7,
+    5
+   ],
+   "jog LEFT": [
+    7,
+    6
+   ]
+  }
+ },
+ "TOUCH knob 1 (don't turn)": {
+  "kind": "touch",
+  "data": {
+   "bits": []
+  }
+ },
+ "TOUCH knob 2 (don't turn)": {
+  "kind": "touch",
+  "data": {
+   "bits": [
+    [
+     12,
+     1
+    ]
+   ]
+  }
+ },
+ "TOUCH knob 3 (don't turn)": {
+  "kind": "touch",
+  "data": {
+   "bits": [
+    [
+     12,
+     2
+    ]
+   ]
+  }
+ },
+ "TOUCH knob 4 (don't turn)": {
+  "kind": "touch",
+  "data": {
+   "bits": [
+    [
+     12,
+     3
+    ]
+   ]
+  }
+ },
+ "TOUCH knob 5 (don't turn)": {
+  "kind": "touch",
+  "data": {
+   "bits": [
+    [
+     12,
+     4
+    ]
+   ]
+  }
+ },
+ "TOUCH knob 6 (don't turn)": {
+  "kind": "touch",
+  "data": {
+   "bits": [
+    [
+     12,
+     5
+    ]
+   ]
+  }
+ },
+ "TOUCH knob 7 (don't turn)": {
+  "kind": "touch",
+  "data": {
+   "bits": []
+  }
+ },
+ "TOUCH knob 8 (don't turn)": {
+  "kind": "touch",
+  "data": {
+   "bits": [
+    [
+     12,
+     7
+    ]
+   ]
+  }
+ },
+ "TOUCH the jog wheel (don't turn)": {
+  "kind": "touch",
+  "data": {
+   "bits": []
+  }
+ },
+ "TURN knob 1 (below the screens)": {
+  "kind": "turn",
+  "data": {
+   "field": 0,
+   "movement": [
+    2435,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "TURN knob 2 (below the screens)": {
+  "kind": "turn",
+  "data": {
+   "field": 1,
+   "movement": [
+    15,
+    3257,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "TURN knob 3 (below the screens)": {
+  "kind": "turn",
+  "data": {
+   "field": 2,
+   "movement": [
+    0,
+    0,
+    3119,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "TURN knob 4 (below the screens)": {
+  "kind": "turn",
+  "data": {
+   "field": 3,
+   "movement": [
+    0,
+    0,
+    0,
+    3006,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "TURN knob 5 (below the screens)": {
+  "kind": "turn",
+  "data": {
+   "field": 4,
+   "movement": [
+    0,
+    0,
+    0,
+    0,
+    3592,
+    4,
+    0,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "TURN knob 6 (below the screens)": {
+  "kind": "turn",
+  "data": {
+   "field": 5,
+   "movement": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    3854,
+    4,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "TURN knob 7 (below the screens)": {
+  "kind": "turn",
+  "data": {
+   "field": 6,
+   "movement": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2506,
+    4,
+    0
+   ],
+   "also": []
+  }
+ },
+ "TURN knob 8 (below the screens)": {
+  "kind": "turn",
+  "data": {
+   "field": 7,
+   "movement": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2881,
+    0
+   ],
+   "also": []
+  }
+ },
+ "TURN the big JOG WHEEL": {
+  "kind": "turn",
+  "data": null
+ },
+ "TURN the VOLUME knob (master section)": {
+  "kind": "turn",
+  "data": {
+   "field": 8,
+   "movement": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2118
+   ],
+   "also": []
+  }
+ },
+ "CHANNEL": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     1,
+     7
+    ]
+   ]
+  }
+ },
+ "PLUG-IN": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     1,
+     0
+    ]
+   ]
+  }
+ },
+ "ARRANGE": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     1,
+     6
+    ]
+   ]
+  }
+ },
+ "MIX": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     1,
+     1
+    ]
+   ]
+  }
+ },
+ "BROWSE": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     1,
+     5
+    ]
+   ]
+  }
+ },
+ "SAMPLING": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     1,
+     2
+    ]
+   ]
+  }
+ },
+ "page LEFT arrow": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     1,
+     4
+    ]
+   ]
+  }
+ },
+ "page RIGHT arrow": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     1,
+     3
+    ]
+   ]
+  }
+ },
+ "ALL": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     2,
+     5
+    ]
+   ]
+  }
+ },
+ "AUTO": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     2,
+     4
+    ]
+   ]
+  }
+ },
+ "display button 1 (above screens)": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     9,
+     0
+    ]
+   ]
+  }
+ },
+ "display button 2 (above screens)": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     9,
+     7
+    ]
+   ]
+  }
+ },
+ "display button 3 (above screens)": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     9,
+     6
+    ]
+   ]
+  }
+ },
+ "display button 4 (above screens)": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     9,
+     1
+    ]
+   ]
+  }
+ },
+ "display button 5 (above screens)": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     9,
+     5
+    ]
+   ]
+  }
+ },
+ "display button 6 (above screens)": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     9,
+     2
+    ]
+   ]
+  }
+ },
+ "display button 7 (above screens)": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     9,
+     4
+    ]
+   ]
+  }
+ },
+ "display button 8 (above screens)": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     9,
+     3
+    ]
+   ]
+  }
+ },
+ "IN 1": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     10,
+     0
+    ]
+   ]
+  }
+ },
+ "IN 2": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     10,
+     1
+    ]
+   ]
+  }
+ },
+ "IN 3": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     10,
+     2
+    ]
+   ]
+  }
+ },
+ "IN 4": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     10,
+     3
+    ]
+   ]
+  }
+ },
+ "MASTER": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     10,
+     7
+    ]
+   ]
+  }
+ },
+ "GROUP": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     10,
+     6
+    ]
+   ]
+  }
+ },
+ "SOUND": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     10,
+     5
+    ]
+   ]
+  }
+ },
+ "CUE": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     10,
+     4
+    ]
+   ]
+  }
+ },
+ "PRESS DOWN on the JOG WHEEL": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     7,
+     3
+    ]
+   ]
+  }
+ },
+ "COPY": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     6,
+     3
+    ]
+   ]
+  }
+ },
+ "PASTE": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     6,
+     0
+    ]
+   ]
+  }
+ },
+ "NOTE": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     6,
+     7
+    ]
+   ]
+  }
+ },
+ "NUDGE": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     6,
+     4
+    ]
+   ]
+  }
+ },
+ "UNDO": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     6,
+     2
+    ]
+   ]
+  }
+ },
+ "REDO": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     6,
+     1
+    ]
+   ]
+  }
+ },
+ "QUANTIZE": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     6,
+     6
+    ]
+   ]
+  }
+ },
+ "CLEAR": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     6,
+     5
+    ]
+   ]
+  }
+ },
+ "SHIFT": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     4,
+     2
+    ]
+   ]
+  }
+ },
+ "RESTART / LOOP": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     4,
+     4
+    ]
+   ]
+  }
+ },
+ "METRO": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     4,
+     7
+    ]
+   ]
+  }
+ },
+ "EVENTS": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     4,
+     0
+    ]
+   ]
+  }
+ },
+ "GRID": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     4,
+     3
+    ]
+   ]
+  }
+ },
+ "PLAY": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     4,
+     5
+    ]
+   ]
+  }
+ },
+ "REC": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     4,
+     6
+    ]
+   ]
+  }
+ },
+ "ERASE": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     4,
+     1
+    ]
+   ]
+  }
+ },
+ "TAP": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     2,
+     0
+    ]
+   ]
+  }
+ },
+ "SNAP": {
+  "kind": "button",
+  "data": null
+ },
+ "MACRO": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     2,
+     2
+    ]
+   ]
+  }
+ },
+ "NOTE REPEAT": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     2,
+     3
+    ]
+   ]
+  }
+ },
+ "SCENE": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     5,
+     3
+    ]
+   ]
+  }
+ },
+ "PATTERN": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     5,
+     2
+    ]
+   ]
+  }
+ },
+ "PAD MODE": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     5,
+     1
+    ]
+   ]
+  }
+ },
+ "NAVIGATE": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     5,
+     0
+    ]
+   ]
+  }
+ },
+ "DUPLICATE": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     5,
+     7
+    ]
+   ]
+  }
+ },
+ "SELECT": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     5,
+     6
+    ]
+   ]
+  }
+ },
+ "SOLO": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     5,
+     5
+    ]
+   ]
+  }
+ },
+ "MUTE": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     5,
+     4
+    ]
+   ]
+  }
+ },
+ "STEP": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     2,
+     1
+    ]
+   ]
+  }
+ },
+ "GROUP A": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     3,
+     0
+    ]
+   ]
+  }
+ },
+ "GROUP B": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     3,
+     3
+    ]
+   ]
+  }
+ },
+ "GROUP C": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     3,
+     4
+    ]
+   ]
+  }
+ },
+ "GROUP D": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     3,
+     7
+    ]
+   ]
+  }
+ },
+ "GROUP E": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     3,
+     1
+    ]
+   ]
+  }
+ },
+ "GROUP F": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     3,
+     2
+    ]
+   ]
+  }
+ },
+ "GROUP G": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     3,
+     5
+    ]
+   ]
+  }
+ },
+ "GROUP H": {
+  "kind": "button",
+  "data": {
+   "bits": [
+    [
+     3,
+     6
+    ]
+   ]
+  }
+ },
+ "PAD 1": {
+  "kind": "pad",
+  "data": {
+   "sensor": 12,
+   "peak": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3984,
+    0,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "PAD 2": {
+  "kind": "pad",
+  "data": {
+   "sensor": 13,
+   "peak": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3730,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "PAD 3": {
+  "kind": "pad",
+  "data": {
+   "sensor": 14,
+   "peak": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4021,
+    0
+   ],
+   "also": []
+  }
+ },
+ "PAD 4": {
+  "kind": "pad",
+  "data": {
+   "sensor": 15,
+   "peak": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3184
+   ],
+   "also": []
+  }
+ },
+ "PAD 5": {
+  "kind": "pad",
+  "data": {
+   "sensor": 8,
+   "peak": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3893,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "PAD 6": {
+  "kind": "pad",
+  "data": {
+   "sensor": 9,
+   "peak": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3935,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "PAD 7": {
+  "kind": "pad",
+  "data": {
+   "sensor": 10,
+   "peak": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4070,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "PAD 8": {
+  "kind": "pad",
+  "data": {
+   "sensor": 11,
+   "peak": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2421,
+    0,
+    0,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "PAD 9": {
+  "kind": "pad",
+  "data": {
+   "sensor": 4,
+   "peak": [
+    0,
+    0,
+    0,
+    0,
+    4073,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    112,
+    0
+   ],
+   "also": []
+  }
+ },
+ "PAD 10": {
+  "kind": "pad",
+  "data": {
+   "sensor": 5,
+   "peak": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    3904,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "PAD 11": {
+  "kind": "pad",
+  "data": {
+   "sensor": 6,
+   "peak": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3921,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "PAD 12": {
+  "kind": "pad",
+  "data": {
+   "sensor": 7,
+   "peak": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4029,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "PAD 13": {
+  "kind": "pad",
+  "data": {
+   "sensor": 0,
+   "peak": [
+    3944,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "PAD 14": {
+  "kind": "pad",
+  "data": {
+   "sensor": 1,
+   "peak": [
+    0,
+    4031,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "PAD 15": {
+  "kind": "pad",
+  "data": {
+   "sensor": 2,
+   "peak": [
+    0,
+    0,
+    3865,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "PAD 16": {
+  "kind": "pad",
+  "data": {
+   "sensor": 3,
+   "peak": [
+    0,
+    0,
+    0,
+    4036,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "also": []
+  }
+ },
+ "EXTRA 1: any button not asked about": {
+  "kind": "button",
+  "data": null
+ },
+ "EXTRA 2: any button not asked about": {
+  "kind": "button",
+  "data": null
+ },
+ "EXTRA 3: any button not asked about": {
+  "kind": "button",
+  "data": null
+ },
+ "EXTRA 4: any button not asked about": {
+  "kind": "button",
+  "data": null
+ },
+ "EXTRA 5: any button not asked about": {
+  "kind": "button",
+  "data": null
+ },
+ "EXTRA 6: any button not asked about": {
+  "kind": "button",
+  "data": null
+ }
+}
