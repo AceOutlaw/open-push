@@ -233,4 +233,6 @@ For the bridge now (tracked in Linear as epic KM-244, *Bridge · Architecture & 
 3. One owner per surface: modes as pages, LEDs and LCD drawn on a fixed clock.
 4. A read-only root filesystem on the Pi, with a small writable data area.
 
+The bridge's target architecture (modules, separate programs, packaging): `bridge-architecture.md`.
+
 For a standalone instrument: see `standalone-instrument.md`.

@@ -124,6 +124,10 @@ probability 49 %, velocity 80. Every MIDI change showed up as **exactly one byte
 Seqtrak from another program, **switch to another project and back in the app** before exporting; otherwise the
 export is unchanged (seen twice).
 
+**Next exports**: `Y3P-EXPORT-PLAN.md` lists the one-change exports that should decode pattern length,
+melody and sampler notes, and the patterns the SEQTRAK writes itself (the drum-step rule above finds nothing
+in `random 1`, checked 2026-10-24).
+
 ## Writing files (KM-232)
 
 ✅ **The app imports edited files** (2026-10-18): a copy of `test vel80.Y3P` with only the tempo byte changed
