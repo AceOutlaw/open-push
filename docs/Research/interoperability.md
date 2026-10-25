@@ -28,7 +28,7 @@ the same structure plus a section for hardware routing.
 
 | Thread | What it gives | Where it stands | Next step | Notes |
 |---|---|---|---|---|
-| **Seqtrak bridge** (today's rig) | Push controls the Seqtrak | Working, with bugs | Bug epic KM-100 | `docs/Seqtrak/` |
+| **Seqtrak bridge** (today's rig) | Push controls the Seqtrak | Working; **28 features built but not yet tested by hand** (Linear "In Review"); Pi 3 fixes behind | Hardware test session | `docs/Seqtrak/HARDWARE-TEST-v1.md`, KM-100 |
 | **Bridge architecture** | Modules, runs as a proper program, no Seqtrak required at startup | Designed | KM-270 (packaging) first | `bridge-architecture.md`, KM-244, KM-268–271 |
 | **Song model + DAWproject** | The middle of the diagram | Writer and parser done; Bitwig and Cubase open our file with notes and scenes intact | Re-export test (do devices survive?) | `experiments/dawproject/` |
 | **OP-1 Field → DAW** | Tapes open in a DAW | Tape format fully decoded in field-arrange | One converter, about one session | `field-arrange/docs/op1-field-tape-format.md`; field-arrange isn't in git yet |
@@ -47,22 +47,29 @@ times, partly. Finishing one path end to end builds it once, and the others reus
 
 ## Picking one
 
-What to look for: **finished in days, not weeks**; **used in your own music right away**; **builds the shared
-piece** the others need.
+*Revised 2026-10-25 after reading the repo and Linear.*
 
-| Candidate | Days to a result | Used right away | Builds the shared piece |
-|---|---|---|---|
-| OP-1 Field → DAW | ~1 session: the format is already decoded | Yes: open real tapes in Bitwig/Cubase | Yes: first real converter into the model |
-| Seqtrak → DAW | Weeks: needs the export session, then decoding | Yes, once it works | Yes |
-| Pi sequencer | Weeks to months | Only once it's tight enough to perform with | Yes, but needs the model first |
-| Seqtrak bridge bugs | Ongoing | Yes, it's the rig | No |
+**First: finish the Seqtrak bridge as v1.0.** It's the main project and nearly done, but nothing in it is
+marked finished: 28 features (every KM-100 fix, Song mode, micro timing, probability, substeps, copy/paste,
+undo, metronome, project switching) are built and verified from the Pi but have never been tried by hand. No
+code has changed since 2026-10-18; the days since went to research. Finishing means:
 
-**Recommendation: OP-1 Field → DAW first.** It's the only path that ends in a working result in one sitting,
-it puts real music through the song model, and it settles the DAWproject details (audio clips, mixer, markers)
-before anything harder depends on them. **Seqtrak → DAW** is the natural second: same output side, only the
-input is new. The Pi sequencer comes after both, when the model has carried real songs.
+1. Deploy the current commit to pibridge (it's 3 fixes behind).
+2. One test session with `docs/Seqtrak/HARDWARE-TEST-v1.md`.
+3. Fix what fails, plus KM-126 and KM-128.
+4. Tag `v1.0`.
 
-The exception: if a gig is coming, the rig wins, and the bridge bugs (KM-100) come first.
+**Then, one at a time:**
+
+| Order | Thread | Why then |
+|---|---|---|
+| 2 | Stability: non-blocking reads, atomic saves (KM-254, KM-255) | Freezes and corrupt files hurt on stage, and the Pi runs on a battery |
+| 3 | Run as a proper program (KM-270) | Small, and the base for the modular bridge |
+| 4 | One converter: **OP-1 Field → DAW** | First interoperability thread: the format is decoded, about one session, and it builds the song model the others reuse |
+| 5 | Seqtrak → DAW | Same output side; needs the `.Y3P` export session first |
+
+The Pi sequencer, the Orchid, the standalone instrument and Maschine wait until after v1.0. Maschine's KM-261 is
+still marked In Progress in Linear and should go back to Backlog.
 
 ## Rule for new ideas
 
